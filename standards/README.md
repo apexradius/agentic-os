@@ -1,0 +1,21 @@
+# framework/standards/ — executable enforcement
+
+`framework/doctrine/standards/` holds the **law** as prose — the design standard, the
+excellence and communication standards. This directory holds the **machinery that enforces a
+standard deterministically**: runnable checkers an instance points at its own artifacts.
+
+The split mirrors the no-bloat contract: doctrine is law (prose), knowledge is state, code is
+machinery — never mixed in one file. A standard that can be checked by a machine gets a checker
+here; the prose it enforces stays in `doctrine/`, and the JSON-Schema-driven *primitives*
+(agents, skills, hooks, …) stay in `framework/primitives/`. This is neither — it is executable
+enforcement of a doctrine standard, so it earns its own zone.
+
+| Standard | Prose (law) | Enforcement (here) | Judgment layer |
+|---|---|---|---|
+| Design taste | [`doctrine/standards/design.md`](../doctrine/standards/design.md) | [`design-gate/`](design-gate/) — deterministic anti-pattern scanner | [`roles/design-critic.md`](../roles/design-critic.md) |
+
+Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
+extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
+`framework/standards/*/validate.mjs` alongside the primitive validators and runs its selftest.
+
+> Last reviewed: 2026-06-19

@@ -1,0 +1,34 @@
+{
+  "name": "@framework/canva-mcp",
+  "version": "1.0.0",
+  "description": "Canva Connect API MCP server — programmatic design creation, brand-template autofill, and export",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "canva-mcp": "dist/index.js",
+    "canva-login": "dist/auth/login-cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "login": "node dist/auth/login-cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.0",
+    "@framework/mcp-shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ]
+}

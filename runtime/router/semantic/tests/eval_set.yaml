@@ -1,0 +1,119 @@
+# Semantic Router — held-out evaluation set
+# 50 prompts × hand-labeled expected route. Mix of pure cases, ambiguous, real-world phrasings.
+#
+# Acceptance criteria (per task #5):
+#   - chitchat false-positive rate = 0 (never route engineering work to free model)
+#   - tool_op precision ≥ 0.9 (don't strip context from real builds)
+#   - overall accuracy ≥ 0.85
+#
+# fallback = expected route is `engineering` (router's default when no route hits threshold)
+
+cases:
+  # ---- chitchat (10) ----
+  - prompt: "hi"
+    expected: chitchat
+  - prompt: "hello"
+    expected: chitchat
+  - prompt: "thanks"
+    expected: chitchat
+  - prompt: "thank you"
+    expected: chitchat
+  - prompt: "ok"
+    expected: chitchat
+  - prompt: "good morning"
+    expected: chitchat
+  - prompt: "got it"
+    expected: chitchat
+  - prompt: "nice"
+    expected: chitchat
+  - prompt: "bye"
+    expected: chitchat
+  - prompt: "never mind"
+    expected: chitchat
+
+  # ---- tool_op (15) ----
+  - prompt: "show me the contents of package.json"
+    expected: tool_op
+  - prompt: "grep for TODO in src"
+    expected: tool_op
+  - prompt: "list the files in this directory"
+    expected: tool_op
+  - prompt: "what's in the .env file"
+    expected: tool_op
+  - prompt: "tail the last 50 lines of the log"
+    expected: tool_op
+  - prompt: "show git status"
+    expected: tool_op
+  - prompt: "what branch am I on"
+    expected: tool_op
+  - prompt: "run the linter"
+    expected: tool_op
+  - prompt: "run the tests"
+    expected: tool_op
+  - prompt: "find references to UserService"
+    expected: tool_op
+  - prompt: "show me the imports"
+    expected: tool_op
+  - prompt: "cat the readme"
+    expected: tool_op
+  - prompt: "what does this function do"
+    expected: tool_op
+  - prompt: "check if the service is running"
+    expected: tool_op
+  - prompt: "ls the deploy folder"
+    expected: tool_op
+
+  # ---- engineering (20) ----
+  - prompt: "build a stripe webhook handler"
+    expected: engineering
+  - prompt: "refactor this function to be async"
+    expected: engineering
+  - prompt: "debug why the login is failing"
+    expected: engineering
+  - prompt: "create a FastAPI endpoint for /users"
+    expected: engineering
+  - prompt: "write a migration to add a column"
+    expected: engineering
+  - prompt: "implement OAuth2 with Google"
+    expected: engineering
+  - prompt: "fix the race condition in the worker"
+    expected: engineering
+  - prompt: "add caching to this endpoint"
+    expected: engineering
+  - prompt: "build the auth middleware"
+    expected: engineering
+  - prompt: "design the schema for orders"
+    expected: engineering
+  - prompt: "deploy the new service to production"
+    expected: engineering
+  - prompt: "write integration tests for the api"
+    expected: engineering
+  - prompt: "set up the CI pipeline"
+    expected: engineering
+  - prompt: "configure nginx for the new domain"
+    expected: engineering
+  - prompt: "optimize the slow query"
+    expected: engineering
+  - prompt: "implement rate limiting"
+    expected: engineering
+  - prompt: "build a React component for the dashboard"
+    expected: engineering
+  - prompt: "add Stripe payment processing to checkout"
+    expected: engineering
+  - prompt: "integrate the Shopify Admin API"
+    expected: engineering
+  - prompt: "architect a queue system for background jobs"
+    expected: engineering
+
+  # ---- edge cases / novel phrasings (5) ----
+  # Mixed signals — what should the router do? Document expected behavior here.
+  - prompt: "can you check if the deploy worked"
+    expected: tool_op       # asking to *check* something — single-shot tool op
+  - prompt: "what's the latest commit"
+    expected: tool_op       # `git log -1` style
+  - prompt: "how do I set up Stripe Connect"
+    expected: engineering   # research/architectural question, not chitchat
+  - prompt: "the login page is broken"
+    expected: engineering   # bug report = debug/fix work
+  - prompt: "thanks for the help with the auth bug"
+    expected: chitchat      # social acknowledgement, even though it mentions auth

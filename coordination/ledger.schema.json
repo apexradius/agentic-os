@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core.dev/schemas/coordination/ledger.task.json",
+  "title": "Coordination ledger task entry",
+  "description": "One task record in the append-only coordination ledger — a single JSON object per line in tasks.jsonl. The generic, runtime-agnostic model encoded by framework/coordination/ledger.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable unique task id. The latest ledger line for an id wins."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line imperative summary of the task."
+    },
+    "description": {
+      "type": "string",
+      "description": "Fuller task brief or handoff context."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "claimed",
+        "in-progress",
+        "review-pending",
+        "in-review",
+        "blocked",
+        "escalated",
+        "completed",
+        "cancelled"
+      ],
+      "description": "Lifecycle state."
+    },
+    "owner": {
+      "type": ["string", "null"],
+      "description": "Role/agent that currently owns the task; null when unclaimed."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3", "P4"],
+      "description": "Optional priority band."
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "high/critical auto-escalate to the human tiebreaker."
+    },
+    "files_owned": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Normalized paths this task write-locks while claimed — the collision guard."
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Task ids that must complete before this one can start."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Objective outcomes required before closeout."
+    },
+    "verification_command": {
+      "type": "string",
+      "description": "Machine check that proves the task done."
+    },
+    "review_required": {
+      "type": "boolean",
+      "description": "Whether completion routes to cross-review (Council default: true)."
+    },
+    "review_round": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cross-review ping-pong count; exceeding the cap escalates."
+    },
+    "claimed_by_host": { "type": "string", "description": "Host that holds the claim." },
+    "claimed_by_pid": { "type": "integer", "description": "Process id that holds the claim (liveness)." },
+    "last_heartbeat_at": { "type": "string", "format": "date-time", "description": "Last heartbeat timestamp." },
+    "last_heartbeat_host": { "type": "string" },
+    "last_heartbeat_pid": { "type": "integer" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "metadata": {
+      "type": "object",
+      "description": "Instance-specific extension fields the generic model does not define."
+    }
+  }
+}

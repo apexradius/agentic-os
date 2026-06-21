@@ -1,0 +1,960 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import contextlib
+import fcntl
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path(os.environ.get("APEX_AI_ORG_ROOT", str(Path(__file__).resolve().parents[1])))
+STATE_ROOT = ROOT / "state" / "council"
+CURRENT = STATE_ROOT / "current"
+ARCHIVE = STATE_ROOT / "archive"
+REPORTS = CURRENT / "reports"
+REVIEWS = CURRENT / "reviews"
+STUCK = CURRENT / "stuck-reports"
+CHECKPOINTS = CURRENT / "checkpoints"
+PROMPTS = CURRENT / "prompts"
+STATE_FILE = CURRENT / "state.json"
+DELIBERATION = CURRENT / "deliberation.md"
+STATE_OF_DEBATE = CURRENT / "state-of-debate.md"
+HANDOFF = CURRENT / "handoff.md"
+LOCK_FILE = STATE_ROOT / "council.lock"
+AORG_BIN = ROOT / "bin" / "aorg"
+WORKSPACE = Path(os.environ.get("APEX_AI_ORG_WORKSPACE", "~")).expanduser()
+DIRECTOR_ADD_DIRS = os.environ.get("APEX_AI_ORG_DIRECTOR_ADD_DIRS", "")
+
+KNOWN_DIRECTORS = ["Claude", "Codex Director"]
+DEFAULT_DIRECTORS = ["Claude", "Codex Director"]
+ROLE_TO_WINDOW = {
+    "Claude": "claude-director",
+    "Codex Director": "codex-director",
+    "Antigravity": "antigravity-director",
+}
+COUNCIL_CONTROL_WINDOWS = {"council-control", "chair"}
+BILLING_SENSITIVE_PATTERNS = (
+    r"\bclaude\s+(-p|--print)\b",
+    r"\bgemini\b[^\n]*(--prompt|-p)\b",
+    r"\b" + "ANTHROPIC" + r"_API_KEY\b",
+    r"\b" + "GEMINI" + r"_API_KEY\b",
+    r"\bapi\." + "anthropic" + r"\.com\b",
+    r"\b@" + "anthropic-ai" + r"/sdk\b",
+)
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def ensure_dirs() -> None:
+    for path in [CURRENT, ARCHIVE, REPORTS, REVIEWS, STUCK, CHECKPOINTS, PROMPTS]:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+@contextlib.contextmanager
+def council_lock():
+    STATE_ROOT.mkdir(parents=True, exist_ok=True)
+    with LOCK_FILE.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def configured_directors() -> list[str]:
+    raw = os.environ.get("APEX_COUNCIL_DIRECTORS")
+    if raw:
+        directors = [item.strip() for item in raw.split(",") if item.strip()]
+    else:
+        directors = list(DEFAULT_DIRECTORS)
+
+    unknown = [director for director in directors if director not in KNOWN_DIRECTORS]
+    if unknown:
+        raise SystemExit(f"unknown council director(s): {', '.join(unknown)}")
+    if not directors:
+        raise SystemExit("at least one council director is required")
+    return directors
+
+
+def active_directors(state: dict | None = None) -> list[str]:
+    if state and state.get("directors"):
+        return list(state["directors"])
+    return configured_directors()
+
+
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def write_text(path: Path, value: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(value, encoding="utf-8")
+
+
+def scan_files(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    ignored_dirs = {"__pycache__", ".git", ".DS_Store"}
+    allowed_suffixes = {".py", ".sh", ".md", ".json", ".jsonl", ".toml", ".yaml", ".yml", ""}
+    files: list[Path] = []
+    for item in path.rglob("*"):
+        if any(part in ignored_dirs for part in item.parts):
+            continue
+        if item.name == "aorg":
+            continue
+        if item.is_file() and item.suffix in allowed_suffixes:
+            files.append(item)
+    return files
+
+
+def load_state() -> dict:
+    if not STATE_FILE.exists():
+        raise SystemExit(f"no council session initialized at {STATE_FILE}")
+    return json.loads(read_text(STATE_FILE))
+
+
+def save_state(state: dict) -> None:
+    write_text(STATE_FILE, json.dumps(state, indent=2, sort_keys=True) + "\n")
+
+
+def run_aorg(args: list[str]) -> dict:
+    if not AORG_BIN.exists():
+        return {"ok": False, "returncode": 127, "stdout": "", "stderr": f"aorg not found: {AORG_BIN}"}
+    proc = subprocess.run([str(AORG_BIN), *args], cwd=str(ROOT), capture_output=True, text=True, timeout=30)
+    return {"ok": proc.returncode == 0, "returncode": proc.returncode, "stdout": proc.stdout.strip(), "stderr": proc.stderr.strip()}
+
+
+def archive_current() -> None:
+    if not STATE_FILE.exists():
+        return
+    session_id = json.loads(read_text(STATE_FILE)).get("session_id", "unknown")
+    target = ARCHIVE / f"{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}-{session_id}"
+    target.mkdir(parents=True, exist_ok=True)
+    for child in CURRENT.iterdir():
+        shutil.move(str(child), str(target / child.name))
+
+
+def derive_items(task_text: str, explicit_items: list[str]) -> list[dict]:
+    titles: list[str] = []
+    if explicit_items:
+        titles = explicit_items
+    else:
+        for line in task_text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("- [ ] "):
+                titles.append(stripped[6:].strip())
+            elif stripped.startswith("- ") and len(titles) < 12:
+                titles.append(stripped[2:].strip())
+            elif stripped.startswith("## ") and stripped.lower() not in {"## task brief", "## constraints", "## out of scope"}:
+                titles.append(stripped[3:].strip())
+    if not titles:
+        titles = ["Approve execution plan for submitted task brief"]
+
+    items = []
+    seen = set()
+    for title in titles:
+        title = re.sub(r"\s+", " ", title).strip()
+        if not title or title.lower() in seen:
+            continue
+        seen.add(title.lower())
+        item_id = f"item-{len(items) + 1:03d}"
+        items.append(
+            {
+                "id": item_id,
+                "title": title,
+                "status": "open",
+                "approvals": {},
+                "dissents": [],
+                "locked_at": None,
+            }
+        )
+    return items
+
+
+def init_session(args: argparse.Namespace) -> int:
+    task_path = Path(args.task_file).expanduser()
+    if not task_path.exists():
+        raise SystemExit(f"task brief not found: {task_path}")
+    ensure_dirs()
+    if not args.no_archive:
+        archive_current()
+        ensure_dirs()
+
+    task_text = read_text(task_path)
+    session_id = args.session or f"council-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+    items = derive_items(task_text, args.item or [])
+    aorg_task_id = args.aorg_task or os.environ.get("AORG_TASK_ID") or None
+    aorg_role = args.aorg_role or os.environ.get("AORG_ROLE") or "codex"
+    state = {
+        "session_id": session_id,
+        "mode": args.mode,
+        "created_at": utc_now(),
+        "task_file": str(task_path),
+        "status": "deliberating",
+        "directors": configured_directors(),
+        "aorg": {
+            "task_id": aorg_task_id,
+            "role": aorg_role,
+            "claim": None,
+            "completion": None,
+        },
+        "items": items,
+        "phase_reviews": [],
+        "stuck_reports": [],
+        "events": [{"at": utc_now(), "event": "session_initialized", "mode": args.mode}],
+    }
+    if aorg_task_id and not args.no_aorg_claim:
+        result = run_aorg(["claim", aorg_role, aorg_task_id])
+        state["aorg"]["claim"] = result
+        if not result["ok"]:
+            save_state(state)
+            raise SystemExit(f"aorg claim failed for {aorg_task_id}: {result['stderr'] or result['stdout']}")
+    save_state(state)
+
+    write_text(
+        DELIBERATION,
+        "# Apex OS Council Deliberation\n\n"
+        f"**Session:** {session_id}\n"
+        f"**Mode:** {args.mode}\n"
+        f"**Started:** {state['created_at']}\n\n"
+        "## Task Brief\n\n"
+        f"{task_text.strip()}\n\n"
+        "## Open Items\n\n"
+        + "\n".join(f"- `{item['id']}` {item['title']}" for item in items)
+        + "\n\n## Approved Items\n\nNone yet.\n",
+    )
+    write_text(STATE_OF_DEBATE, "# State of Debate\n\nNo rounds recorded yet.\n")
+    write_role_prompts(state)
+    print(f"initialized {session_id}")
+    print(STATE_FILE)
+    return 0
+
+
+ROLES_FILE = ROOT / "roles.json"
+# Pillar 9: director prompt-file -> roles.json persona key (chair is a process role, no persona).
+WINDOW_TO_ROLE_KEY = {
+    "claude-director.md": "claude",
+    "codex-director.md": "codex",
+    "antigravity-director.md": "antigravity",
+}
+
+
+def load_personas() -> dict:
+    """Per-director personas from roles.json (Pillar 9). Returns {} on ANY failure so the
+    legacy one-line lenses remain the fallback — personas only ever ADD prompt text."""
+    try:
+        roles = json.loads(ROLES_FILE.read_text(encoding="utf-8")).get("roles", {})
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for key in ("claude", "codex", "antigravity"):
+        role = roles.get(key)
+        if isinstance(role, dict) and isinstance(role.get("persona"), dict):
+            out[key] = role["persona"]
+    return out
+
+
+def enrich_lens_with_persona(filename: str, fallback_lens: str) -> str:
+    """Append the director's persona block to the legacy lens line, or return the lens
+    unchanged when no persona exists (back-compat: the '<X> lens' token is preserved)."""
+    key = WINDOW_TO_ROLE_KEY.get(filename)
+    persona = load_personas().get(key) if key else None
+    if not persona:
+        return fallback_lens
+    values = ", ".join(persona.get("value_priority", []))
+    return (
+        f"{fallback_lens}\n"
+        f"**Persona:** {persona.get('alias', key)} — {persona.get('temperament', '')}\n"
+        f"**Value priority:** {values}\n"
+        f"**Adversarial mandate:** {persona.get('adversarial_mandate', '')}"
+    )
+
+
+def write_role_prompts(state: dict) -> None:
+    ensure_dirs()
+    base = (
+        "You are participating in Apex OS Council mode.\n\n"
+        "Rules:\n"
+        "- This is a live terminal subscription lane, not a headless API call.\n"
+        "- Do not use or recommend Claude/Gemini headless billing-sensitive calls.\n"
+        "- Read the task, deliberation, and state files before responding.\n"
+        "- Your response should be concise and suitable to paste into deliberation.md.\n\n"
+        f"Session: {state['session_id']}\n"
+        f"State: {STATE_FILE}\n"
+        f"Deliberation: {DELIBERATION}\n"
+        f"State of Debate: {STATE_OF_DEBATE}\n\n"
+        "Required contribution shape:\n"
+        "## Director: [Name] - Round [N] - [ISO timestamp]\n"
+        "**Lens:** [assigned lens]\n"
+        "**Status:** APPROVED | CHANGES_REQUESTED | OBJECTING\n"
+        "**Agreed with:** [specific items or none]\n"
+        "**Disputed:** [specific items or none]\n"
+        "**Proposed:** [specific changes or none]\n"
+        "**Notes:** [observations or none]\n"
+        "**Signature:** [name + model]\n"
+    )
+    role_lenses = {
+        "claude-director.md": "Claude lens: architecture, cohesion, failure modes, review quality.",
+        "codex-director.md": "Codex Director lens: implementation feasibility and verification.",
+        "antigravity-director.md": "Antigravity lens: plan verification, correctness, security, and execution feasibility (plan + VERIFY only).",
+        "chair.md": "Chair lens: enforce process, synthesize state, and certify only locked items.",
+    }
+    enabled_prompt_files = {f"{ROLE_TO_WINDOW[director]}.md" for director in active_directors(state)}
+    enabled_prompt_files.add("chair.md")
+    for filename, lens in role_lenses.items():
+        if filename in enabled_prompt_files:
+            write_text(PROMPTS / filename, f"{base}\n{enrich_lens_with_persona(filename, lens)}\n")
+
+
+def find_item(state: dict, item_id: str) -> dict:
+    for item in state["items"]:
+        if item["id"] == item_id:
+            return item
+    raise SystemExit(f"unknown item: {item_id}")
+
+
+def sealed_dir() -> Path:
+    """Directory holding per-(item,director) sealed contributions for the current session."""
+    return PROMPTS / "sealed"
+
+
+def submit_sealed(args: argparse.Namespace) -> int:
+    """Pillar 9: record a director's SEALED (blind) contribution for an item. The body is written to
+    a per-(item,director) file hidden from the shared deliberation.md until `reveal-item`, so directors
+    deliberate without anchoring on each other. Opt-in: the legacy paste-into-deliberation.md flow is
+    unchanged. Source priority: --text, else --file, else stdin."""
+    state = load_state()
+    directors = active_directors(state)
+    if args.director not in directors:
+        raise SystemExit(f"director must be one of: {', '.join(directors)}")
+    item = find_item(state, args.item_id)
+    window = ROLE_TO_WINDOW.get(args.director)
+    if not window:
+        raise SystemExit(f"no prompt window mapped for director: {args.director}")
+    if getattr(args, "text", None) is not None:
+        body = args.text
+    elif getattr(args, "file", None):
+        body = read_text(Path(args.file).expanduser())
+    else:
+        body = sys.stdin.read()
+    if not body.strip():
+        raise SystemExit("refusing to submit an empty sealed contribution")
+    write_text(sealed_dir() / f"{args.item_id}-{window}.md", body.rstrip() + "\n")
+    item.setdefault("sealed", {})[args.director] = {"at": utc_now(), "window": window}
+    item.setdefault("revealed_at", None)
+    state["events"].append({"at": utc_now(), "event": "sealed_submitted", "item": args.item_id, "director": args.director})
+    save_state(state)
+    print(f"sealed {args.director} -> {args.item_id}")
+    return 0
+
+
+def reveal_item(args: argparse.Namespace) -> int:
+    """Pillar 9: concatenate every sealed submission for an item into deliberation.md at once and
+    stamp revealed_at — the reveal moment that ends the blind phase. Refuses partial reveals unless
+    --force so no director's blind view is exposed before the others have committed theirs."""
+    state = load_state()
+    directors = active_directors(state)
+    item = find_item(state, args.item_id)
+    sealed = item.get("sealed") or {}
+    missing = [d for d in directors if d not in sealed]
+    if missing and not args.force:
+        raise SystemExit(
+            f"cannot reveal {args.item_id}: still sealed for {', '.join(missing)} "
+            "(use --force to reveal a partial set)"
+        )
+    parts = []
+    for director in directors:
+        window = ROLE_TO_WINDOW.get(director)
+        path = sealed_dir() / f"{args.item_id}-{window}.md" if window else None
+        if path and path.exists():
+            parts.append(f"### Sealed - {director} - {args.item_id}\n\n{read_text(path).strip()}\n")
+    if not parts:
+        raise SystemExit(f"no sealed submissions found for {args.item_id}")
+    block = f"\n## Blind reveal - {args.item_id} - {utc_now()}\n\n" + "\n".join(parts)
+    existing = read_text(DELIBERATION) if DELIBERATION.exists() else ""
+    write_text(DELIBERATION, existing + block)
+    item["revealed_at"] = utc_now()
+    state["events"].append({"at": utc_now(), "event": "item_revealed", "item": args.item_id, "directors": sorted(sealed.keys())})
+    save_state(state)
+    print(f"revealed {args.item_id} -> {DELIBERATION}")
+    return 0
+
+
+def record_vote(args: argparse.Namespace) -> int:
+    state = load_state()
+    directors = active_directors(state)
+    if args.director not in directors:
+        raise SystemExit(f"director must be one of: {', '.join(directors)}")
+    item = find_item(state, args.item_id)
+    decision = args.decision.upper()
+    if decision not in {"APPROVED", "CHANGES_REQUESTED", "OBJECTING"}:
+        raise SystemExit("decision must be APPROVED, CHANGES_REQUESTED, or OBJECTING")
+    item["approvals"][args.director] = {
+        "decision": decision,
+        "note": args.note or "",
+        "at": utc_now(),
+        "evidence": args.evidence or "",
+    }
+    if decision != "APPROVED":
+        item["dissents"].append(
+            {
+                "director": args.director,
+                "decision": decision,
+                "note": args.note or "",
+                "at": utc_now(),
+            }
+        )
+    maybe_lock_item(item, directors)
+    state["events"].append({"at": utc_now(), "event": "vote_recorded", "item": args.item_id, "director": args.director, "decision": decision})
+    update_session_status(state)
+    save_state(state)
+    print(f"recorded {decision} from {args.director} on {args.item_id}")
+    return 0
+
+
+def maybe_lock_item(item: dict, directors: list[str]) -> None:
+    decisions = {director: item["approvals"].get(director, {}).get("decision") for director in directors}
+    if all(decisions.get(director) == "APPROVED" for director in directors):
+        item["status"] = "locked"
+        item["locked_at"] = item["locked_at"] or utc_now()
+    else:
+        item["status"] = "open"
+        item["locked_at"] = None
+
+
+def update_session_status(state: dict) -> None:
+    if state.get("status") in {"archived", "cancelled", "complete"}:
+        return
+    state["status"] = "council_approved" if all(item["status"] == "locked" for item in state["items"]) else "deliberating"
+
+
+def status(args: argparse.Namespace) -> int:
+    state = load_state()
+    update_session_status(state)
+    save_state(state)
+    print(f"session={state['session_id']}")
+    print(f"status={state['status']}")
+    print(f"directors={','.join(active_directors(state))}")
+    print_pane_health(state, getattr(args, "session", "apex-council"))
+    for item in state["items"]:
+        approved = sorted(d for d, vote in item["approvals"].items() if vote.get("decision") == "APPROVED")
+        blockers = sorted(d for d, vote in item["approvals"].items() if vote.get("decision") in {"CHANGES_REQUESTED", "OBJECTING"})
+        print(f"{item['id']} [{item['status']}] {item['title']}")
+        print(f"  approved={','.join(approved) if approved else '-'}")
+        print(f"  blockers={','.join(blockers) if blockers else '-'}")
+    return 0
+
+
+def write_handoff(args: argparse.Namespace) -> int:
+    state = load_state()
+    update_session_status(state)
+    if state["status"] != "council_approved" and not args.force:
+        raise SystemExit("cannot write handoff: not all items are locked; use --force only for manual recovery")
+    locked_items = [item for item in state["items"] if item["status"] == "locked"]
+    text = (
+        "# Council-Approved Handoff\n\n"
+        f"**Session:** {state['session_id']}\n"
+        f"**Generated:** {utc_now()}\n\n"
+        "## Locked Items\n\n"
+        + "\n".join(f"- `{item['id']}` {item['title']}" for item in locked_items)
+        + "\n\n## Phases\n\n"
+        "### Phase 1: Execute Locked Scope\n"
+        "**Scope:** all locked items listed above.\n\n"
+        "**Default executor:** Claude implements the locked handoff unless this handoff names a different single owner.\n\n"
+        "**Finalizer:** Codex checks the result against this handoff, runs the strongest practical verification, fixes any defects directly, and records final evidence. Do not route routine defects back to the executor.\n\n"
+        "**Completion criteria:** implementation complete, Codex finalization complete, verification commands recorded, evidence report written.\n\n"
+        "**Escalation:** reopen Council only for a plan/scope change. Escalate to Ayo only for destructive, production-risk, billing, outbound, auth, legal, or irreversible decisions.\n\n"
+        "## Recorded Dissents\n\n"
+    )
+    dissents = [d for item in state["items"] for d in item.get("dissents", [])]
+    text += "\n".join(f"- {d['director']} {d['decision']}: {d['note'] or 'no note'}" for d in dissents) if dissents else "None"
+    text += f"\n\nCouncil-Approved - {utc_now()} - Chair session {state['session_id']}\n"
+    write_text(HANDOFF, text)
+    aorg = state.get("aorg") or {}
+    if aorg.get("task_id") and not args.no_aorg_complete:
+        acceptance = [f"{item['id']} locked: {item['title']}" for item in locked_items]
+        result = run_aorg(
+            [
+                "complete",
+                aorg.get("role") or "codex",
+                aorg["task_id"],
+                "--summary",
+                f"Council-approved handoff written for {state['session_id']}",
+                "--evidence",
+                str(HANDOFF),
+                "--acceptance-met",
+                *acceptance,
+                "--vna",
+                "Claude executes the locked handoff; Codex finalizes, verifies, and repairs directly without sending routine defects back.",
+            ]
+        )
+        aorg["completion"] = result
+        state["aorg"] = aorg
+        state["events"].append({"at": utc_now(), "event": "aorg_complete_attempted", "task_id": aorg["task_id"], "ok": result["ok"]})
+        save_state(state)
+        if not result["ok"]:
+            raise SystemExit(f"aorg complete failed for {aorg['task_id']}: {result['stderr'] or result['stdout']}")
+    print(HANDOFF)
+    return 0
+
+
+def readiness(_: argparse.Namespace) -> int:
+    errors: list[str] = []
+    for binary in ["tmux", "codex", "claude"]:
+        if shutil.which(binary) is None:
+            errors.append(f"missing binary: {binary}")
+
+    if "Antigravity" in configured_directors() and shutil.which("agy") is None:
+        errors.append("Antigravity director enabled but 'agy' binary is missing")
+
+    scan_paths = [ROOT / "council", ROOT / "bin"]
+    for path in scan_paths:
+        if path.exists():
+            content = "\n".join(p.read_text(errors="ignore") for p in scan_files(path))
+            for pattern in BILLING_SENSITIVE_PATTERNS:
+                if re.search(pattern, content):
+                    errors.append(f"billing-sensitive pattern found in {path}: {pattern}")
+
+    if errors:
+        print("readiness=blocked")
+        for error in errors:
+            print(f"- {error}")
+        return 1
+    print("readiness=pass")
+    return 0
+
+
+def tmux_has(session: str) -> bool:
+    return subprocess.run(["tmux", "has-session", "-t", session], capture_output=True).returncode == 0
+
+
+def tmux_new_window(session: str, name: str, command: str) -> None:
+    subprocess.run(["tmux", "new-window", "-t", session, "-n", name, "-c", str(ROOT.parent.parent), command], check=True)
+
+
+def tmux_list_windows(session: str) -> list[str]:
+    return subprocess.run(
+        ["tmux", "list-windows", "-t", session, "-F", "#W"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+
+def prompt_file_for_window(window_name: str) -> Path | None:
+    prompt = PROMPTS / f"{window_name}.md"
+    if prompt.exists():
+        return prompt
+    return None
+
+
+def launch_window_plan(existing_windows: set[str], commands: dict[str, str], fresh: bool) -> dict[str, list[str]]:
+    create: list[str] = []
+    recreate: list[str] = []
+    reuse: list[str] = []
+    for name in commands:
+        if name not in existing_windows:
+            create.append(name)
+        elif fresh and name not in COUNCIL_CONTROL_WINDOWS:
+            recreate.append(name)
+        else:
+            reuse.append(name)
+    return {"create": create, "recreate": recreate, "reuse": reuse}
+
+
+def tmux_kill_window(session: str, name: str) -> None:
+    subprocess.run(["tmux", "kill-window", "-t", f"{session}:{name}"], check=True)
+
+
+def build_prompt_injection_text(state: dict, prompt_file: Path, max_chars: int = 12000) -> str:
+    prompt_text = read_text(prompt_file)
+    brief_path = Path(state.get("task_file") or "")
+    brief_text = read_text(brief_path) if brief_path.exists() else ""
+    body = (
+        f"Council session {state.get('session_id', 'unknown')}\n"
+        f"Prompt file: {prompt_file}\n"
+        f"Task brief: {brief_path if brief_path else '(none)'}\n\n"
+        "Rules: non-mutating review only. Do not send outbound messages. Do not use headless/API billing.\n"
+        "Respond in the required Director block and include only grounded claims from the prompt and task brief.\n\n"
+        "----- DIRECTOR PROMPT -----\n"
+        f"{prompt_text.strip()}\n\n"
+        "----- TASK BRIEF -----\n"
+        f"{brief_text.strip()}\n"
+    )
+    if len(body) <= max_chars:
+        return body
+    keep = max_chars - 120
+    return body[:keep] + "\n\n[truncated: task brief exceeded injection limit; request chair paste only the missing section if needed]\n"
+
+
+def tmux_paste_text(session: str, window_name: str, text: str) -> None:
+    buffer_name = f"apex-council-{window_name}"
+    subprocess.run(["tmux", "load-buffer", "-b", buffer_name, "-"], input=text, text=True, check=True)
+    subprocess.run(["tmux", "paste-buffer", "-t", f"{session}:{window_name}", "-b", buffer_name], check=True)
+    subprocess.run(["tmux", "send-keys", "-t", f"{session}:{window_name}", "C-m"], check=True)
+
+
+def inject_prompt_instruction(session: str, window_name: str, prompt_file: Path, state: dict) -> None:
+    tmux_paste_text(session, window_name, build_prompt_injection_text(state, prompt_file))
+
+
+SHELL_COMMANDS = {"zsh", "-zsh", "bash", "-bash", "sh", "fish", "login"}
+
+
+def director_commands(with_antigravity: bool = False) -> dict[str, str]:
+    _dirs = [str(WORKSPACE)] + [d for d in DIRECTOR_ADD_DIRS.split(os.pathsep) if d] + ["/private/tmp"]
+    _flags = " ".join(f"--add-dir {d}" for d in _dirs)
+    commands = {
+        "claude-director": f"claude --permission-mode plan {_flags}",
+        "codex-director": "codex",
+        "chair": "zsh",
+    }
+    if with_antigravity or "Antigravity" in configured_directors():
+        commands["antigravity-director"] = "agy -i"
+    return commands
+
+
+def resolve_window(member: str) -> str:
+    key = member.strip().lower()
+    aliases = {
+        "claude": "claude-director",
+        "claude-director": "claude-director",
+        "codex": "codex-director",
+        "codex director": "codex-director",
+        "codex-director": "codex-director",
+        "antigravity": "antigravity-director",
+        "antigravity-director": "antigravity-director",
+        "chair": "chair",
+    }
+    if key not in aliases:
+        raise SystemExit(f"unknown member: {member}; choose Claude, Codex Director, Antigravity, or chair")
+    return aliases[key]
+
+
+def pane_health(session: str, window: str, expect_cli: bool) -> tuple[str, str]:
+    res = subprocess.run(
+        ["tmux", "list-panes", "-t", f"{session}:{window}", "-F", "#{pane_dead}|#{pane_current_command}"],
+        capture_output=True,
+        text=True,
+    )
+    if res.returncode != 0:
+        return ("missing", "")
+    lines = [ln for ln in res.stdout.splitlines() if ln.strip()]
+    if not lines:
+        return ("unknown", "")
+    dead, _, cmd = lines[0].partition("|")
+    cmd = cmd.strip()
+    if dead.strip() == "1":
+        return ("dead", cmd)
+    if expect_cli and cmd in SHELL_COMMANDS:
+        return ("idle(shell)", cmd)
+    return ("alive", cmd)
+
+
+def print_pane_health(state: dict, session: str) -> None:
+    print(f"tmux_session={session}")
+    if not tmux_has(session):
+        print("  panes: no live tmux session")
+        return
+    live = set(tmux_list_windows(session))
+    for window in [ROLE_TO_WINDOW[d] for d in active_directors(state) if d in ROLE_TO_WINDOW]:
+        health, cmd = pane_health(session, window, expect_cli=True)
+        print(f"  pane {window}: {health}" + (f" ({cmd})" if cmd else ""))
+    for window in ("chair", "council-control"):
+        if window in live:
+            health, cmd = pane_health(session, window, expect_cli=False)
+            print(f"  pane {window}: {health}" + (f" ({cmd})" if cmd else ""))
+
+
+def restart_director(args: argparse.Namespace) -> int:
+    session = args.session
+    window = resolve_window(args.member)
+    if not tmux_has(session):
+        raise SystemExit(f"no live tmux session '{session}'; run: council launch --session {session}")
+    commands = director_commands()
+    if window not in commands:
+        raise SystemExit(f"{window} is not an active pane; configured: {', '.join(sorted(commands))}")
+    existing = set(tmux_list_windows(session))
+    if window in existing:
+        tmux_kill_window(session, window)
+        action = "restarted"
+    else:
+        action = "created"
+    tmux_new_window(session, window, commands[window])
+    injected = False
+    if not args.no_inject and window not in COUNCIL_CONTROL_WINDOWS:
+        prompt_file = prompt_file_for_window(window)
+        if prompt_file and STATE_FILE.exists():
+            if args.inject_delay > 0:
+                time.sleep(args.inject_delay)
+            inject_prompt_instruction(session, window, prompt_file, load_state())
+            injected = True
+    print(f"{action} {window} in {session}" + (" (prompt re-injected)" if injected else ""))
+    return 0
+
+
+def attach(args: argparse.Namespace) -> int:
+    session = args.session
+    if not tmux_has(session):
+        raise SystemExit(f"no live tmux session '{session}'; run: council launch --session {session}")
+    verb = "switch-client" if os.environ.get("TMUX") else "attach-session"
+    os.execvp("tmux", ["tmux", verb, "-t", session])
+
+
+def launch(args: argparse.Namespace) -> int:
+    ensure_dirs()
+    session = args.session
+    if not tmux_has(session):
+        subprocess.run(["tmux", "new-session", "-d", "-s", session, "-n", "council-control", "-c", str(ROOT), "zsh"], check=True)
+    windows = set(tmux_list_windows(session))
+    commands = director_commands(args.with_antigravity)
+    plan = launch_window_plan(windows, commands, args.fresh)
+    for name in plan["recreate"]:
+        tmux_kill_window(session, name)
+        tmux_new_window(session, name, commands[name])
+    for name in plan["create"]:
+        tmux_new_window(session, name, commands[name])
+    injected: list[str] = []
+    if args.inject_prompts:
+        if (plan["create"] or plan["recreate"]) and args.inject_delay > 0:
+            time.sleep(args.inject_delay)
+        state = load_state()
+        for name in commands:
+            if name in COUNCIL_CONTROL_WINDOWS:
+                continue
+            prompt_file = prompt_file_for_window(name)
+            if not prompt_file:
+                continue
+            inject_prompt_instruction(session, name, prompt_file, state)
+            injected.append(name)
+    print(f"launched tmux session {session}")
+    reused_directors = [name for name in plan["reuse"] if name not in COUNCIL_CONTROL_WINDOWS]
+    reused_control = [name for name in plan["reuse"] if name in COUNCIL_CONTROL_WINDOWS]
+    if reused_directors:
+        print("reused existing director windows:")
+        for name in reused_directors:
+            print(f"- {name}")
+        print("warning: reused director windows may contain stale conversations; rerun with --fresh to recreate council-owned director panes")
+    if reused_control:
+        print("reused control windows:")
+        for name in reused_control:
+            print(f"- {name}")
+    if plan["recreate"]:
+        print("recreated windows:")
+        for name in plan["recreate"]:
+            print(f"- {name}")
+    if plan["create"]:
+        print("created windows:")
+        for name in plan["create"]:
+            print(f"- {name}")
+    if injected:
+        print("injected prompt instructions:")
+        for name in injected:
+            print(f"- {name}")
+    print("prompt files:")
+    for path in sorted(PROMPTS.glob("*.md")):
+        print(f"- {path}")
+    return 0
+
+
+def self_test(_: argparse.Namespace) -> int:
+    old_root = globals()["ROOT"]
+    old_directors = os.environ.get("APEX_COUNCIL_DIRECTORS")
+    os.environ["APEX_COUNCIL_DIRECTORS"] = ",".join(DEFAULT_DIRECTORS)
+    with tempfile.TemporaryDirectory(prefix="apex-council-test-") as td:
+        test_root = Path(td) / "ai-org"
+        globals()["ROOT"] = test_root
+        globals()["STATE_ROOT"] = test_root / "state" / "council"
+        globals()["CURRENT"] = globals()["STATE_ROOT"] / "current"
+        globals()["ARCHIVE"] = globals()["STATE_ROOT"] / "archive"
+        globals()["REPORTS"] = globals()["CURRENT"] / "reports"
+        globals()["REVIEWS"] = globals()["CURRENT"] / "reviews"
+        globals()["STUCK"] = globals()["CURRENT"] / "stuck-reports"
+        globals()["CHECKPOINTS"] = globals()["CURRENT"] / "checkpoints"
+        globals()["PROMPTS"] = globals()["CURRENT"] / "prompts"
+        globals()["STATE_FILE"] = globals()["CURRENT"] / "state.json"
+        globals()["DELIBERATION"] = globals()["CURRENT"] / "deliberation.md"
+        globals()["STATE_OF_DEBATE"] = globals()["CURRENT"] / "state-of-debate.md"
+        globals()["HANDOFF"] = globals()["CURRENT"] / "handoff.md"
+        globals()["LOCK_FILE"] = globals()["STATE_ROOT"] / "council.lock"
+        globals()["AORG_BIN"] = test_root / "bin" / "aorg"
+
+        brief = test_root / "brief.md"
+        write_text(brief, "# Task\n\n- [ ] Build council mode\n- [ ] Verify gates\n")
+        init_args = argparse.Namespace(
+            task_file=str(brief),
+            mode="plan",
+            session="test",
+            item=[],
+            aorg_task=None,
+            aorg_role="codex",
+            no_aorg_claim=True,
+            no_archive=True,
+        )
+        init_session(init_args)
+        state = load_state()
+        assert len(state["items"]) == 2
+        assert state["status"] == "deliberating"
+        directors = active_directors(state)
+        for director in directors[:-1]:
+            record_vote(argparse.Namespace(item_id="item-001", director=director, decision="APPROVED", note="", evidence="self-test"))
+        state = load_state()
+        assert find_item(state, "item-001")["status"] == "open"
+        record_vote(argparse.Namespace(item_id="item-001", director=directors[-1], decision="APPROVED", note="", evidence="self-test"))
+        state = load_state()
+        assert find_item(state, "item-001")["status"] == "locked"
+        assert state["status"] == "deliberating"
+        for director in directors:
+            record_vote(argparse.Namespace(item_id="item-002", director=director, decision="APPROVED", note="", evidence="self-test"))
+        state = load_state()
+        assert state["status"] == "council_approved"
+        # Pillar 9: sealed-submission -> reveal cycle (blind council deliberation)
+        for director in directors:
+            submit_sealed(argparse.Namespace(director=director, item_id="item-001", file=None, text=f"blind view from {director}"))
+        state = load_state()
+        assert set((find_item(state, "item-001").get("sealed") or {}).keys()) == set(directors)
+        assert find_item(state, "item-001").get("revealed_at") is None
+        reveal_item(argparse.Namespace(item_id="item-001", force=False))
+        state = load_state()
+        assert find_item(state, "item-001").get("revealed_at") is not None
+        assert DELIBERATION.exists() and "Blind reveal" in read_text(DELIBERATION)
+        write_handoff(argparse.Namespace(force=False, no_aorg_complete=True))
+        assert HANDOFF.exists()
+        plan = launch_window_plan(
+            {"council-control", "claude-director", "antigravity-director"},
+            {"claude-director": "claude", "antigravity-director": "agy", "chair": "zsh"},
+            fresh=False,
+        )
+        assert plan == {
+            "create": ["chair"],
+            "recreate": [],
+            "reuse": ["claude-director", "antigravity-director"],
+        }
+        fresh_plan = launch_window_plan(
+            {"council-control", "claude-director", "antigravity-director"},
+            {"claude-director": "claude", "antigravity-director": "agy", "chair": "zsh"},
+            fresh=True,
+        )
+        assert fresh_plan == {
+            "create": ["chair"],
+            "recreate": ["claude-director", "antigravity-director"],
+            "reuse": [],
+        }
+        injection = build_prompt_injection_text(state, PROMPTS / "antigravity-director.md")
+        assert "----- DIRECTOR PROMPT -----" in injection
+        assert "----- TASK BRIEF -----" in injection
+        assert "Antigravity lens" in injection
+        assert director_commands()["claude-director"].startswith("claude ")
+        assert "antigravity-director" in director_commands()
+        assert resolve_window("Claude") == "claude-director"
+        assert resolve_window("Codex Director") == "codex-director"
+        assert resolve_window("antigravity-director") == "antigravity-director"
+        content = Path(__file__).read_text(encoding="utf-8")
+        for pattern in BILLING_SENSITIVE_PATTERNS:
+            assert re.search(pattern, content) is None, pattern
+        globals()["ROOT"] = old_root
+    if old_directors is None:
+        os.environ.pop("APEX_COUNCIL_DIRECTORS", None)
+    else:
+        os.environ["APEX_COUNCIL_DIRECTORS"] = old_directors
+    print("council_self_test=pass")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Apex OS Council mode")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("init")
+    p.add_argument("task_file")
+    p.add_argument("--mode", choices=["plan", "phase-review", "stuck-report"], default="plan")
+    p.add_argument("--session")
+    p.add_argument("--item", action="append")
+    p.add_argument("--aorg-task")
+    p.add_argument("--aorg-role", default="codex")
+    p.add_argument("--no-aorg-claim", action="store_true")
+    p.add_argument("--no-archive", action="store_true")
+    p.set_defaults(func=init_session)
+
+    p = sub.add_parser("record")
+    p.add_argument("item_id")
+    p.add_argument("director")
+    p.add_argument("decision")
+    p.add_argument("--note")
+    p.add_argument("--evidence")
+    p.set_defaults(func=record_vote)
+
+    p = sub.add_parser("submit", help="record a director's SEALED (blind) contribution for an item (Pillar 9)")
+    p.add_argument("director", help="Claude | Codex Director | Antigravity")
+    p.add_argument("item_id")
+    p.add_argument("--file", default=None, help="read the contribution from this file")
+    p.add_argument("--text", default=None, help="inline contribution text (else --file, else stdin)")
+    p.set_defaults(func=submit_sealed)
+
+    p = sub.add_parser("reveal-item", help="reveal all sealed submissions for an item into deliberation.md (Pillar 9)")
+    p.add_argument("item_id")
+    p.add_argument("--force", action="store_true", help="reveal even if some active directors have not submitted")
+    p.set_defaults(func=reveal_item)
+
+    p = sub.add_parser("status")
+    p.add_argument("--session", default="apex-council")
+    p.set_defaults(func=status)
+
+    p = sub.add_parser("handoff")
+    p.add_argument("--force", action="store_true")
+    p.add_argument("--no-aorg-complete", action="store_true")
+    p.set_defaults(func=write_handoff)
+
+    p = sub.add_parser("readiness")
+    p.set_defaults(func=readiness)
+
+    p = sub.add_parser("launch")
+    p.add_argument("--session", default="apex-council")
+    p.add_argument("--with-antigravity", action="store_true")
+    p.add_argument("--fresh", action="store_true", help="recreate existing council-owned director panes before launch")
+    p.add_argument("--inject-prompts", action="store_true", help="paste current director prompt and task brief into live director panes")
+    p.add_argument("--inject-delay", type=float, default=2.0, help="seconds to wait before prompt injection after creating panes")
+    p.set_defaults(func=launch)
+
+    p = sub.add_parser("restart", help="restart a single director pane without nuking the session")
+    p.add_argument("member", help="Claude | Codex Director | Antigravity | chair (or a window name)")
+    p.add_argument("--session", default="apex-council")
+    p.add_argument("--no-inject", action="store_true", help="do not re-inject the director prompt after restart")
+    p.add_argument("--inject-delay", type=float, default=2.0)
+    p.set_defaults(func=restart_director)
+
+    p = sub.add_parser("attach", help="attach to (or switch-client to) the live council tmux session")
+    p.add_argument("--session", default="apex-council")
+    p.set_defaults(func=attach)
+
+    p = sub.add_parser("self-test")
+    p.set_defaults(func=self_test)
+
+    return parser
+
+
+def main() -> int:
+    if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
+        return self_test(argparse.Namespace())
+    parser = build_parser()
+    args = parser.parse_args()
+    if args.cmd in {"init", "record", "status", "handoff"}:
+        with council_lock():
+            return args.func(args)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

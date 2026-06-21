@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/plugins/plugins.schema.json",
+  "title": "Agentic OS plugin artifacts",
+  "description": "Plugins are not authored as one frontmatter file — they are three JSON artifacts. validate.mjs dispatches by filename to one of the definitions below: installed_plugins.json (the install registry), known_marketplaces.json (the marketplace registry), and a per-plugin .claude-plugin/plugin.json (the manifest). Schemas are lenient (additionalProperties: true) on entry detail — these files are written by tooling and evolve; we check the structural backbone, not every field.",
+  "definitions": {
+    "installedPlugins": {
+      "type": "object",
+      "required": ["version", "plugins"],
+      "additionalProperties": true,
+      "properties": {
+        "version": { "type": "integer", "description": "Registry format version (observed: 2)." },
+        "plugins": {
+          "type": "object",
+          "description": "Keyed by 'plugin-id@marketplace'; each value is an array of install records.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["scope", "installPath", "version"],
+              "additionalProperties": true,
+              "properties": {
+                "scope": { "type": "string", "description": "user | system | global | project" },
+                "installPath": { "type": "string" },
+                "version": { "type": "string", "description": "semver or 'unknown'" },
+                "installedAt": { "type": "string" },
+                "lastUpdated": { "type": "string" },
+                "gitCommitSha": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "knownMarketplaces": {
+      "type": "object",
+      "description": "Keyed by marketplace name; each value describes its source + cache.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["source"],
+        "additionalProperties": true,
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": true,
+            "properties": {
+              "source": { "type": "string", "description": "e.g. 'github'" },
+              "repo": { "type": "string", "description": "'org/repo' for github sources" }
+            }
+          },
+          "installLocation": { "type": "string" },
+          "lastUpdated": { "type": "string" }
+        }
+      }
+    },
+    "pluginManifest": {
+      "type": "object",
+      "required": ["name", "description"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "string", "description": "semver" },
+        "description": { "type": "string" },
+        "author": { "type": ["object", "string"] },
+        "homepage": { "type": "string" },
+        "repository": { "type": ["string", "object"] },
+        "license": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "skills": { "type": ["string", "array"] },
+        "apps": { "type": "string" },
+        "mcpServers": { "type": ["string", "object"] },
+        "hooks": { "type": "string" },
+        "interface": { "type": "object" }
+      }
+    }
+  }
+}

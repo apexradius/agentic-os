@@ -1,0 +1,43 @@
+{
+  "name": "@framework/seo-mcp",
+  "version": "1.1.0",
+  "description": "SEO analysis MCP server for technical SEO, content quality, schema, AEO, accessibility, performance, DataForSEO, GSC, and scoring",
+  "keywords": [
+    "mcp",
+    "seo",
+    "audit",
+    "analysis",
+    "schema",
+    "aeo",
+    "dataforseo",
+    "cheerio"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "seo-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@25xcodes/llmstxt-parser": "^1.2.0",
+    "@axe-core/playwright": "^4.11.3",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "camoufox-js": "^0.10.2",
+    "cheerio": "^1.0.0",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0",
+    "zod": "^3.23.0",
+    "@framework/mcp-shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

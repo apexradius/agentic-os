@@ -1,0 +1,17 @@
+{
+  "//": "Shared TS compiler options for every package in the framework/runtime workspace (mcp-shared, mcp-servers/*). Per-package tsconfig.json extends this and sets only outDir/rootDir/include.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true
+  }
+}

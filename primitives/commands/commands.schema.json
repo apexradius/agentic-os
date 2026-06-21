@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/commands/commands.schema.json",
+  "title": "Agentic OS slash-command frontmatter",
+  "description": "Validates the YAML frontmatter of a Claude Code slash command (.claude/commands/<name>.md). The command name is the filename stem (no 'name' field). The markdown BODY is the prompt and is checked separately by validate.mjs. Commands are Claude-only — Codex has no native command dispatch (see spec.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["description"],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "description": "One-line help text shown in the /command picker. Says what the command does."
+    },
+    "argument-hint": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Hint for the $ARGUMENTS the command expects, e.g. '[pr-number]' or ['client', 'ask']."
+    },
+    "allowed-tools": {
+      "type": "string",
+      "description": "Comma-separated tool allow-list the command body may use (e.g. 'Read, Edit, Bash')."
+    },
+    "model": {
+      "type": "string",
+      "description": "Optional model override for the command run (e.g. claude-opus-4-6)."
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "description": "When true, the command is human-invocable only (the model will not auto-trigger it)."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@framework/omnibus-mcp",
+  "version": "1.0.0",
+  "description": "Omnibus MCP — a single SSE endpoint that proxies JSON-RPC to N stdio MCP children; tools are namespaced as <server>__<tool> and routed by namespace.",
+  "main": "src/index.js",
+  "bin": {
+    "omnibus-mcp": "src/index.js"
+  },
+  "scripts": {
+    "lint": "node --check src/index.js",
+    "test": "node test/smoke.test.js",
+    "start": "node src/index.js"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

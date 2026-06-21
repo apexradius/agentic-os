@@ -1,0 +1,77 @@
+# Semantic Router — route definitions (generic example).
+# Copy to routes.yaml (or point APEX_ROUTER_ROUTES at your own) and tune per deployment.
+# Edited routes auto-reload on next router invocation (no daemon).
+# score_threshold: minimum cosine similarity to claim this route. Tuned per-route.
+#   chitchat: HIGH (0.78) — a false positive shortcuts real work to a cheap model. Costly.
+#   tool_op:  MID  (0.70) — a false positive only strips heavy context; degrades, won't break.
+#   engineering: LOW (0.55) — default fallback. Better to over-route to the full pipeline than under.
+
+routes:
+  - name: chitchat
+    score_threshold: 0.78
+    utterances:
+      - hi
+      - hello
+      - hey
+      - thanks
+      - thank you
+      - good morning
+      - good night
+      - how are you
+      - "what's up"
+      - "ok"
+      - "got it"
+      - cool
+      - clear
+      - exit
+      - bye
+      - never mind
+
+  - name: tool_op
+    score_threshold: 0.70
+    utterances:
+      - grep for foo in this repo
+      - grep for TODO
+      - search for the string bar
+      - read this file
+      - show me the contents of config.yaml
+      - "what's in this file"
+      - cat the log file
+      - list the files in this directory
+      - ls -la
+      - tail the log
+      - run the linter
+      - run the tests
+      - show git status
+      - "what's the latest commit"
+      - what branch am I on
+      - is the service running
+      - verify the deploy
+      - curl the health endpoint
+      - what does this function do
+      - explain this code
+      - find references to UserService
+
+  - name: engineering
+    score_threshold: 0.55
+    utterances:
+      - build a new endpoint for user signup
+      - create a route that handles webhook events
+      - refactor this function to use async
+      - debug why this test is failing
+      - architect a queue system for background jobs
+      - write a migration to add a column
+      - implement OAuth2 with a provider
+      - design the schema for the orders table
+      - add payment processing
+      - deploy the new service to production
+      - set up a CI pipeline
+      - write a script that processes the CSV
+      - create a component for the dashboard
+      - fix the race condition in the worker
+      - optimize the slow query
+      - add caching to this endpoint
+      - implement rate limiting
+      - build the auth middleware
+      - write integration tests for the api
+      - configure the reverse proxy for the new domain

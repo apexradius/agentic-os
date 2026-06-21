@@ -1,0 +1,34 @@
+#!/bin/zsh
+# aorg-sync-loop — refresh the local prime mirror from VPS canonical state.
+# Runs OUTSIDE the Claude sandbox (launchd login-shell context) so it can reach
+# the tailnet for sync-from-vps (the sandbox blocks tailnet SSH).
+#
+# Why this exists: the local mirror (the workspace-relative .local/state/aorg path) is only updated by
+# sync-from-vps. Without a scheduled runner it drifts whenever no session runs it,
+# which blinds `aorg watchdog` (it reads the stale mirror). On 2026-05-29 the mirror
+# went 16h stale and the watchdog missed a genuinely stuck claim. This keeps it fresh.
+set -u
+# Generic launcher: the caller MUST provide AORG_STATE_DIR — without it the bin falls
+# back to repo-relative state/, syncing an orphan ledger nobody reads (split-brain).
+# Apex supplies these via apex/config/aorg/aorg.env (sourced by the launchd job).
+: "${AORG_STATE_DIR:?set AORG_STATE_DIR (e.g. source apex/config/aorg/aorg.env)}"
+export AORG_STATE_DIR
+export AORG_WORKSPACE="${AORG_WORKSPACE:-$HOME}"
+AORG="${AORG_BIN:-${0:A:h}/aorg}"
+LOGDIR="${AORG_SYNC_LOGDIR:-${AORG_STATE_DIR}/reports/aorg-sync}"
+mkdir -p "$LOGDIR"
+ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# Ensure the verb broker is alive before syncing. sync-from-vps needs it to reach the
+# tailnet, and Claude Code (sandboxed) depends on it for ALL VPS access. This is the
+# wedge-recovery layer that launchd KeepAlive (process-EXIT only) misses: the broker
+# can be "running" yet have a dead/unbound socket. Runs here because this loop is in
+# clean launchd login-shell context, so its kickstart respawns the broker un-EPERM'd.
+echo "[$ts] broker health-check"
+"${0:A:h}/aorg-broker-watchdog" || echo "[$ts] broker-watchdog reported failure"
+
+echo "[$ts] sync-from-vps start"
+"$AORG" sync-from-vps
+rc=$?
+echo "[$ts] sync-from-vps exit rc=$rc"
+exit $rc

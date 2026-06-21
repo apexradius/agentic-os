@@ -1,0 +1,32 @@
+{
+  "name": "@framework/github-mcp",
+  "version": "1.0.0",
+  "description": "GitHub API MCP server — issues, PRs, repos, code search, and file operations for Claude",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "github-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.0",
+    "@framework/mcp-shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ]
+}

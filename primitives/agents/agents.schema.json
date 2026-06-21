@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/agents/agents.schema.json",
+  "title": "Agentic OS canonical agent frontmatter",
+  "description": "Validates the YAML frontmatter of a canonical agent .md (framework/roles/ or apex/agents/). The <Agent_Prompt> BODY is not JSON and is checked separately by validate.mjs (see spec.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 64,
+      "description": "kebab-case identifier; must equal the filename stem and the emitted .toml name key."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 400,
+      "description": "Load signal: what the agent does + when to use it. One of only two fields projected to Codex."
+    },
+    "model": {
+      "type": "string",
+      "description": "Claude model id (e.g. claude-opus-4-6). Claude-only; not emitted to Codex. Optional so a role may inherit the default."
+    },
+    "memory": {
+      "type": "string",
+      "enum": ["project", "user"],
+      "description": "Memory scope the agent persists to. Real roster uses only these two."
+    },
+    "color": { "type": "string" },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Autonomy/complexity tier. Roster uses 2–4; bounded 1–5."
+    },
+    "tools": {
+      "type": "string",
+      "description": "Comma-separated allow-list (supports mcp__server__* wildcards). Claude-only."
+    },
+    "disallowedTools": {
+      "type": "string",
+      "description": "Comma-separated deny-list — the read-only-lane mechanism (e.g. 'Write, Edit'). Claude-only."
+    },
+    "mcpServers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    }
+  }
+}

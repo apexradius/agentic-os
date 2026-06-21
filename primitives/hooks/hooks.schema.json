@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/hooks/hooks.schema.json",
+  "title": "Agentic OS hooks block (event-entry shape)",
+  "description": "Validates the STRUCTURE of a hooks map — the value of the 'hooks' key in .claude/settings.json or .codex/hooks.json (and plugin hooks.json). This is the entry-shape layer ONLY. The runtime I/O contract (stdin/stdout JSON, exit 0/2, fail-open) is a separate honest layer deferred to validate-codex-hook-runtime.py — see spec.md. Event-name freshness is checked as a code-level warning, not a schema failure, because the runtimes add events over time.",
+  "type": "object",
+  "additionalProperties": { "$ref": "#/definitions/eventEntries" },
+  "definitions": {
+    "eventEntries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/matcherGroup" }
+    },
+    "matcherGroup": {
+      "type": "object",
+      "required": ["hooks"],
+      "additionalProperties": true,
+      "properties": {
+        "matcher": { "type": "string", "description": "Tool-name pattern; '*' or omitted = all (regex allowed, e.g. 'Write|Edit')." },
+        "hooks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/hook" }
+        }
+      }
+    },
+    "hook": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": true,
+      "properties": {
+        "type": { "type": "string", "enum": ["command", "prompt"] },
+        "command": { "type": "string", "description": "Required when type='command'." },
+        "prompt": { "type": "string", "description": "Required when type='prompt'." },
+        "timeout": { "type": "number", "description": "Seconds; runtimes cap at 600." },
+        "statusMessage": { "type": "string" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "command" } }, "required": ["type"] }, "then": { "required": ["command"] } },
+        { "if": { "properties": { "type": { "const": "prompt" } }, "required": ["type"] }, "then": { "required": ["prompt"] } }
+      ]
+    }
+  }
+}

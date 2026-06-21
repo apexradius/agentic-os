@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/skills/skills.schema.json",
+  "title": "Agentic OS skill frontmatter (SKILL.md)",
+  "description": "Validates the YAML frontmatter of a SKILL.md. Skills share ONE format across both runtimes (Claude and Codex read the same SKILL.md). Unlike agents/commands this schema is OPEN (additionalProperties: true): the skill ecosystem evolves and a closed whitelist is exactly why the legacy quick_validate.py wrongly rejected real skills. We type-check the known keys strictly and let novel keys pass. The markdown body is checked separately by validate.mjs.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 64,
+      "description": "kebab-case identifier; should equal the skill's containing directory name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^<>]*$",
+      "description": "Load signal: 'does X; use when Y + symptoms/triggers'. No angle brackets. Never a workflow recap (that makes agents shortcut the body)."
+    },
+    "user-invocable": { "type": "boolean", "description": "Whether /<name> dispatch is allowed." },
+    "argument-hint": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "tools": { "type": "string", "description": "Comma-separated tool allow-list (Claude permission model)." },
+    "allowed-tools": { "type": "string", "description": "Comma-separated tool allow-list (alt spelling)." },
+    "context": { "type": "string", "description": "Execution strategy, e.g. 'fork'. Left as a free string — only one value observed live; an enum here would risk false negatives." },
+    "agent": { "type": "string", "description": "Route this skill to a named agent's context." },
+    "disable-model-invocation": { "type": "boolean", "description": "Human-invocable only; the model will not auto-trigger." },
+    "license": { "type": "string" },
+    "version": { "type": "string" },
+    "metadata": { "type": "object", "description": "Free-form key/value bag (validated structurally only)." },
+    "mcp_dependencies": { "type": ["array", "object", "string"], "description": "MCP servers this skill needs. Observed live as a comma-separated string ('mcp-core, mcp-tools'); arrays/objects also accepted." },
+    "compatibility": { "type": ["object", "string", "array"] }
+  }
+}

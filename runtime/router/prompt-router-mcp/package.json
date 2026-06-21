@@ -1,0 +1,37 @@
+{
+  "name": "@framework/prompt-router-mcp",
+  "version": "0.4.1",
+  "description": "Local stdio MCP that routes a workspace or session to the correct canonical prompt",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "apex-prompt-router-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && chmod +x dist/index.js",
+    "lint:prompts": "tsc && node dist/prompt-os/cli.js library/prompts",
+    "prompt-os:migrate": "tsc && node scripts/prompt-os/migrate.mjs",
+    "prompt-os:build": "tsc && node scripts/prompt-os/build.mjs",
+    "eval:tier1": "tsc && node dist/prompt-os/eval/tier1-cli.js library"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/mcp/mcp.schema.json",
+  "title": "Agentic OS MCP server package.json (structural)",
+  "description": "An MCP server is a TypeScript package, not a frontmatter file — so this primitive is a CONVENTION LINTER, not a schema validator (see spec.md). The one structured, machine-checkable artifact in a server dir is its package.json; this schema checks that backbone. The real value of the linter (shared-factory dependency, src/index.ts -> tools/*.ts layout, system_health presence, snake_case tool names) lives in validate.mjs as code, because none of it is expressible as JSON Schema over a single file.",
+  "type": "object",
+  "required": ["name"],
+  "additionalProperties": true,
+  "properties": {
+    "name": { "type": "string", "description": "Package name, e.g. @framework/github-mcp." },
+    "version": { "type": "string" },
+    "type": { "type": "string", "description": "Should be 'module' (ESM)." },
+    "main": { "type": "string" },
+    "bin": { "type": ["object", "string"] },
+    "dependencies": { "type": "object" },
+    "devDependencies": { "type": "object" }
+  }
+}

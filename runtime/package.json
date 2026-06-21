@@ -1,0 +1,23 @@
+{
+  "name": "@framework/runtime",
+  "version": "0.0.0",
+  "private": true,
+  "description": "npm workspace root for the framework runtime: the shared MCP factory, first-party MCP servers, and the prompt-router engine. Apex-free; install-specific values come from apex/config.",
+  "type": "module",
+  "workspaces": [
+    "mcp-shared",
+    "mcp-servers/*",
+    "router/prompt-router-mcp"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace @framework/mcp-shared"
+  },
+  "overrides": {
+    "google-auth-library": "10.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

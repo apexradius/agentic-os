@@ -1,0 +1,698 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_STATE = Path(os.environ.get("AORG_STATE_DIR", ROOT / "state"))
+DEFAULT_RUNNER_ROOT = Path(os.environ.get("AORG_RUNNER_ROOT", "~/apex-runner")).expanduser()
+OPEN_PENDING_STATUSES = {"pending", "review-pending", "claimed"}
+DEFAULT_TELEGRAM_KINDS = {
+    "dependency_deadlock",
+    "missing_review_task",
+    "stale_council_round",
+    "stale_pending_inbox",
+    "stale_review_gate",
+    "dead_claim",
+}
+DEPENDENCY_BLOCKING_STATUSES = {"blocked", "pending-human", "review-pending"}
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_ts(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def read_tasks(state_dir: Path) -> tuple[list[dict], list[dict]]:
+    path = state_dir / "tasks.jsonl"
+    tasks: list[dict] = []
+    alerts: list[dict] = []
+    if not path.exists():
+        return tasks, alerts
+    for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            task = json.loads(line)
+        except json.JSONDecodeError as exc:
+            alerts.append(
+                {
+                    "kind": "task_ledger_parse_error",
+                    "severity": "critical",
+                    "task_id": None,
+                    "status": "unknown",
+                    "assignee": "operator",
+                    "title": "AORG task ledger contains invalid JSON",
+                    "age_minutes": None,
+                    "threshold_minutes": None,
+                    "line_no": line_no,
+                    "error": f"{exc.msg} at column {exc.colno}",
+                }
+            )
+            continue
+        if isinstance(task, dict):
+            tasks.append(task)
+        else:
+            alerts.append(
+                {
+                    "kind": "task_ledger_parse_error",
+                    "severity": "critical",
+                    "task_id": None,
+                    "status": "unknown",
+                    "assignee": "operator",
+                    "title": "AORG task ledger line is not an object",
+                    "age_minutes": None,
+                    "threshold_minutes": None,
+                    "line_no": line_no,
+                    "error": "non-object JSON value",
+                }
+            )
+    return tasks, alerts
+
+
+def minutes_since(now_dt: datetime, value: str | None) -> float | None:
+    parsed = parse_ts(value)
+    if not parsed:
+        return None
+    return max(0.0, (now_dt - parsed).total_seconds() / 60)
+
+
+def host_aliases(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    raw = str(value).casefold()
+    return {raw, raw.split(".", 1)[0]}
+
+
+def current_host_aliases() -> set[str]:
+    aliases = host_aliases(socket.gethostname())
+    aliases.update(host_aliases(os.environ.get("HOSTNAME")))
+    return aliases
+
+
+def process_alive(pid_value: object) -> bool | None:
+    try:
+        pid = int(pid_value)
+    except (TypeError, ValueError):
+        return None
+    if pid <= 0:
+        return None
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def claimed_liveness(task: dict) -> dict:
+    host = task.get("claimed_by_host") or task.get("last_heartbeat_host")
+    pid = task.get("claimed_by_pid") or task.get("last_heartbeat_pid")
+    payload = {
+        "claimed_by_host": host,
+        "claimed_by_pid": pid,
+        "liveness_scope": "heartbeat_only",
+        "claimed_process_alive": None,
+    }
+    if not host or not pid:
+        return payload
+    if host_aliases(str(host)).intersection(current_host_aliases()):
+        payload["liveness_scope"] = "local_pid"
+        payload["claimed_process_alive"] = process_alive(pid)
+        return payload
+    payload["liveness_scope"] = "remote_host_unchecked"
+    return payload
+
+
+def task_age_minutes(now_dt: datetime, task: dict, status: str) -> float | None:
+    if status == "claimed":
+        return minutes_since(now_dt, task.get("claimed_at"))
+    if status == "review-pending":
+        return (
+            minutes_since(now_dt, task.get("completion_candidate_at"))
+            or minutes_since(now_dt, task.get("completed_at"))
+            or minutes_since(now_dt, task.get("created_at"))
+        )
+    return minutes_since(now_dt, task.get("created_at"))
+
+
+def alert_for_task(now_dt: datetime, task: dict, args: argparse.Namespace) -> dict | None:
+    status = task.get("status")
+    if status not in OPEN_PENDING_STATUSES:
+        return None
+    age = task_age_minutes(now_dt, task, status)
+    if age is None:
+        return {
+            "kind": "missing_timestamp",
+            "severity": "warning",
+            "task_id": task.get("id"),
+            "status": status,
+            "assignee": task.get("assignee"),
+            "title": task.get("title"),
+            "age_minutes": None,
+            "threshold_minutes": None,
+        }
+    heartbeat_age = None
+    liveness = {}
+    if status == "claimed":
+        liveness = claimed_liveness(task)
+        heartbeat_age = minutes_since(now_dt, task.get("last_heartbeat_at"))
+        heartbeat_stale = heartbeat_age is None or heartbeat_age >= args.heartbeat_minutes
+        process_dead = liveness.get("liveness_scope") == "local_pid" and liveness.get("claimed_process_alive") is False
+        process_alive_now = liveness.get("liveness_scope") == "local_pid" and liveness.get("claimed_process_alive") is True
+        if age >= args.dead_claim_minutes and (process_dead or (heartbeat_stale and not process_alive_now)):
+            return {
+                "kind": "dead_claim",
+                "severity": "critical",
+                "task_id": task.get("id"),
+                "status": status,
+                "assignee": task.get("assignee"),
+                "title": task.get("title"),
+                "age_minutes": round(age, 1),
+                "threshold_minutes": args.dead_claim_minutes,
+                "heartbeat_age_minutes": round(heartbeat_age, 1) if heartbeat_age is not None else None,
+                "heartbeat_threshold_minutes": args.heartbeat_minutes,
+                "claimed_by": task.get("claimed_by"),
+                "claimed_at": task.get("claimed_at"),
+                "last_heartbeat_at": task.get("last_heartbeat_at"),
+                "dead_claim_reason": "claimed_process_dead" if process_dead else "heartbeat_stale",
+                **liveness,
+            }
+        threshold = args.claimed_minutes
+        kind = "stale_claimed"
+    elif status == "review-pending":
+        threshold = args.review_minutes
+        kind = "stale_review_gate"
+    else:
+        threshold = args.pending_minutes
+        kind = "stale_pending_inbox"
+    if age < threshold:
+        return None
+    return {
+        "kind": kind,
+        "severity": "critical" if status in {"pending", "review-pending"} else "warning",
+        "task_id": task.get("id"),
+        "status": status,
+        "assignee": task.get("assignee"),
+        "title": task.get("title"),
+        "age_minutes": round(age, 1),
+        "threshold_minutes": threshold,
+        "heartbeat_age_minutes": round(heartbeat_age, 1) if heartbeat_age is not None else None,
+        "blocked_reason": task.get("blocked_reason"),
+        "reviewer": task.get("reviewer"),
+        "reviews_task": task.get("reviews_task"),
+        **liveness,
+    }
+
+
+def dependency_deadlock_alerts(tasks: list[dict]) -> list[dict]:
+    by_id = {task.get("id"): task for task in tasks if task.get("id")}
+    alerts: list[dict] = []
+    for task in tasks:
+        if task.get("status") != "pending":
+            continue
+        dep_ids = [dep for dep in task.get("depends_on") or [] if dep]
+        if not dep_ids:
+            continue
+
+        unresolved = []
+        for dep_id in dep_ids:
+            dep = by_id.get(dep_id)
+            status = dep.get("status") if dep else "missing"
+            if status != "complete":
+                unresolved.append({"id": dep_id, "status": status})
+        if not unresolved:
+            continue
+
+        statuses = {str(dep["status"]) for dep in unresolved}
+        if statuses.issubset(DEPENDENCY_BLOCKING_STATUSES | {"missing"}):
+            alerts.append(
+                {
+                    "kind": "dependency_deadlock",
+                    "severity": "critical",
+                    "task_id": task.get("id"),
+                    "status": task.get("status"),
+                    "assignee": task.get("assignee"),
+                    "title": task.get("title"),
+                    "age_minutes": None,
+                    "threshold_minutes": None,
+                    "depends_on": unresolved,
+                }
+            )
+    return alerts
+
+
+def missing_review_task_alerts(tasks: list[dict]) -> list[dict]:
+    review_task_statuses: dict[str, list[dict]] = {}
+    for task in tasks:
+        parent_id = task.get("reviews_task")
+        if not parent_id:
+            continue
+        review_task_statuses.setdefault(str(parent_id), []).append(task)
+
+    alerts: list[dict] = []
+    for task in tasks:
+        if task.get("status") != "review-pending":
+            continue
+        task_id = task.get("id")
+        if not task_id:
+            continue
+        reviewer = task.get("reviewer")
+        candidates = review_task_statuses.get(str(task_id), [])
+        active = [
+            candidate
+            for candidate in candidates
+            if candidate.get("status") in {"pending", "claimed"}
+            and (not reviewer or candidate.get("assignee") == reviewer)
+        ]
+        if active:
+            continue
+        alerts.append(
+            {
+                "kind": "missing_review_task",
+                "severity": "critical",
+                "task_id": task_id,
+                "status": task.get("status"),
+                "assignee": reviewer or task.get("assignee"),
+                "title": task.get("title"),
+                "age_minutes": None,
+                "threshold_minutes": None,
+                "reviewer": reviewer,
+                "review_task_statuses": [
+                    {
+                        "id": candidate.get("id"),
+                        "status": candidate.get("status"),
+                        "assignee": candidate.get("assignee"),
+                    }
+                    for candidate in candidates
+                ],
+            }
+        )
+    return alerts
+
+
+def council_round_alert(args: argparse.Namespace) -> dict | None:
+    state_path = (args.council_state or (args.state_dir / "council" / "current" / "state.json")).expanduser().resolve()
+    if not state_path.exists():
+        return None
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {
+            "kind": "stale_council_round",
+            "severity": "critical",
+            "task_id": state_path.name,
+            "status": "parse-error",
+            "assignee": "operator",
+            "title": "Council state JSON is invalid",
+            "age_minutes": None,
+            "threshold_minutes": args.council_minutes,
+            "error": f"{exc.msg} at column {exc.colno}",
+        }
+    if not isinstance(state, dict):
+        return {
+            "kind": "stale_council_round",
+            "severity": "critical",
+            "task_id": state_path.name,
+            "status": "parse-error",
+            "assignee": "operator",
+            "title": "Council state JSON is not an object",
+            "age_minutes": None,
+            "threshold_minutes": args.council_minutes,
+            "error": "non-object JSON value",
+        }
+    status = state.get("status") or "unknown"
+    if status in {"council_approved", "complete", "cancelled", "archived"}:
+        return None
+    timestamps = [state.get("created_at")]
+    timestamps.extend(event.get("at") for event in state.get("events") or [] if isinstance(event, dict))
+    parsed = [value for value in (parse_ts(str(item)) for item in timestamps if item) if value]
+    last_activity = max(parsed) if parsed else None
+    if not last_activity:
+        return {
+            "kind": "stale_council_round",
+            "severity": "warning",
+            "task_id": state.get("session_id") or state_path.name,
+            "status": status,
+            "assignee": "chair",
+            "title": "Council session has no valid activity timestamp",
+            "age_minutes": None,
+            "threshold_minutes": args.council_minutes,
+        }
+    age = max(0.0, (utcnow() - last_activity).total_seconds() / 60)
+    if age < args.council_minutes:
+        return None
+    return {
+        "kind": "stale_council_round",
+        "severity": "critical",
+        "task_id": state.get("session_id") or state_path.name,
+        "status": status,
+        "assignee": "chair",
+        "title": "Council session has no recorded activity within SLA",
+        "age_minutes": round(age, 1),
+        "threshold_minutes": args.council_minutes,
+        "last_activity_at": iso(last_activity),
+        "council_state": str(state_path),
+    }
+
+
+def scan_local(args: argparse.Namespace) -> dict:
+    now_dt = utcnow()
+    state_dir = args.state_dir.expanduser().resolve()
+    tasks, alerts = read_tasks(state_dir)
+    for task in tasks:
+        alert = alert_for_task(now_dt, task, args)
+        if alert:
+            alerts.append(alert)
+    alerts.extend(dependency_deadlock_alerts(tasks))
+    alerts.extend(missing_review_task_alerts(tasks))
+    council_alert = council_round_alert(args)
+    if council_alert:
+        alerts.append(council_alert)
+    return {
+        "generated_at": iso(now_dt),
+        "source": "local",
+        "state_dir": str(state_dir),
+        "ok": not alerts,
+        "alert_count": len(alerts),
+        "alerts": alerts,
+    }
+
+
+def read_json_output(command: list[str], timeout: int) -> dict:
+    proc = subprocess.run(command, text=True, capture_output=True, timeout=timeout)
+    if proc.returncode != 0:
+        stderr = proc.stderr.strip() or proc.stdout.strip()
+        raise RuntimeError(f"command failed rc={proc.returncode}: {stderr[:500]}")
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"command did not return JSON: {exc.msg}") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError("command returned non-object JSON")
+    return payload
+
+
+def scan_remote(args: argparse.Namespace) -> dict:
+    now_dt = utcnow()
+    ssh_cmd = [
+        "ssh",
+        "-i",
+        str(args.remote_key.expanduser()),
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        f"ConnectTimeout={args.remote_connect_timeout}",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        args.remote_host,
+    ]
+    try:
+        payload = read_json_output(ssh_cmd, args.remote_timeout)
+        payload["source"] = "remote"
+        payload["remote_host"] = args.remote_host
+        return payload
+    except Exception as exc:
+        return {
+            "generated_at": iso(now_dt),
+            "source": "remote",
+            "remote_host": args.remote_host,
+            "ok": False,
+            "alert_count": 1,
+            "alerts": [
+                {
+                    "kind": "aorg_watchdog_unreachable",
+                    "severity": "critical",
+                    "task_id": None,
+                    "status": "unknown",
+                    "assignee": "operator",
+                    "title": "AORG watchdog remote check failed",
+                    "age_minutes": None,
+                    "threshold_minutes": args.pending_minutes,
+                    "error": str(exc),
+                }
+            ],
+        }
+
+
+def load_dedupe(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def save_dedupe(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def alert_key(alert: dict) -> str:
+    return ":".join(
+        [
+            str(alert.get("kind") or "unknown"),
+            str(alert.get("task_id") or alert.get("remote_host") or "system"),
+            str(alert.get("status") or "unknown"),
+        ]
+    )
+
+
+def safe_runner_description(alert: dict) -> str:
+    task_id = alert.get("task_id") or "system"
+    status = alert.get("status") or "unknown"
+    assignee = alert.get("assignee") or "unknown"
+    age = alert.get("age_minutes")
+    threshold = alert.get("threshold_minutes")
+    title = (alert.get("title") or "").replace("\n", " ").strip()
+    if len(title) > 180:
+        title = title[:177] + "..."
+    lines = [
+        "AORG WATCHDOG READ-ONLY QUEUE NUDGE",
+        f"kind: {alert.get('kind')}",
+        f"task_id: {task_id}",
+        f"status: {status}",
+        f"assignee: {assignee}",
+        f"age_minutes: {age}",
+        f"threshold_minutes: {threshold}",
+        f"title: {title}",
+        "",
+        "Action: inspect queue state and move the item forward through the correct review or operator lane.",
+        "Constraints: read-only triage first; do not edit production files; do not contact customers; do not perform billing or service mutations.",
+    ]
+    if alert.get("error"):
+        lines.insert(-2, f"error: {alert.get('error')}")
+    return "\n".join(lines)
+
+
+def safe_alert_title(alert: dict, limit: int = 180) -> str:
+    title = (alert.get("title") or "").replace("\n", " ").strip()
+    if len(title) > limit:
+        return title[: limit - 3] + "..."
+    return title
+
+
+def telegram_message(alert: dict) -> str:
+    lines = [
+        "AORG watchdog alert",
+        f"kind: {alert.get('kind')}",
+        f"severity: {alert.get('severity')}",
+        f"task_id: {alert.get('task_id') or 'system'}",
+        f"status: {alert.get('status') or 'unknown'}",
+        f"assignee: {alert.get('assignee') or 'unknown'}",
+        f"age_minutes: {alert.get('age_minutes')}",
+        f"threshold_minutes: {alert.get('threshold_minutes')}",
+        f"title: {safe_alert_title(alert)}",
+        "",
+        "Action: inspect aorg status --open and move the review/operator lane forward.",
+    ]
+    if alert.get("heartbeat_age_minutes") is not None:
+        lines.insert(8, f"heartbeat_age_minutes: {alert.get('heartbeat_age_minutes')}")
+    if alert.get("liveness_scope"):
+        lines.insert(9, f"liveness_scope: {alert.get('liveness_scope')}")
+    if alert.get("claimed_process_alive") is not None:
+        lines.insert(10, f"claimed_process_alive: {alert.get('claimed_process_alive')}")
+    if alert.get("error"):
+        lines.insert(-2, f"error: {alert.get('error')}")
+    return "\n".join(lines)
+
+
+def post_telegram_message(token: str, chat_id: str, text: str, timeout: int) -> dict:
+    data = urllib.parse.urlencode({"chat_id": chat_id, "text": text}).encode("utf-8")
+    request = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/sendMessage",
+        data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        raw = response.read().decode("utf-8", errors="replace")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "telegram_non_json_response"}
+    return payload if isinstance(payload, dict) else {"ok": False, "error": "telegram_non_object_response"}
+
+
+def telegram_alerts(alerts: list[dict], args: argparse.Namespace) -> list[dict]:
+    kinds = set(args.telegram_kinds or DEFAULT_TELEGRAM_KINDS)
+    targets = [alert for alert in alerts if alert.get("kind") in kinds]
+    if not targets:
+        return []
+
+    token = os.environ.get(args.telegram_token_env or "")
+    chat_id = args.telegram_chat_id or os.environ.get(args.telegram_chat_id_env or "")
+    if not args.telegram_dry_run and (not token or not chat_id):
+        missing = []
+        if not token:
+            missing.append(args.telegram_token_env)
+        if not chat_id:
+            missing.append(args.telegram_chat_id_env)
+        return [{"ok": False, "error": "telegram_config_missing", "missing": missing}]
+
+    state_path = args.dedupe_state.expanduser().resolve()
+    dedupe = load_dedupe(state_path)
+    now_ts = time.time()
+    repeat_seconds = args.repeat_minutes * 60
+    sent = []
+    for alert in targets:
+        key = f"telegram:{alert_key(alert)}"
+        previous = float(dedupe.get(key, {}).get("last_enqueued_epoch", 0))
+        if now_ts - previous < repeat_seconds:
+            continue
+        message = telegram_message(alert)
+        if args.telegram_dry_run:
+            sent.append({"key": key, "ok": True, "dry_run": True, "message": message})
+            continue
+        try:
+            result = post_telegram_message(token, str(chat_id), message, args.telegram_timeout)
+            ok = bool(result.get("ok"))
+            record = {
+                "key": key,
+                "ok": ok,
+                "message_id": result.get("result", {}).get("message_id") if isinstance(result.get("result"), dict) else None,
+                "error": result.get("description") if not ok else None,
+            }
+        except Exception as exc:
+            ok = False
+            record = {"key": key, "ok": False, "error": str(exc)}
+        sent.append(record)
+        if ok:
+            dedupe[key] = {"last_enqueued_epoch": now_ts, "last_enqueued_at": iso(utcnow())}
+    save_dedupe(state_path, dedupe)
+    return sent
+
+
+def enqueue_runner(alerts: list[dict], args: argparse.Namespace) -> list[dict]:
+    runner_root = args.runner_root.expanduser().resolve()
+    apex_task = runner_root / "apex-task"
+    if not apex_task.exists():
+        raise RuntimeError(f"apex-task not found: {apex_task}")
+    state_path = args.dedupe_state.expanduser().resolve()
+    dedupe = load_dedupe(state_path)
+    now_ts = time.time()
+    repeat_seconds = args.repeat_minutes * 60
+    enqueued = []
+    for alert in alerts:
+        key = alert_key(alert)
+        previous = float(dedupe.get(key, {}).get("last_enqueued_epoch", 0))
+        if now_ts - previous < repeat_seconds:
+            continue
+        desc = safe_runner_description(alert)
+        proc = subprocess.run([str(apex_task), "add", desc], text=True, capture_output=True, timeout=30)
+        record = {
+            "key": key,
+            "returncode": proc.returncode,
+            "stdout": proc.stdout.strip(),
+            "stderr": proc.stderr.strip(),
+        }
+        enqueued.append(record)
+        if proc.returncode == 0:
+            dedupe[key] = {"last_enqueued_epoch": now_ts, "last_enqueued_at": iso(utcnow())}
+    save_dedupe(state_path, dedupe)
+    return enqueued
+
+
+def append_event(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, separators=(",", ":"), sort_keys=True) + "\n")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Watch Apex AI Org queue for stale inbox/review work.")
+    parser.add_argument("--state-dir", type=Path, default=DEFAULT_STATE)
+    parser.add_argument("--pending-minutes", type=float, default=5)
+    parser.add_argument("--review-minutes", type=float, default=5)
+    parser.add_argument("--claimed-minutes", type=float, default=60)
+    parser.add_argument("--heartbeat-minutes", type=float, default=10)
+    parser.add_argument("--dead-claim-minutes", type=float, default=15)
+    parser.add_argument("--council-minutes", type=float, default=15)
+    parser.add_argument("--council-state", type=Path)
+    parser.add_argument("--remote-host")
+    parser.add_argument("--remote-key", type=Path, default=Path("/root/.ssh/aorg_watchdog_ed25519"))
+    parser.add_argument("--remote-timeout", type=int, default=45)
+    parser.add_argument("--remote-connect-timeout", type=int, default=10)
+    parser.add_argument("--enqueue-runner", action="store_true")
+    parser.add_argument("--runner-root", type=Path, default=DEFAULT_RUNNER_ROOT)
+    parser.add_argument("--repeat-minutes", type=float, default=60)
+    parser.add_argument("--dedupe-state", type=Path, default=Path("/var/lib/aorg-watchdog/dedupe.json"))
+    parser.add_argument("--event-log", type=Path)
+    parser.add_argument("--telegram-alert", action="store_true")
+    parser.add_argument("--telegram-token-env", default="TG_BOT_TOKEN")
+    parser.add_argument("--telegram-chat-id-env", default="TG_ALLOWED_CHAT_ID")
+    parser.add_argument("--telegram-chat-id")
+    parser.add_argument("--telegram-kinds", nargs="*", default=sorted(DEFAULT_TELEGRAM_KINDS))
+    parser.add_argument("--telegram-timeout", type=int, default=15)
+    parser.add_argument("--telegram-dry-run", action="store_true")
+    parser.add_argument("--exit-nonzero-on-alert", action="store_true")
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    payload = scan_remote(args) if args.remote_host else scan_local(args)
+    if args.enqueue_runner and payload.get("alerts"):
+        payload["runner_enqueue"] = enqueue_runner(payload["alerts"], args)
+    if args.telegram_alert and payload.get("alerts"):
+        payload["telegram_alerts"] = telegram_alerts(payload["alerts"], args)
+    if args.event_log:
+        append_event(args.event_log.expanduser().resolve(), payload)
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    if args.exit_nonzero_on_alert and payload.get("alerts"):
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "categories": {
+    "technical": {
+      "weight": 0.20,
+      "checks": ["canonical", "mobile_viewport", "https", "robots_txt", "ai_crawlers", "redirect_chains", "security_headers", "url_structure", "hreflang", "xml_sitemap"]
+    },
+    "content": {
+      "weight": 0.20,
+      "checks": ["heading_hierarchy", "thin_content", "keyword_usage", "eeat_signals", "readability", "internal_links"]
+    },
+    "onpage": {
+      "weight": 0.15,
+      "checks": ["title_tag", "meta_description", "h1_tag", "url_keywords", "content_length"]
+    },
+    "performance": {
+      "weight": 0.15,
+      "checks": ["lcp", "inp", "cls", "total_blocking_time", "resource_hints", "page_weight"]
+    },
+    "schema": {
+      "weight": 0.10,
+      "checks": ["jsonld_present", "required_types", "property_completeness", "deprecated_types"]
+    },
+    "aeo": {
+      "weight": 0.10,
+      "checks": ["llms_txt", "ai_crawler_access", "extraction_points", "qae_structure", "content_freshness", "citation_readiness"]
+    },
+    "images": {
+      "weight": 0.05,
+      "checks": ["format_modern", "alt_text", "dimensions_set", "lazy_loading", "oversized", "responsive"]
+    },
+    "local": {
+      "weight": 0.05,
+      "checks": ["local_schema", "nap_consistency", "gbp_signals", "review_signals", "hyper_local_title", "near_me_optimization"]
+    }
+  },
+  "severity_scores": {
+    "critical": 0,
+    "warning": 0.5,
+    "pass": 1.0,
+    "info": null
+  },
+  "grades": {
+    "A": [90, 100],
+    "B": [80, 89],
+    "C": [70, 79],
+    "D": [60, 69],
+    "F": [0, 59]
+  }
+}

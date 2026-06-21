@@ -1,0 +1,17 @@
+{
+  "name": "@framework/google-drive-mcp",
+  "version": "1.0.0",
+  "description": "Google Drive (read-only) MCP — multi-account, env-configured account map. Uses the global fetch + node builtins (no external deps).",
+  "main": "index.js",
+  "bin": {
+    "google-drive-mcp": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

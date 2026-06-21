@@ -1,0 +1,23 @@
+{
+  "name": "@apex-core/primitives-lib",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared toolchain for Agentic OS primitives: frontmatter parsing, JSON-Schema validation (ajv), and one-directional agent emit (.md canonical -> .claude .md copy + .codex .toml).",
+  "engines": { "node": ">=18" },
+  "bin": {
+    "apex-validate": "./validate.mjs",
+    "apex-emit": "./emit.mjs"
+  },
+  "scripts": {
+    "selftest": "node validate.mjs --selftest",
+    "validate": "node validate.mjs --all",
+    "emit": "node emit.mjs",
+    "emit:check": "node emit.mjs --check"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.7.1"
+  }
+}
