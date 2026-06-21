@@ -14,7 +14,9 @@
     "build:shared": "npm run build --workspace @framework/mcp-shared"
   },
   "overrides": {
-    "google-auth-library": "10.7.0"
+    "google-auth-library": "10.7.0",
+    "uuid": "11.1.1",
+    "esbuild": "0.28.1"
   },
   "engines": {
     "node": ">=20"
