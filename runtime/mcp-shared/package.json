@@ -15,7 +15,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build",
-    "test": "node --experimental-vm-modules node_modules/.bin/vitest --passWithNoTests run"
+    "test": "vitest --passWithNoTests run"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.4.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.8"
   },
   "engines": {
     "node": ">=20"
