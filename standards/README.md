@@ -13,9 +13,10 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Standard | Prose (law) | Enforcement (here) | Judgment layer |
 |---|---|---|---|
 | Design taste | [`doctrine/standards/design.md`](../doctrine/standards/design.md) | [`design-gate/`](design-gate/) — deterministic anti-pattern scanner | [`roles/design-critic.md`](../roles/design-critic.md) |
+| Mirror parity | [`doctrine/README.md`](../doctrine/README.md) — single source ("everything else is a mirror") | [`mirror-parity/`](mirror-parity/) — co-owned manual pairs keep the same outline | human review of mirrored prose |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
 `framework/standards/*/validate.mjs` alongside the primitive validators and runs its selftest.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-22

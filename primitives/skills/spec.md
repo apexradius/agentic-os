@@ -1,7 +1,8 @@
 # Primitive: Skills
 
 > A skill is a reusable SOP the agent loads on demand — a procedure with a load-signal
-> description, progressive disclosure, and (ideally) a test. This spec is the contract.
+> description, progressive disclosure, and a failing-baseline eval (measured coverage,
+> see below). This spec is the contract.
 > Schema: [`skills.schema.json`](skills.schema.json). Validator: [`validate.mjs`](validate.mjs).
 > Creator: [`creator.md`](creator.md).
 
@@ -51,9 +52,60 @@ the **known** keys strictly and let novel keys pass:
    (progressive-disclosure budget — push detail into one-level-deep references) or if `name`
    ≠ the containing directory.
 
-Verified empirically against the live set: **119/119** `SKILL.md` across both runtimes pass
-(one reconciliation: `mcp_dependencies` appears live as a comma-separated string, now accepted).
-An inline `--selftest` keeps `node _lib/validate.mjs --all` non-vacuous on a fresh clone.
+The whole live set across both runtimes passes (one reconciliation: `mcp_dependencies`
+appears live as a comma-separated string, now accepted). An inline `--selftest` keeps
+`node _lib/validate.mjs --all` non-vacuous on a fresh clone.
+
+## Evals: the failing-baseline standard (measured, not blocking)
+
+Every skill SHOULD carry an `eval.md` next to `SKILL.md` — the proof a skill *earns its
+context*. There are **two shapes**, chosen by `eval-type` in the eval's frontmatter
+(default `baseline`); both are minimal and machine-checkable.
+
+**`baseline` (RED→GREEN) — the default.** For behavioral, discipline, and output-shape skills
+where a discrete pass exists (the agent either swallows the error or finds the root cause):
+
+```markdown
+---
+skill: debug          # the slug this eval pins down
+---
+## Baseline
+The prompt + the failure observed WITHOUT the skill (e.g. agent swallows the error).
+## Pass            # (or '## With skill')
+The success criterion WITH the skill loaded — what must be true to count as a pass.
+```
+
+**`rubric` — for creative/generative skills.** For skills whose output is *graded, not
+binary* (generate an image, write a brand kit, draft an email sequence). Forcing RED→GREEN
+onto these produces a hollow eval — the exact folklore the standard exists to kill — so a
+scored rubric is the honest shape:
+
+```markdown
+---
+skill: ai-image
+eval-type: rubric
+---
+## Task
+A representative prompt that exercises the skill.
+## Rubric
+A table of weighted, checkable criteria specific to what the skill claims to deliver
+(an LLM-judge or human can score each). Generic "is it good?" criteria are not acceptable.
+## Pass threshold
+The score (of the rubric total) required to pass.
+```
+
+The validator enforces this **asymmetrically**, on purpose:
+
+- **Absent `eval.md` → WARNING.** Coverage is reported on every run
+  (`eval coverage: N/total … (P%)`), so the gap is visible and shrinking — never hidden
+  behind a green check. The target is 100%; we warn rather than block so the standard
+  doesn't get gamed by deleting skills or stubbing evals to clear a gate.
+- **Present but malformed `eval.md` → ERROR.** A broken eval (empty, an unknown `eval-type`,
+  or missing its shape's required sections) reads as "covered" when it isn't — strictly worse
+  than absent. So a *present* eval must be a real one of a known shape.
+
+This mirrors the framework-level pattern: per-primitive `--selftest` IS the failing-baseline
+test for the validator itself; `eval.md` is the same idea applied to each skill.
 
 ## Constraints (what NOT to do)
 
@@ -67,7 +119,9 @@ An inline `--selftest` keeps `node _lib/validate.mjs --all` non-vacuous on a fre
 ## Verify (executable acceptance)
 
 ```
-node framework/primitives/skills/validate.mjs --selftest                       # inline good/bad
+node framework/primitives/skills/validate.mjs --selftest                       # inline good/bad (incl. eval cases)
 node framework/primitives/skills/validate.mjs ~/.codex/skills/*/SKILL.md       # real artifacts
+node framework/primitives/skills/validate.mjs                                  # in-repo set + eval-coverage report
 ```
-Green = the skill set conforms.
+Green = the skill set conforms. The `eval coverage: N/total (P%)` line is the standard's
+scoreboard — drive it toward 100%.

@@ -22,9 +22,18 @@
 3. **Body (progressive disclosure).** Keep `SKILL.md` under ~500 lines: When-to-Use →
    Procedure → Decision-Criteria → Anti-Patterns. Push long detail into `references/`
    (one level deep, no nested ref chains), `scripts/`, `assets/`.
-4. **Test-first where it matters.** A discipline/behavioral skill should ship with a
-   failing-baseline test (RED→GREEN), rationalization tables, and red-flags — the meta-skill
-   below scaffolds these.
+4. **Ship a failing-baseline `eval.md`.** Create `<name>/eval.md` next to `SKILL.md`. Pick the
+   shape by `eval-type` (see `spec.md` → "Evals"):
+   - **`baseline` (default)** for behavioral/discipline/output-shape skills — a `## Baseline`
+     section (the prompt + the failure observed *without* the skill, a concrete RED) and a
+     `## Pass` section (the success criterion *with* the skill, the GREEN).
+   - **`eval-type: rubric`** for creative/generative skills (image/video/copy/brand) where a
+     binary pass is contrived — a `## Rubric` of weighted, *specific, checkable* criteria and a
+     `## Pass threshold`. Do not write generic "is it good?" criteria; tie each to what the
+     skill claims to deliver, or the eval is folklore.
+   Coverage is measured on every validate (`eval coverage: N/total`). A missing eval is a
+   warning; a present-but-malformed eval (or unknown `eval-type`) is an error, so write a real
+   one. The meta-skill below scaffolds rationalization tables and red-flags for discipline skills.
 
 ## Verify (the gate)
 
