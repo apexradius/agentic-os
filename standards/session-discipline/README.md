@@ -19,7 +19,7 @@ node framework/standards/session-discipline/validate.mjs
 node framework/primitives/_lib/validate.mjs --all
 ```
 
-## What it enforces (4 hooks)
+## What it enforces (5 hooks)
 
 | Hook | Event | Matcher | Behavior |
 |---|---|---|---|
@@ -27,6 +27,7 @@ node framework/primitives/_lib/validate.mjs --all
 | `planning-gate.sh` | `PreToolUse` | `Edit\|Write` | Exits 2 if SESSION.md lacks ASSUMPTIONS (3+), UNKNOWNS (1+), VERIFICATION_PLAN (1+) |
 | `read-only-gate.sh` | `PreToolUse` | `Bash\|Edit\|Write` | When `.discovery-mode` flag exists: blocks writes (except to sessions dir) and non-read-only Bash |
 | `session-close.sh` | `Stop` | (none) | Archives populated session to `sessions/archive/`, removes pointer, clears discovery flags |
+| `mcp-cleanup.sh` | `Stop` | (none) | Reaps orphan/duplicate MCP server processes left by the ending session. Instance-agnostic: a no-op until configured via `MCP_CLEANUP_*` env (so it can never kill an unrelated process). Always exits 0 |
 
 ## Install
 
@@ -37,8 +38,13 @@ session-content parsing — no npm install required.
 ```bash
 cp framework/standards/session-discipline/hooks/*.sh ~/.claude/hooks/
 chmod +x ~/.claude/hooks/session-start.sh ~/.claude/hooks/planning-gate.sh \
-         ~/.claude/hooks/read-only-gate.sh ~/.claude/hooks/session-close.sh
+         ~/.claude/hooks/read-only-gate.sh ~/.claude/hooks/session-close.sh \
+         ~/.claude/hooks/mcp-cleanup.sh
 ```
+
+`mcp-cleanup.sh` is pure bash and does nothing until you point it at your own MCP
+processes — set `MCP_CLEANUP_PATTERN` (and optionally `MCP_CLEANUP_NAMES`,
+`MCP_CLEANUP_BIN_DIR`, `MCP_CLEANUP_NPM_SCOPE`) in the hook's environment.
 
 Merge the hook wiring from `examples/settings.json` into your existing settings file,
 keeping your existing `permissions.deny` list and any other hooks.
@@ -63,4 +69,4 @@ node framework/primitives/_lib/validate.mjs --all           # full harness
 bash framework/runtime/verify-zone-purity.sh                # zero instance coupling
 ```
 
-> Last reviewed: 2026-06-22
+> Last reviewed: 2026-06-23

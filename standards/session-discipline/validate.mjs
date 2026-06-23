@@ -18,6 +18,27 @@ const checks = [];
 const ok = (name, cond, detail = "") => { checks.push({ name, pass: !!cond, detail }); return !!cond; };
 const skip = (name) => { checks.push({ name, pass: true, detail: "SKIPPED — python3 not found" }); };
 
+// ── mcp-cleanup.sh: pure bash (no python3) — exercise it unconditionally ──────
+// Safety: only ever run it UNCONFIGURED (pure no-op) or CONFIGURED-BUT-NO-MATCH.
+// We never hand it a pattern that matches a real process, so the selftest cannot
+// kill anything. Both invocations must exit 0 and reap nothing.
+{
+  const mcpHook = join(HOOKS_DIR, "mcp-cleanup.sh");
+  const noopRun = spawnSync("bash", [mcpHook], {
+    encoding: "utf8",
+    env: { ...process.env, MCP_CLEANUP_PATTERN: "", MCP_CLEANUP_NAMES: "", MCP_CLEANUP_NPM_SCOPE: "" },
+  });
+  ok("mcp-cleanup.sh: unconfigured → clean no-op exit 0", noopRun.status === 0,
+    `exit ${noopRun.status}\n${noopRun.stderr}`);
+  const nomatch = `__ska_selftest_nomatch_${process.pid}__`;
+  const cfgRun = spawnSync("bash", [mcpHook], {
+    encoding: "utf8",
+    env: { ...process.env, MCP_CLEANUP_PATTERN: nomatch, MCP_CLEANUP_NAMES: nomatch, MCP_CLEANUP_NPM_SCOPE: nomatch },
+  });
+  ok("mcp-cleanup.sh: configured-but-no-match → exit 0, reaps nothing", cfgRun.status === 0,
+    `exit ${cfgRun.status}\n${cfgRun.stderr}`);
+}
+
 // ── detect python3 ────────────────────────────────────────────────────────────
 const pyCheck = spawnSync("python3", ["--version"], { encoding: "utf8" });
 const hasPython = pyCheck.status === 0;
@@ -32,9 +53,11 @@ if (!hasPython) {
   skip("read-only-gate.sh with discovery flag: Bash rm -rf → exit 2");
   skip("read-only-gate.sh without discovery flag: Edit → exit 0");
   skip("session-close.sh: archives populated session, removes pointer");
-  console.log("session-discipline: python3 not found — all integration checks skipped");
-  console.log(`session-discipline: ${checks.length}/${checks.length} selftest checks passed`);
-  process.exit(0);
+  console.log("session-discipline: python3 not found — python-dependent checks skipped");
+  const f0 = checks.filter((c) => !c.pass);
+  for (const c of f0) console.log(`  FAIL ${c.name}${c.detail ? `  [${c.detail}]` : ""}`);
+  console.log(`session-discipline: ${checks.length - f0.length}/${checks.length} selftest checks passed`);
+  process.exit(f0.length ? 1 : 0);
 }
 
 // ── helper: spawn a hook with an isolated HOME ────────────────────────────────

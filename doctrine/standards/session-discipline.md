@@ -44,6 +44,14 @@ enforcement notice into the model's context. A `Stop` hook archives completed se
 and cleans up discovery-mode flags. Session state is plain Markdown — no database, no
 daemon, no network.
 
+Tearing a session down cleanly is part of the lifecycle, not an afterthought: a session
+that dies abruptly can strand its MCP servers as init-reparented orphans (`ppid=1`) or
+leave duplicate children after an IDE reload. A second `Stop` hook (`mcp-cleanup.sh`)
+reaps them. It is **instance-agnostic** — it does nothing until the instance names its
+own processes via `MCP_CLEANUP_*` environment variables, so the standard can never kill
+a process it does not own. The *which-processes-are-mine* knowledge is instance
+configuration; the reaping mechanism is the standard.
+
 ## Instance configuration
 
 Instances copy the hooks from this standard's `hooks/` directory to `~/.claude/hooks/`
@@ -51,4 +59,4 @@ and wire them in `settings.json` using `examples/settings.json` as a template.
 Instance-specific rule names, project paths, or downstream hooks belong in the instance
 configuration, not here.
 
-> Last reviewed: 2026-06-22
+> Last reviewed: 2026-06-23
