@@ -41,4 +41,25 @@ If any item fails, **do not ship — fix first.**
 When verification fails, don't patch the patch in a recursive fix loop. Revert to the last
 checkpoint, re-read the plan / `WIRING.md`, and re-implement from the corrected understanding.
 
-> Last reviewed: 2026-06-19
+## Close-out: retire the plan, keep the knowledge
+
+A plan is scaffolding, not a record. Once the work is verified done, the plan has served its
+purpose — and a plan left on disk rots into a stale to-do that reads as open work it isn't. So
+the **last act of Verify is to close the plan out**:
+
+1. **Fold the outcome into the knowledge base** — what was actioned, the deciding evidence (the
+   commit, the artifact, the verified behavior), and any decision worth citing later. Knowledge
+   is the standing record; the plan was the disposable means to it.
+2. **Note any remainder in the task ledger** — work the plan opened but didn't finish (gated on a
+   decision, a later phase, an external wait). The ledger ([../coordination/](../coordination/))
+   is where open work survives a context reset — not a plan file.
+3. **Delete the plan.** Once 1 and 2 hold, the file is redundant. A plans dir that holds only
+   genuinely-open plans stays trustworthy; one full of finished plans does not.
+
+Partially-done is the common case, not the exception: fold what shipped into knowledge, move
+what's left to the ledger, delete the plan. "Keep it for reference" is not a reason to retain a
+plan — that reference is exactly what step 1 moved into knowledge. This is a **discipline, not a
+gate**: a plan's completion isn't deterministically detectable from the file, so no validator
+enforces it — the loop does.
+
+> Last reviewed: 2026-06-22

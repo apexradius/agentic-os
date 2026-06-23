@@ -36,4 +36,9 @@ at cutover; the framework default is `.agent/`.)
 Plans under `.agent/plans/` are **read-only to executors** — an executor appends to its
 notepad, never edits the plan it was handed.
 
-> Last reviewed: 2026-06-19
+A plan's life ends at **close-out**: once the work it describes is verified done, its outcome is
+folded into the knowledge base and any remainder into the task ledger, and the plan file is
+**deleted** (see [verification.md](verification.md)). Plans are ephemeral; their durable residue —
+knowledge and open tasks — is not. A finished plan left on disk is stale state, not a record.
+
+> Last reviewed: 2026-06-22

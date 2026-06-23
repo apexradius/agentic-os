@@ -107,6 +107,10 @@ The validator enforces this **asymmetrically**, on purpose:
 This mirrors the framework-level pattern: per-primitive `--selftest` IS the failing-baseline
 test for the validator itself; `eval.md` is the same idea applied to each skill.
 
+Evals are not one-and-done. They are re-scored on **session-count windows** (+3/+10/+30), so a
+skill that quietly stops earning its context surfaces instead of lingering green. That lifecycle
+lives in the `self-evolve` skill (Verdict Windows), not in this validator.
+
 ## Constraints (what NOT to do)
 
 - **Never write a workflow-summary `description`.** It must be a load signal, or agents skip

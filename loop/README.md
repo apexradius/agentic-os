@@ -9,7 +9,8 @@ never skip Verify. The rigor scales with size, but the shape never changes.
   hypotheses by evidence, resolve every fork, write the plan to a file.
 - **Implement** — build the slice the plan describes. One concern at a time.
 - **[Verify](verification.md)** — prove it works with an executable check you watched pass.
-  "Done" is verified-in-reality, not code-shipped.
+  "Done" is verified-in-reality, not code-shipped. The last act of Verify is **close-out**: fold
+  the outcome into knowledge, move any remainder to the task ledger, then delete the plan.
 
 ## Artifact gate (rigor scales with size)
 
@@ -29,10 +30,10 @@ reviewer can check it. ([Artifact shapes →](artifacts.md))
 |---|---|---|
 | [planning.md](planning.md) | Plan | Planning mandate, decision-complete plans, evidence-driven ranking |
 | [artifacts.md](artifacts.md) | Plan/Implement | The four artifacts + the one artifact-path standard |
-| [verification.md](verification.md) | Verify | Definition of done, the pre-ship gate, rollback-on-fail |
+| [verification.md](verification.md) | Verify | Definition of done, the pre-ship gate, rollback-on-fail, plan close-out |
 | [context.md](context.md) | All | Surviving long sessions: WHISK, compaction recovery, VNA, sub-agent dispatch, the reflexes |
 
 The law these obey is [`../doctrine/`](../doctrine/). How agents hand work to each other is
 [`../coordination/`](../coordination/).
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-22

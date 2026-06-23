@@ -41,6 +41,16 @@ When saving new feedback:
 
 After saving, check: are there 3+ entries about the same pattern? If yes, suggest consolidating into a CLAUDE.md rule. If user approves, write the rule and archive individual memories.
 
+## Verdict Windows (does the rule actually hold?)
+
+A captured rule is a hypothesis, not a result. Track it by **session count, not calendar** — calendar windows miss a rule that silently stops firing mid-project.
+
+- On capture, tag the entry `Verdict: pending @ +3 / +10 / +30 sessions`.
+- When the rule's trigger recurs, score the outcome: **adopted** (applied, held) · **ignored** (you forgot it — the trigger is too weak, sharpen it) · **regressed** (applied but caused a problem — revise or retire) · **partial**.
+- A rule still `ignored` at +10 is dead weight: delete it or rewrite its trigger. A rule `adopted` at +30 is earned — promote it toward a CLAUDE.md rule (see Aggregation).
+
+This pairs with the skill `eval.md` standard: skill evals are re-scored on the same session-count cadence, so a skill that quietly stops earning its context surfaces instead of lingering green.
+
 ## Rules
 
 1. Capture from both failure AND success

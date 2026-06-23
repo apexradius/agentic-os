@@ -34,6 +34,14 @@ Structural review of code for architecture, patterns, and maintainability. Compl
 - Are magic numbers/strings extracted as constants?
 - Is the public API surface minimal and intentional?
 
+### 5. AI Failure Modes (the four that AI-written code reliably hits)
+- **Wrong assumptions** — does the code assume an API shape, file, or invariant nobody verified? Name the assumption; demand the check.
+- **Overcomplexity** — solving a more general problem than asked (premature abstraction, config for a single caller). Cut to the case actually in front of you.
+- **Orthogonal edits** — changes unrelated to the stated goal riding along in the diff. Flag them out; one fix per commit.
+- **Imperative over declarative** — hand-rolled loops/branches re-implementing what a declarative construct (map/filter, a schema, a query, a lookup table) states directly. Prefer the declarative form.
+
+When most code under review is AI-drafted, this lens is the highest-yield pass — these four account for the bulk of "works but wrong" findings.
+
 ## Output
 
 ```markdown
