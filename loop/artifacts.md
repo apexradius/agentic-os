@@ -17,6 +17,15 @@ written to disk, they survive compaction, and a reviewer can check the work agai
 Each artifact also declares its **constraints** — what the change must NOT do. Negative
 engineering prevents scope creep.
 
+## Per-slice execution recommendation
+
+Every slice in `WIRING.md` / `IMPLEMENTATION.md` — each step an executor will pick up — names the
+**model tier and effort level** it should run on (e.g. `Sonnet · high`, `Opus · xhigh`). The default
+session model plans on the top tier and executes on the mid tier; a slice that needs the top tier
+for the *build itself* must say so, or it won't get it. A slice left as "best judgment" is **not
+decision-complete** (see [planning.md](planning.md)). The concrete tier→effort mapping is the
+instance's model-selection reference, not framework doctrine.
+
 ## The artifact-path standard
 
 All run-artifacts — plans, drafts, notepads, research, role-scoped output — live under one

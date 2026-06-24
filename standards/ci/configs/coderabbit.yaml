@@ -1,0 +1,69 @@
+# CodeRabbit config — shared standard
+# Drop a copy of this at repo root as .coderabbit.yaml to opt in to AI PR review.
+#
+# Corrected from the common blueprint mistake: `tools.<tool>.enabled: true`
+# means CodeRabbit RUNS that tool against the diff. We disable tools we already
+# run in Tier 1 / CI so we don't double-comment on lint findings the local
+# pipeline has already caught.
+
+language: en
+early_access: false
+
+reviews:
+  profile: chill          # Concise, non-pedantic style.
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # Skip large auto-generated diffs and lockfiles
+  path_filters:
+    - '!**/node_modules/**'
+    - '!**/dist/**'
+    - '!**/build/**'
+    - '!**/target/**'
+    - '!**/.next/**'
+    - '!**/.expo/**'
+    - '!**/*.lock'
+    - '!**/package-lock.json'
+    - '!**/pnpm-lock.yaml'
+    - '!**/Cargo.lock'
+
+  # Tier 1 already covers these — disable in CodeRabbit to avoid duplicate noise.
+  # Enable a tool here only when the calling repo does NOT run it locally / in CI.
+  tools:
+    biome:
+      enabled: false      # We run Biome in CI on TS/JS repos.
+    ruff:
+      enabled: false      # We run Ruff in CI on Python repos.
+    eslint:
+      enabled: false      # Disable if ESLint already runs in CI; enable otherwise.
+    gitleaks:
+      enabled: false      # We run a dedicated gitleaks job in CI with our policy.
+    shellcheck:
+      enabled: true       # Not yet in Tier 1 — keep CodeRabbit eyes on shell.
+    markdownlint:
+      enabled: false      # Not enforced.
+
+  # Drives the reviewer's focus toward functional bugs the LLM is actually
+  # good at, away from things deterministic linters already catch.
+  instructions: |
+    You are an expert peer reviewer. Skip everything our local toolchain already
+    enforces — do not comment on syntax, formatting, import order, semicolons,
+    line length, or anything a formatter would fix. CodeRabbit is the Tier 2
+    gate, not a second Tier 1.
+
+    Focus exclusively on:
+      - Functional logic bugs (off-by-one, wrong branch, missed null path)
+      - Concurrency / async / race conditions
+      - Security: injection, auth bypass, hardcoded secrets, unsafe deserialization
+      - Performance: O(n²) hot paths, unnecessary network/DB round trips
+      - Cross-file impact the diff alone does not show
+      - API / schema breaking changes against current callers
+      - Test coverage gaps for non-trivial code paths
+
+chat:
+  auto_reply: true

@@ -14,6 +14,15 @@ recoverable.
 - **Select** — load only what you need. Don't re-read a whole file for five lines.
 - **Keep lean** — summarize between phases; drop resolved context.
 
+## Context budget — the percentage ladder
+
+As context fills, the [context-budget standard](../standards/context-budget/) enforces a
+living-handoff ladder. The ladder's default rungs (45 / 55 / 65 / 75 / 85 / 95% of the
+window) are configurable per instance — the principle is host-agnostic: the agent must
+refresh the handoff at each rung so the host's auto-compaction recovers from structured
+state rather than reconstructing from scratch. The exact token count at which to act is
+not fixed — it follows from the window size and the configured percentages.
+
 ## Compaction recovery — write first, read second
 
 After any compaction or summarization signal, the **first** action is to **write**: rewrite the
@@ -48,4 +57,4 @@ conversation's context. The safety contract for delegation is
   current events, versions, prices, service status, "is X still true" — use live lookup before
   answering. Reasoning, math, and code don't need it.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-23

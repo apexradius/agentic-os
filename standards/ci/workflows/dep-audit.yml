@@ -1,0 +1,109 @@
+name: Dependency Audit (reusable)
+
+# Blocks PRs that introduce dependencies with known CVEs at or above the
+# configured audit-level. Uses each language's native audit tool — no SaaS
+# token, no third-party action. Repo-local lockfiles / pyproject must exist.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      language:
+        type: string
+        required: true
+        description: 'One of: npm | pnpm | yarn | pip | cargo'
+      audit-level:
+        type: string
+        default: high
+        description: |
+          Block on this severity AND above. Values per ecosystem:
+            npm/pnpm/yarn: low | moderate | high | critical
+            pip-audit: ignored — reports all; we error on any finding
+            cargo audit: ignored — reports all; we error on any finding
+      working-directory:
+        type: string
+        default: '.'
+      node-version:
+        type: string
+        default: '20'
+        description: For npm/pnpm/yarn audit only.
+      python-version:
+        type: string
+        default: '3.12'
+        description: For pip-audit only.
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  audit:
+    name: Dependency Audit
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Node.js ecosystems ---------------------------------------------
+      - name: Setup pnpm
+        if: inputs.language == 'pnpm'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        if: inputs.language == 'npm' || inputs.language == 'pnpm' || inputs.language == 'yarn'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: npm audit
+        if: inputs.language == 'npm'
+        env:
+          AUDIT_LEVEL: ${{ inputs.audit-level }}
+        run: npm audit --audit-level="$AUDIT_LEVEL"
+
+      - name: pnpm audit
+        if: inputs.language == 'pnpm'
+        env:
+          AUDIT_LEVEL: ${{ inputs.audit-level }}
+        run: pnpm audit --audit-level="$AUDIT_LEVEL"
+
+      - name: yarn npm audit
+        if: inputs.language == 'yarn'
+        env:
+          AUDIT_LEVEL: ${{ inputs.audit-level }}
+        # yarn v3+ uses `yarn npm audit`; falls back to classic if needed.
+        run: yarn npm audit --severity "$AUDIT_LEVEL" --all || yarn audit --level "$AUDIT_LEVEL"
+
+      # --- Python ---------------------------------------------------------
+      - name: Setup Python
+        if: inputs.language == 'pip'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: pip-audit
+        if: inputs.language == 'pip'
+        run: |
+          pip install --upgrade pip-audit
+          if [ -f pyproject.toml ]; then
+            pip-audit --strict
+          elif [ -f requirements.txt ]; then
+            pip-audit --strict -r requirements.txt
+          else
+            echo "::error::No pyproject.toml or requirements.txt found in $(pwd)"
+            exit 1
+          fi
+
+      # --- Rust -----------------------------------------------------------
+      - name: cargo audit
+        if: inputs.language == 'cargo'
+        run: |
+          if ! command -v cargo-audit >/dev/null 2>&1; then
+            cargo install --locked cargo-audit
+          fi
+          cargo audit --deny warnings

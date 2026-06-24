@@ -1,0 +1,101 @@
+name: Gitleaks (reusable)
+
+# The gitleaks policy is embedded in this workflow file as a heredoc rather
+# than fetched from a separate config-ref. Rationale: cross-repo actions/checkout
+# of a private templates repo requires a PAT or GitHub App token — too much
+# operational burden for downstream consumers. Embedding keeps a single source
+# of truth (this file) without any runtime cross-repo dependency. Repo-local
+# .gitleaks.toml still takes precedence.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  scan:
+    name: Gitleaks
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve gitleaks config (repo-local first, else embedded template)
+        id: cfg
+        run: |
+          set -euo pipefail
+          if [ -f ".gitleaks.toml" ]; then
+            echo "Using repo-local .gitleaks.toml"
+          else
+            echo "Using embedded shared secret scanning policy"
+            cat > .gitleaks.toml <<'TOML'
+          title = "shared secret scanning policy (embedded)"
+          [extend]
+          useDefault = true
+
+          [[allowlists]]
+          description = "Build artifacts and lockfiles are never source-of-truth for secrets"
+          paths = [
+            '''.*/node_modules/.*''',
+            '''.*/dist/.*''',
+            '''.*/build/.*''',
+            '''.*/target/.*''',
+            '''.*/\.next/.*''',
+            '''.*/\.expo/.*''',
+            '''.*/\.wxt/.*''',
+            '''.*/\.output/.*''',
+            '''.*/\.wrangler/.*''',
+            '''package-lock\.json$''',
+            '''pnpm-lock\.yaml$''',
+            '''yarn\.lock$''',
+            '''Cargo\.lock$''',
+            '''uv\.lock$''',
+            '''Podfile\.lock$''',
+          ]
+
+          [[allowlists]]
+          description = "Audit / runbook / progress docs reference historical dev tokens"
+          paths = [
+            '''(?i).*audit.*\.md$''',
+            '''(?i).*runbook.*\.md$''',
+            '''(?i).*progress.*\.md$''',
+            '''(?i).*findings.*\.md$''',
+            '''(?i).*plan.*\.md$''',
+          ]
+
+          [[allowlists]]
+          description = "Design-system / preview screens may contain sk_test_*, sk_live_* demo strings"
+          regexes = [
+            '''sk_(test|live)_[A-Za-z0-9]{8,32}''',
+          ]
+          paths = [
+            '''.*DesignSystem.*\.(tsx|jsx)$''',
+            '''.*StyleGuide.*\.(tsx|jsx)$''',
+            '''.*preview.*\.(tsx|jsx)$''',
+          ]
+          TOML
+          fi
+
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          VERSION=8.30.1
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            tmp=$(mktemp -d)
+            curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+              | tar -xz -C "$tmp" gitleaks
+            sudo install -m 0755 "$tmp/gitleaks" /usr/local/bin/gitleaks
+            rm -rf "$tmp"
+          fi
+          gitleaks version
+
+      - name: Scan
+        run: gitleaks detect --config .gitleaks.toml --redact --verbose --source .

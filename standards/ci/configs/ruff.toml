@@ -1,0 +1,48 @@
+# Canonical ruff config — single source of truth for Python repos.
+#
+# Copy to repo root as `ruff.toml`, or reference from CI. This ends the drift
+# where the same code passes in one repo and fails in another because each repo
+# has a local pyproject with different ignores. Pin via the ci-templates version
+# tag like any other shared config; a repo with genuinely different needs keeps
+# a local override.
+#
+# Adopting: copy this file to <repo>/ruff.toml then run `ruff format . && ruff check .`.
+
+line-length = 100
+indent-width = 4
+target-version = "py311"
+
+[lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (import sorting)
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long — the formatter owns line length
+    "E402", # module import not at top — FastAPI/env bootstrap loads config before imports
+    "E741", # ambiguous name (l/O/I) — intentional accounting symbols in ledger code
+]
+
+[lint.per-file-ignores]
+# FastAPI puts `Depends()` / `Query()` / `Security()` in argument defaults. That trips
+# B008 (function-call-in-default-argument) on every route — a framework idiom, not a bug.
+# Suppress ONLY where it is structurally unavoidable, so B008 still catches real
+# `def f(x=[])` mutable-default bugs everywhere else.
+"**/routers/*.py" = ["B008"]
+"**/routes/*.py" = ["B008"]
+"**/api/**/*.py" = ["B008"]
+"**/dependencies.py" = ["B008"]
+# Test suites use call-defaults in fixtures and re-import after path setup.
+"**/conftest.py" = ["B008", "E402"]
+"**/tests/**/*.py" = ["B008"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

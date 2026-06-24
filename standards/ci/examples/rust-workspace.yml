@@ -1,0 +1,27 @@
+# Drop this at .github/workflows/ci.yml in Rust workspace repos.
+# Note: repos with sophisticated CI (Sigstore attestations, deterministic builds,
+# daemon integrity gates) should NOT replace their existing ci.yml with this baseline.
+# Use this as the starting point for NEW Rust repos.
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: <your-org>/ci-templates/.github/workflows/rust-workspace.yml@<tag>
+    with:
+      rust-toolchain: '1.95.0'
+      run-clippy: true
+      run-tests: true
+      run-release-build: false   # Slow — turn on only for main / release branches.
+      secrets-scan: true

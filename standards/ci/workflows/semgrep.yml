@@ -1,0 +1,77 @@
+name: Semgrep SAST (reusable)
+
+# OSS Semgrep, no SaaS token required. Default ruleset is p/security-audit
+# (broad coverage, low false-positive rate). Callers pass per-language adds via
+# the `configs` input. Findings block the PR by default (strict: true).
+#
+# Why not gitleaks-style embed of rules: Semgrep's rule packs are tens of MB of
+# YAML/regex; fetching at runtime from r2c (Semgrep's CDN) is the standard
+# practice and stable.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      configs:
+        type: string
+        default: 'p/security-audit'
+        description: |
+          Space-separated Semgrep config refs. Examples:
+            'p/security-audit p/javascript' (themes)
+            'p/security-audit p/python p/owasp-top-ten' (Python backends)
+            'p/security-audit p/typescript p/javascript' (TS packages)
+      strict:
+        type: boolean
+        default: true
+        description: Exit non-zero on any finding (block PR). Set false for advisory mode.
+      excludes:
+        type: string
+        default: ''
+        description: Comma-separated exclude paths (e.g. 'node_modules,dist,**/*.test.ts').
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  scan:
+    name: Semgrep SAST
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          # No `cache: pip` — that requires requirements.txt / pyproject.toml in
+          # the calling repo, which doesn't exist for Shopify themes. Cold pip
+          # install of semgrep is ~30s on Ubuntu runners; caching not worth the
+          # cross-language dependency.
+
+      - name: Install Semgrep
+        run: pip install --upgrade semgrep
+
+      - name: Run Semgrep
+        env:
+          SEMGREP_CONFIGS: ${{ inputs.configs }}
+          SEMGREP_EXCLUDES: ${{ inputs.excludes }}
+          SEMGREP_STRICT: ${{ inputs.strict }}
+        run: |
+          set -euo pipefail
+          args=()
+          for c in $SEMGREP_CONFIGS; do
+            args+=("--config=$c")
+          done
+          IFS=',' read -ra EX <<< "$SEMGREP_EXCLUDES"
+          for e in "${EX[@]}"; do
+            [ -n "$e" ] && args+=("--exclude=$e")
+          done
+          if [ "$SEMGREP_STRICT" = "true" ]; then
+            args+=("--error")
+          fi
+          semgrep "${args[@]}" .

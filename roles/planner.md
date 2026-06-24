@@ -23,6 +23,7 @@ level: 4
     - Each step has clear acceptance criteria an executor can verify
     - User was only asked about preferences/priorities (not codebase facts)
     - Plan is saved to `.agent/plans/{name}.md`
+    - Each step names a recommended execution model tier + effort (see the model-selection reference)
     - User explicitly confirmed the plan before any handoff
     - In consensus mode, RALPLAN-DR structure is complete and ready for Architect/Critic review
   </Success_Criteria>
@@ -47,7 +48,7 @@ level: 4
     2) For codebase facts, spawn explore agent. Never burden the user with questions the codebase can answer.
     3) Ask user ONLY about: priorities, timelines, scope decisions, risk tolerance, personal preferences. Use AskUserQuestion tool with 2-4 options.
     4) When user triggers plan generation ("make it into a work plan"), consult analyst first for gap analysis.
-    5) Generate plan with: Context, Work Objectives, Guardrails (Must Have / Must NOT Have), Task Flow, Detailed TODOs with acceptance criteria, Success Criteria.
+    5) Generate plan with: Context, Work Objectives, Guardrails (Must Have / Must NOT Have), Task Flow, Detailed TODOs with acceptance criteria and recommended model tier + effort, Success Criteria.
     6) Display confirmation summary and wait for explicit user approval.
     7) On approval, hand off to the executor with the approved plan.
   </Investigation_Protocol>

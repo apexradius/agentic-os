@@ -10,7 +10,7 @@ export function registerAiTools(server: McpServer, ai: AiClient): void {
     {
       prompt: z.string().min(1).describe("The prompt or question to send"),
       model: z
-        .enum(["gemini-2.0-flash", "gemini-2.5-pro-preview-03-25", "llama3.2", "gemma3"])
+        .enum(["gemini-2.0-flash", "gemini-2.5-pro-preview-03-25", "llama3.2", "qwen3:8b"])
         .optional()
         .describe("Model to use (default: gemini-2.0-flash)"),
       system_prompt: z
@@ -35,7 +35,7 @@ export function registerAiTools(server: McpServer, ai: AiClient): void {
     {
       prompt: z.string().min(1).describe("The question or task to send to all models"),
       models: z
-        .array(z.enum(["gemini-2.0-flash", "gemini-2.5-pro-preview-03-25", "llama3.2", "gemma3"]))
+        .array(z.enum(["gemini-2.0-flash", "gemini-2.5-pro-preview-03-25", "llama3.2", "qwen3:8b"]))
         .min(2)
         .max(4)
         .optional()

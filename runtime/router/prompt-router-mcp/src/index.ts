@@ -5,6 +5,9 @@ import process from 'node:process';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
+import express from 'express';
 import { z } from 'zod';
 
 import {
@@ -90,7 +93,7 @@ async function reportStartupReconciliation(): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
+function createServer(): McpServer {
   const server = new McpServer({ name: MCP_NAME, version: MCP_VERSION });
 
   server.registerTool(
@@ -349,8 +352,54 @@ async function main(): Promise<void> {
     },
   );
 
+  return server;
+}
+
+function argVal(flag: string): string | undefined {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+async function serveHttp(host: string, port: number): Promise<void> {
+  const app = createMcpExpressApp({ host });
+  app.use(express.json());
+  app.get('/health', (_req, res) => {
+    res.json({ ok: true, name: MCP_NAME, version: MCP_VERSION });
+  });
+  app.all('/mcp', async (req, res) => {
+    // Stateless: a fresh server + transport per request. The router is read-only, so no
+    // session state is needed and concurrent clients are isolated by construction.
+    const server = createServer();
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    res.on('close', () => {
+      void transport.close();
+      void server.close();
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req as never, res as never, (req as { body?: unknown }).body);
+  });
+  await new Promise<void>((resolve) => {
+    app.listen(port, host, () => {
+      process.stderr.write(`${MCP_NAME} http transport on http://${host}:${port}/mcp\n`);
+      resolve();
+    });
+  });
+}
+
+async function main(): Promise<void> {
   await reportStartupReconciliation();
-  await server.connect(new StdioServerTransport());
+  const httpMode =
+    process.argv.includes('--http') ||
+    process.argv.includes('--sse') ||
+    Boolean(process.env.APEX_PROMPT_ROUTER_HTTP);
+  if (httpMode) {
+    const host = process.env.HOST ?? argVal('--host') ?? '127.0.0.1';
+    const port = Number(process.env.PORT ?? argVal('--port') ?? 3003);
+    await serveHttp(host, port);
+  } else {
+    const server = createServer();
+    await server.connect(new StdioServerTransport());
+  }
 }
 
 main().catch((error) => {

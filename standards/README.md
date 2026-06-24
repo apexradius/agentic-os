@@ -15,9 +15,10 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Design taste | [`doctrine/standards/design.md`](../doctrine/standards/design.md) | [`design-gate/`](design-gate/) — deterministic anti-pattern scanner | [`roles/design-critic.md`](../roles/design-critic.md) |
 | Mirror parity | [`doctrine/README.md`](../doctrine/README.md) — single source ("everything else is a mirror") | [`mirror-parity/`](mirror-parity/) — co-owned manual pairs keep the same outline | human review of mirrored prose |
 | Session discipline | [`doctrine/standards/session-discipline.md`](../doctrine/standards/session-discipline.md) | [`session-discipline/`](session-discipline/) — PIV planning gate + lifecycle hooks | human review / the planner role |
+| Continuous integration | [`doctrine/standards/ci.md`](../doctrine/standards/ci.md) | [`ci/`](ci/) — reusable workflows + shared tool configs (zone-pure source the instance's delivery repo syncs from) | CodeRabbit / Greptile PR review (Tiers 2–3) |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
 `framework/standards/*/validate.mjs` alongside the primitive validators and runs its selftest.
 
-> Last reviewed: 2026-06-22
+> Last reviewed: 2026-06-23

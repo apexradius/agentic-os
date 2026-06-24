@@ -15,7 +15,7 @@ export const AVAILABLE_MODELS: ModelChoice[] = [
   { provider: "gemini", model: "gemini-2.0-flash", label: "Gemini 2.0 Flash (fast)" },
   { provider: "gemini", model: "gemini-2.5-pro-preview-03-25", label: "Gemini 2.5 Pro (deep thinking)" },
   { provider: "ollama", model: "llama3.2", label: "Llama 3.2 (local, private)" },
-  { provider: "ollama", model: "gemma3", label: "Gemma 3 (local, private)" },
+  { provider: "ollama", model: "qwen3:8b", label: "Qwen3 8B (local, private)" },
 ];
 
 export class AiClient {

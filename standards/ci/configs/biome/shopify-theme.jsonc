@@ -1,0 +1,62 @@
+{
+  // Shared Biome config for Shopify theme assets.
+  //
+  // Design intent:
+  //   - Formatter is DISABLED. Themes have heterogeneous style (tabs vs
+  //     spaces, semis, quotes). Forcing consistency = giant noisy diff,
+  //     no actual bug catch. Style isn't the failure mode we're guarding
+  //     against here.
+  //   - Linter is ENABLED but selectively. Only correctness / security
+  //     classes at "error". Style-shaped rules are off.
+  //   - Shopify runtime globals are allowlisted so noUndeclaredVariables
+  //     doesn't flag `Shopify.cart`, `theme.routes`, etc.
+  //
+  // To override per-theme: drop a `biome.json` at the theme repo root.
+  // The reusable workflow respects local config when present.
+
+  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+
+  "formatter": {
+    "enabled": false
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "correctness": {
+        "noUndeclaredVariables": "error",
+        "noUnreachable": "error",
+        "noUnusedLabels": "warn",
+        "useValidTypeof": "error"
+      },
+      "suspicious": {
+        "noDoubleEquals": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateObjectKeys": "error",
+        "noFallthroughSwitchClause": "error",
+        "noSelfCompare": "error",
+        "noUnsafeNegation": "error"
+      },
+      "security": {
+        "noGlobalEval": "error"
+      }
+    }
+  },
+
+  "javascript": {
+    "globals": [
+      "Shopify",
+      "theme",
+      "ShopifyAnalytics",
+      "trekkie",
+      "Stripe",
+      "PaymentRequest",
+      "fbq",
+      "gtag",
+      "dataLayer",
+      "BOOMR"
+    ]
+  }
+}

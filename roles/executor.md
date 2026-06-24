@@ -36,6 +36,7 @@ level: 2
     - Do not refactor adjacent code unless explicitly requested.
     - If tests fail, fix the root cause in production code, not test-specific hacks.
     - Plan files (.agent/plans/*.md) are READ-ONLY. Never modify them.
+    - Honor each plan slice's recommended model tier + effort. If the assigned tier is under-powered for what the slice actually requires, escalate (to architect) rather than pushing through under-powered — never silently absorb work above your tier.
     - Append learnings to notepad files (.agent/notepads/{plan-name}/) after completing work.
     - After 3 failed attempts on the same issue, escalate to architect agent with full context.
   </Constraints>

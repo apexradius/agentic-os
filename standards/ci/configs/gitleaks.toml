@@ -1,0 +1,52 @@
+title = "shared secret scanning policy (v1)"
+
+# Repo-local .gitleaks.toml takes precedence over this template. Override here
+# only when adding patterns that should apply to every repo in your org.
+
+[extend]
+useDefault = true
+
+# -------------------------------------------------------------------------
+# Cross-repo allowlists — patterns intentionally checked in
+# -------------------------------------------------------------------------
+
+[[allowlists]]
+description = "Audit / runbook / progress docs intentionally reference historical dev tokens and endpoints"
+paths = [
+  '''(?i).*audit.*\.md$''',
+  '''(?i).*runbook.*\.md$''',
+  '''(?i).*progress.*\.md$''',
+  '''(?i).*findings.*\.md$''',
+  '''(?i).*plan.*\.md$''',
+]
+
+[[allowlists]]
+description = "Build artifacts and lockfiles — never source of truth for secrets"
+paths = [
+  '''.*/node_modules/.*''',
+  '''.*/dist/.*''',
+  '''.*/build/.*''',
+  '''.*/target/.*''',
+  '''.*/\.next/.*''',
+  '''.*/\.expo/.*''',
+  '''.*/\.wxt/.*''',
+  '''.*/\.output/.*''',
+  '''.*/\.wrangler/.*''',
+  '''package-lock\.json$''',
+  '''pnpm-lock\.yaml$''',
+  '''yarn\.lock$''',
+  '''Cargo\.lock$''',
+  '''uv\.lock$''',
+  '''Podfile\.lock$''',
+]
+
+[[allowlists]]
+description = "Design-system / preview screens may contain sk_test_*, sk_live_* demo strings for UI mocks"
+regexes = [
+  '''sk_(test|live)_[A-Za-z0-9]{8,32}''',
+]
+paths = [
+  '''.*DesignSystem.*\.(tsx|jsx)$''',
+  '''.*StyleGuide.*\.(tsx|jsx)$''',
+  '''.*preview.*\.(tsx|jsx)$''',
+]

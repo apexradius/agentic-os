@@ -8,7 +8,7 @@ export function registerAiTools(server: McpServer, ai: AiClient) {
     "ai_ask",
     "Send a prompt to Gemini or a local Ollama model.",
     {
-      model: z.enum(["gemini-2.0-flash", "gemini-2.0-pro", "gemma-3-27b-it", "deep-research-pro-preview-12-2025"]).default("gemini-2.0-flash"),
+      model: z.enum(["gemini-2.0-flash", "gemini-2.0-pro", "qwen3:8b", "deep-research-pro-preview-12-2025"]).default("gemini-2.0-flash"),
       prompt: z.string().min(1),
       system_prompt: z.string().optional()
     },
@@ -26,7 +26,7 @@ export function registerAiTools(server: McpServer, ai: AiClient) {
     "ai_consensus",
     "Ask the same question to multiple models and compare side-by-side.",
     {
-      models: z.array(z.enum(["gemini-2.0-flash", "gemini-2.0-pro", "gemma-3-27b-it", "deep-research-pro-preview-12-2025"])).min(2).default(["gemini-2.0-flash", "gemini-2.0-pro"]),
+      models: z.array(z.enum(["gemini-2.0-flash", "gemini-2.0-pro", "qwen3:8b", "deep-research-pro-preview-12-2025"])).min(2).default(["gemini-2.0-flash", "gemini-2.0-pro"]),
       prompt: z.string().min(1),
       system_prompt: z.string().optional()
     },

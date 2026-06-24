@@ -45,7 +45,7 @@ ROLES_FILE = Path(os.environ.get("AORG_ROLES_FILE", ROOT / "roles.json"))
 POLICY_DIR = Path(os.environ.get("AORG_POLICY_DIR", ROOT / "policy"))
 WORKSPACE = Path(os.environ.get("AORG_WORKSPACE", "~")).expanduser()
 TMP_ROOT = Path("/private/tmp") if Path("/private/tmp").exists() else Path("/tmp")
-OLLAMA_DEFAULT_MODEL = os.environ.get("AORG_OLLAMA_MODEL", os.environ.get("AORG_LOCAL_MODEL", "gemma4:e4b"))
+OLLAMA_DEFAULT_MODEL = os.environ.get("AORG_OLLAMA_MODEL", os.environ.get("AORG_LOCAL_MODEL", "qwen3:8b"))
 VPS_MIRROR_HOST = os.environ.get("AORG_VPS_MIRROR_HOST", "")
 VPS_MIRROR_STATE_DIR = os.environ.get("AORG_VPS_MIRROR_STATE_DIR", "")
 VPS_MIRROR_TIMEOUT = int(os.environ.get("AORG_VPS_MIRROR_TIMEOUT", "30"))
@@ -4097,12 +4097,9 @@ def cmd_approve(args: argparse.Namespace) -> None:
 
 def normalize_ollama_model_name(model: str) -> str:
     aliases = {
-        "apex-codex:latest": "gemma4:26b",
-        "apex-general:latest": "gemma4:e4b",
-        "gemma3:latest": "gemma4:e4b",
-        "gemma-4-e4b-it": "gemma4:e4b",
-        "google/gemma-4-e4b": "gemma4:e4b",
-        "gpt-oss:20b": "gemma4:e4b",
+        "apex-codex:latest": "qwen3:8b",
+        "apex-general:latest": "qwen3:8b",
+        "gpt-oss:20b": "qwen3:8b",
     }
     return aliases.get(model, model)
 
@@ -4122,8 +4119,8 @@ def run_ollama_chat(model: str, prompt: str, timeout: int, role: str) -> subproc
 
 def cmd_run_local(args: argparse.Namespace) -> None:
     role = role_or_die(args.role)
-    if args.role != "gemma":
-        print("run-local is only for the gemma local critic role", file=sys.stderr)
+    if args.role != "qwen-vision":
+        print("run-local is only for the qwen-vision local critic role", file=sys.stderr)
         sys.exit(2)
     canonical_local = local_default_state_uses_vps_canonical()
     if canonical_local:
@@ -5742,7 +5739,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     readonly_a = {
         **task_a,
         "id": "smoke-readonly-a",
-        "assignee": "gemma",
+        "assignee": "qwen-vision",
         "mode": "local-review",
         "files": ["/private/tmp/aorg-hardening-owned.txt"],
         "files_owned": [],
@@ -5764,10 +5761,10 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
         "id": "smoke-policy-safe-report",
         "title": "Read-only delete-risk regression",
         "task": "Do not edit or delete files. Write the requested review report only.",
-        "assignee": "gemma",
+        "assignee": "qwen-vision",
         "files": [str(REPORTS / "vps-local-model-policy-20260526.md")],
         "files_owned": [],
-        "allowlist_identity": "gemma-local",
+        "allowlist_identity": "qwen-vision-local",
     }
     safe_report_denial = policy_denial(safe_report_task)
     if safe_report_denial:
@@ -6023,6 +6020,9 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     companion_pass_parent = {
         **task_a,
         "id": "smoke-review-companion-pass-parent",
+        # Council v2: a frontier agent reviews an EXECUTOR-built task, never its own work.
+        "assignee": "qwen",
+        "claimed_by": "qwen",
         "status": "review-pending",
         "review_required": True,
         "reviewer": "codex",
@@ -6040,6 +6040,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
             task_id=companion_pass["id"],
             decision="pass",
             summary="smoke pass",
+            defect_type=None,
             evidence=[str(review_evidence)],
         )
     )
@@ -6057,6 +6058,9 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     companion_fail_parent = {
         **task_a,
         "id": "smoke-review-companion-fail-parent",
+        # Council v2: executor-built so the frontier ping-pong (codex->claude) isn't self-review.
+        "assignee": "qwen",
+        "claimed_by": "qwen",
         "status": "review-pending",
         "review_required": True,
         "reviewer": "codex",
@@ -6071,6 +6075,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
             task_id=companion_fail["id"],
             decision="fail",
             summary="needs changes",
+            defect_type="correctness",
             evidence=[str(review_evidence)],
         )
     )
@@ -6106,6 +6111,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
             task_id=rehanded[0]["id"],
             decision="fail",
             summary="still wrong",
+            defect_type="correctness",
             evidence=[str(review_evidence)],
         )
     )
@@ -6123,6 +6129,9 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     parent_review_task = {
         **task_a,
         "id": "smoke-review-parent-direct",
+        # Council v2: executor-built so the claude reviewer isn't reviewing its own work.
+        "assignee": "qwen",
+        "claimed_by": "qwen",
         "status": "review-pending",
         "review_required": True,
         "reviewer": "claude",
@@ -6137,6 +6146,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
             task_id=parent_review_task["id"],
             decision="pass",
             summary="parent path still works",
+            defect_type=None,
             evidence=[str(review_evidence)],
         )
     )
@@ -6223,8 +6233,8 @@ def cmd_start(args: argparse.Namespace) -> None:
     }
     if args.with_antigravity:
         windows["antigravity"] = f"export APEX_AGENT_IDENTITY=aorg-antigravity-local; {agent_prefix}{canonical_prefix}aorg brief antigravity; agy --dangerously-skip-permissions --add-dir {WORKSPACE} --add-dir /private/tmp{extra_add_dirs}"
-    if args.with_gemma:
-        windows["gemma"] = f"export APEX_AGENT_IDENTITY=gemma-local; {agent_prefix}{canonical_prefix}aorg brief gemma; ollama list; exec zsh"
+    if args.with_qwen_vision:
+        windows["qwen-vision"] = f"export APEX_AGENT_IDENTITY=qwen-vision-local; {agent_prefix}{canonical_prefix}aorg brief qwen-vision; exec zsh"
     for name, command in windows.items():
         tmux("new-window", "-t", session, "-n", name, "-c", str(WORKSPACE), "zsh", "-lic", command)
     print(f"started {session}")
@@ -6536,7 +6546,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("start")
     p.add_argument("--session", default="apex-ai-org")
     p.add_argument("--with-antigravity", action="store_true", help="include the local Antigravity agy lane")
-    p.add_argument("--with-gemma", action="store_true")
+    p.add_argument("--with-qwen-vision", action="store_true")
     p.set_defaults(func=cmd_start)
 
     p = sub.add_parser("attach")

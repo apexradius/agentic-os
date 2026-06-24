@@ -1,0 +1,24 @@
+# Drop this at .github/workflows/ci.yml in Python service repos.
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: <your-org>/ci-templates/.github/workflows/python-backend.yml@<tag>
+    with:
+      python-version: '3.12'
+      working-directory: '.'   # Set 'backend' for repos with a backend/ subdirectory.
+      run-mypy: false          # Flip to true once the codebase is type-annotated end-to-end.
+      run-tests: true
+      secrets-scan: true

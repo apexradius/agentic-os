@@ -1,0 +1,28 @@
+# Lefthook pre-commit for TypeScript / JavaScript repos.
+# Default: Biome. For ESLint repos, see eslint variant in comments below.
+
+pre-commit:
+  parallel: true
+  commands:
+    biome-check:
+      glob: "*.{js,ts,jsx,tsx,json,jsonc,css}"
+      run: npx @biomejs/biome check --write --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+
+    # If your repo uses ESLint + Prettier instead of Biome, swap the block
+    # above for this one. Both should not be enabled simultaneously.
+    #
+    # eslint:
+    #   glob: "*.{js,ts,jsx,tsx}"
+    #   run: npx eslint --fix {staged_files}
+    #   stage_fixed: true
+    # prettier:
+    #   glob: "*.{js,ts,jsx,tsx,json,css,md}"
+    #   run: npx prettier --write {staged_files}
+    #   stage_fixed: true
+
+pre-push:
+  commands:
+    typecheck:
+      run: npx tsc --noEmit
+      tags: types

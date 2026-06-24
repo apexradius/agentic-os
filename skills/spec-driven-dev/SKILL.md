@@ -60,14 +60,14 @@ Create `specs/[feature].tasks.md`:
 # Tasks: [Feature Name]
 
 ## Phase 1: [Setup]
-- [ ] Task 1 — [file(s)] — [estimate]
-- [ ] Task 2 — [file(s)] — [estimate]
+- [ ] Task 1 — [file(s)] — [Tier · effort] — [estimate]
+- [ ] Task 2 — [file(s)] — [Tier · effort] — [estimate]
 
 ## Phase 2: [Core Implementation]
-- [ ] Task 3 — [file(s)] — [estimate]
+- [ ] Task 3 — [file(s)] — [Tier · effort] — [estimate]
 
 ## Phase 3: [Testing & Polish]
-- [ ] Task 4 — [file(s)] — [estimate]
+- [ ] Task 4 — [file(s)] — [Tier · effort] — [estimate]
 
 ## Definition of Done
 - [ ] All acceptance criteria passing

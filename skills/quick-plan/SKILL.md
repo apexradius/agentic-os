@@ -11,10 +11,10 @@ Plan only — do not execute. For adaptive planning (auto-detects complexity), u
 ## Steps
 1. **Analyze request** — break into discrete implementation steps
 2. **Identify affected files** — Glob/Grep for relevant code
-3. **Estimate complexity** per step (trivial/small/medium/large)
+3. **Estimate complexity** per step (trivial/small/medium/large) and assign a recommended **model tier + effort** (`Haiku · low` / `Sonnet · medium|high` / `Opus · xhigh`; see `model-router`)
 4. **Flag risks** — breaking changes, missing tests, dependency conflicts
 5. **Suggest commit structure** — logical, atomic commits
 6. **Testing strategy** — what to test, how to verify
 
 ## Output
-Numbered steps with: file paths, changes needed, estimated complexity, suggested commit message.
+Numbered steps with: file paths, changes needed, estimated complexity, recommended model · effort (see `model-router`), suggested commit message.

@@ -1,0 +1,199 @@
+name: Shopify Theme CI (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+        description: Runner label. Use 'self-hosted, linux' for a self-hosted runner pool.
+      lint-asset-js:
+        type: boolean
+        default: true
+        description: Run Biome on assets/*.{js,css,json} to catch theme JS bugs theme-check misses.
+      secrets-scan:
+        type: boolean
+        default: true
+        description: Run gitleaks against the theme. Theme repos can leak API keys in /config/settings_data.json.
+      run-semgrep:
+        type: boolean
+        default: false
+        description: Run Semgrep SAST (XSS in Liquid, dangerous innerHTML, injection in theme JS). Opt-in until per-theme exclusion patterns are tuned.
+      run-perf-check:
+        type: boolean
+        default: false
+        description: |
+          Run Lighthouse CI + axe-core against a Shopify preview-theme push.
+          Catches Theme Store rejection classes (perf regression, a11y).
+          Requires SHOPIFY_FLAG_STORE, SHOPIFY_CLI_THEME_TOKEN, and
+          SHOPIFY_STORE_PASSWORD as repo secrets.
+          Caller must pass `secrets: inherit` for this to work.
+      min-score-performance:
+        type: string
+        default: '1.0'
+        description: Lighthouse perf TARGET for the homepage. Report-only by default (perf-blocking gates it). Used only when run-perf-check is true.
+      min-score-accessibility:
+        type: string
+        default: '0.9'
+        description: Lighthouse a11y floor for the homepage (HARD gate). 0.9 is the stable fleet floor (homepages measure ~0.95 in CI); ratchet toward 1.0 per theme.
+      min-score-performance-secondary:
+        type: string
+        default: '0.75'
+        description: Lighthouse perf TARGET for product + collection pages. Report-only by default (perf-blocking gates it). Ratchet toward 1.0 as optimized.
+      min-score-accessibility-secondary:
+        type: string
+        default: '0.9'
+        description: Lighthouse a11y floor for product + collection pages. Ratchet toward 1.0.
+      perf-product-handle:
+        type: string
+        default: ''
+        description: Optional product handle for the product-page audit. Defaults to the first product.
+      perf-collection-handle:
+        type: string
+        default: ''
+        description: Optional collection handle for the collection-page audit. Defaults to the first collection.
+      perf-blocking:
+        type: boolean
+        default: false
+        description: >-
+          When true, Lighthouse performance misses fail CI. Default false — perf is
+          report-only on GitHub-hosted runners (too noisy to gate); a11y is always hard-gated.
+    secrets:
+      SHOPIFY_FLAG_STORE:
+        required: false
+      SHOPIFY_CLI_THEME_TOKEN:
+        required: false
+      SHOPIFY_STORE_PASSWORD:
+        required: false
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  theme-check:
+    name: Shopify Theme Check
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Theme Check
+        uses: shopify/theme-check-action@v2
+        with:
+          token: ${{ github.token }}
+
+  asset-js-lint:
+    name: Asset JS Lint (Biome, bug-only)
+    if: ${{ inputs.lint-asset-js }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect lintable JS in assets/
+        id: detect
+        run: |
+          if [ -d assets ] && find assets -maxdepth 2 -name '*.js' -print -quit | grep -q .; then
+            echo "has_assets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_assets=false" >> "$GITHUB_OUTPUT"
+            echo "No lintable JS in assets/ — skipping."
+          fi
+
+      - uses: biomejs/setup-biome@v2
+        if: steps.detect.outputs.has_assets == 'true'
+        with:
+          version: latest
+
+      - name: Resolve Biome config (repo-local first, else shared bug-only)
+        if: steps.detect.outputs.has_assets == 'true'
+        id: cfg
+        run: |
+          if [ -f biome.json ] || [ -f biome.jsonc ]; then
+            echo "config_path=" >> "$GITHUB_OUTPUT"
+            echo "Using repo-local Biome config."
+          else
+            echo "Using shared bug-only Biome config (formatter off,"
+            echo "correctness + suspicious + security at error, Shopify globals allowlisted)."
+            mkdir -p /tmp/biome-shared
+            cat > /tmp/biome-shared/biome.json <<'JSON'
+          {
+            "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+            "formatter": { "enabled": false },
+            "linter": {
+              "enabled": true,
+              "rules": {
+                "recommended": false,
+                "correctness": {
+                  "noUndeclaredVariables": "error",
+                  "noUnreachable": "error",
+                  "noUnusedLabels": "warn",
+                  "useValidTypeof": "error"
+                },
+                "suspicious": {
+                  "noDoubleEquals": "error",
+                  "noDuplicateCase": "error",
+                  "noDuplicateClassMembers": "error",
+                  "noDuplicateObjectKeys": "error",
+                  "noFallthroughSwitchClause": "error",
+                  "noSelfCompare": "error",
+                  "noUnsafeNegation": "error"
+                },
+                "security": {
+                  "noGlobalEval": "error"
+                }
+              }
+            },
+            "javascript": {
+              "globals": ["Shopify","theme","ShopifyAnalytics","trekkie","Stripe","PaymentRequest","fbq","gtag","dataLayer","BOOMR"]
+            }
+          }
+          JSON
+            echo "config_path=/tmp/biome-shared" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Biome lint assets/
+        if: steps.detect.outputs.has_assets == 'true'
+        run: |
+          if [ -n "${{ steps.cfg.outputs.config_path }}" ]; then
+            biome lint --config-path "${{ steps.cfg.outputs.config_path }}" assets/
+          else
+            biome lint assets/
+          fi
+
+  secrets-scan:
+    name: Secrets Scan (gitleaks)
+    if: ${{ inputs.secrets-scan }}
+    uses: ./.github/workflows/gitleaks.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+
+  semgrep-sast:
+    name: Semgrep SAST
+    if: ${{ inputs.run-semgrep }}
+    uses: ./.github/workflows/semgrep.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      configs: 'p/security-audit p/javascript'
+      # Excludes: dev/build tooling that isn't theme runtime.
+      # - demo-assets, _launch, release: marketing/demo, not theme code
+      # - specs: store metadata + image-gen scripts (often Python utilities
+      #   with urllib usage that isn't user-input-driven; flagging them in
+      #   theme CI confuses signal from noise).
+      excludes: 'demo-assets,_launch,release,specs'
+
+  perf-a11y:
+    name: Perf + A11y (Lighthouse + axe)
+    if: ${{ inputs.run-perf-check }}
+    uses: ./.github/workflows/shopify-theme-perf.yml
+    secrets: inherit
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      min-score-performance: ${{ inputs.min-score-performance }}
+      min-score-accessibility: ${{ inputs.min-score-accessibility }}
+      min-score-performance-secondary: ${{ inputs.min-score-performance-secondary }}
+      min-score-accessibility-secondary: ${{ inputs.min-score-accessibility-secondary }}
+      product-handle: ${{ inputs.perf-product-handle }}
+      collection-handle: ${{ inputs.perf-collection-handle }}
+      perf-blocking: ${{ inputs.perf-blocking }}

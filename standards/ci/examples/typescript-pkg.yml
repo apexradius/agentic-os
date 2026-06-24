@@ -1,0 +1,27 @@
+# Drop this at .github/workflows/ci.yml in TypeScript package repos
+# (MCP microservices, frontend packages, etc.).
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: <your-org>/ci-templates/.github/workflows/typescript-pkg.yml@<tag>
+    with:
+      node-version: '20'
+      package-manager: 'npm'    # 'pnpm' | 'yarn' | 'npm'
+      linter: 'biome'           # 'biome' (default) | 'eslint'
+      run-typecheck: true
+      run-build: true
+      run-tests: true
+      secrets-scan: true

@@ -32,8 +32,8 @@ Cross-review that exceeds its round cap escalates there automatically ([review.m
 ## The handoff brief
 
 Every plan→build handoff is **decision-complete**: scope, the files to change, the approach
-per file, acceptance criteria, and the verification command — enough that the executor makes
-no judgment calls the plan didn't make. A vague handoff is a planning failure, not an executor
+per file, the recommended model tier + effort per slice, acceptance criteria, and the
+verification command — enough that the executor makes no judgment calls the plan didn't make. A vague handoff is a planning failure, not an executor
 failure.
 
 > Last reviewed: 2026-06-19

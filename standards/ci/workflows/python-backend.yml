@@ -1,0 +1,127 @@
+name: Python Backend CI (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      python-version:
+        type: string
+        default: '3.12'
+      working-directory:
+        type: string
+        default: '.'
+        description: Subdir of the repo to operate in (e.g. 'backend' for a service in a subdirectory).
+      package-manager:
+        type: string
+        default: pip
+        description: pip | uv | poetry
+      run-mypy:
+        type: boolean
+        default: false
+        description: mypy is opt-in — enable once the codebase is annotated.
+      run-tests:
+        type: boolean
+        default: true
+      secrets-scan:
+        type: boolean
+        default: true
+      run-semgrep:
+        type: boolean
+        default: false
+        description: Run Semgrep SAST (Python rules + OWASP Top 10). Opt-in until baseline is clean.
+      run-dep-audit:
+        type: boolean
+        default: false
+        description: Run pip-audit against pyproject.toml / requirements.txt. Opt-in.
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Ruff Lint + Format Check
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install ruff
+        run: uv tool install ruff
+      - name: Ruff check
+        run: ruff check .
+      - name: Ruff format --check
+        run: ruff format --check .
+
+  typecheck:
+    name: mypy
+    if: ${{ inputs.run-mypy }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+      - name: Install project + mypy
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" mypy
+      - name: mypy
+        run: mypy .
+
+  test:
+    name: Pytest
+    if: ${{ inputs.run-tests }}
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: pip
+      - name: Install project + dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: pytest
+        run: pytest -x --tb=short
+
+  secrets-scan:
+    if: ${{ inputs.secrets-scan }}
+    uses: ./.github/workflows/gitleaks.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+
+  semgrep-sast:
+    if: ${{ inputs.run-semgrep }}
+    uses: ./.github/workflows/semgrep.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      configs: 'p/security-audit p/python p/owasp-top-ten'
+      excludes: '.venv,venv,dist,build'
+
+  dep-audit:
+    if: ${{ inputs.run-dep-audit }}
+    uses: ./.github/workflows/dep-audit.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      language: pip
+      python-version: ${{ inputs.python-version }}
+      working-directory: ${{ inputs.working-directory }}

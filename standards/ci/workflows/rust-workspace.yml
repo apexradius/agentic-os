@@ -1,0 +1,91 @@
+name: Rust Workspace CI (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      rust-toolchain:
+        type: string
+        default: '1.95.0'
+        description: Pin via rust-toolchain.toml in-repo if you need cross-job consistency.
+      run-clippy:
+        type: boolean
+        default: true
+      run-tests:
+        type: boolean
+        default: true
+      run-release-build:
+        type: boolean
+        default: false
+        description: Release build is slow — only enable on main / pre-release branches.
+      secrets-scan:
+        type: boolean
+        default: true
+      run-semgrep:
+        type: boolean
+        default: false
+        description: Run Semgrep SAST (security-audit baseline). Rust coverage is limited; opt-in advisory mode is fine.
+      run-dep-audit:
+        type: boolean
+        default: false
+        description: Run cargo-audit against Cargo.lock. Opt-in.
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Rust fmt + clippy + test
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          components: rustfmt, clippy
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo fmt --check
+        run: cargo fmt --check
+
+      - name: Cargo clippy
+        if: ${{ inputs.run-clippy }}
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Cargo test
+        if: ${{ inputs.run-tests }}
+        run: cargo test --workspace
+
+      - name: Cargo release build
+        if: ${{ inputs.run-release-build }}
+        run: cargo build --workspace --release
+
+  secrets-scan:
+    if: ${{ inputs.secrets-scan }}
+    uses: ./.github/workflows/gitleaks.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+
+  semgrep-sast:
+    if: ${{ inputs.run-semgrep }}
+    uses: ./.github/workflows/semgrep.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      configs: 'p/security-audit'
+      excludes: 'target,vendor'
+
+  dep-audit:
+    if: ${{ inputs.run-dep-audit }}
+    uses: ./.github/workflows/dep-audit.yml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+      language: cargo

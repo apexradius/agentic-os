@@ -1,0 +1,34 @@
+# Drop this at .github/workflows/ci.yml in each Shopify theme repo.
+name: CI
+
+on:
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**"]
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: <your-org>/ci-templates/.github/workflows/shopify-theme.yml@<tag>
+    secrets: inherit
+    with:
+      lint-asset-js: true
+      secrets-scan: true
+      run-semgrep: true
+      run-perf-check: true
+      # Lighthouse gate. Accessibility is HARD-gated at a flat 0.9 fleet floor (homepages
+      # and storefront pages measure ~0.94-0.96 in CI, not a perfect 1.0). Performance is
+      # REPORT-ONLY by default — GitHub-hosted runners are too noisy to gate perf (an
+      # unchanged homepage swings 0.68-1.0). The perf numbers below are tracked targets
+      # surfaced as warnings; set `perf-blocking: true` on a stable/self-hosted runner to
+      # enforce them. Ratchet a11y toward 1.0 per theme as audits are fixed.
+      min-score-performance: '1.0'
+      min-score-accessibility: '0.9'
+      min-score-performance-secondary: '0.75'
+      min-score-accessibility-secondary: '0.9'

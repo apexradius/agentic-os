@@ -1,0 +1,23 @@
+# Drop this at .github/workflows/fleet-policy.yml in repos that carry
+# fleet/stage_allow.py plus the canonical policy directory.
+name: Fleet Policy
+
+on:
+  pull_request:
+    paths:
+      - 'fleet/**'
+  push:
+    branches: [main]
+    paths:
+      - 'fleet/**'
+  workflow_dispatch:
+
+concurrency:
+  group: fleet-policy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fleet-policy:
+    uses: <your-org>/ci-templates/.github/workflows/fleet-policy.yml@<tag>
+    with:
+      fleet-directory: 'fleet'

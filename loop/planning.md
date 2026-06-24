@@ -20,7 +20,9 @@ structural gate: you cannot start executing a multi-step task until the plan exi
 A plan resolves **every fork**. "Decision complete," not "a list of steps." If an implementer
 — or a future you, post-compaction — would have to make a judgment call the plan didn't make,
 the plan isn't finished. Name the files to change, the approach for each, and the existing code
-to reuse. Don't leave choices to discover mid-build.
+to reuse. Don't leave choices to discover mid-build. Name, too, the **recommended model tier and
+effort** to execute each slice — the executor should never have to guess which model the work
+deserves (see [artifacts.md](artifacts.md)).
 
 Resolve unknowns the right way *before* writing the plan: discoverable facts get found,
 preferences get one round of questions. (See

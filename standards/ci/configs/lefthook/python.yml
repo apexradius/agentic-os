@@ -1,0 +1,25 @@
+# Lefthook pre-commit for Python repos. Copy to repo root as `lefthook.yml`.
+# Install: `brew install lefthook && lefthook install`.
+#
+# stage_fixed: true is the fix for the auto-stage footgun in the common
+# blueprint — Lefthook diffs and re-stages ONLY the formatter's hunks,
+# not all of the file. Unstaged work in the same file stays unstaged.
+
+pre-commit:
+  parallel: true
+  commands:
+    ruff-check:
+      glob: "*.py"
+      run: ruff check --fix {staged_files}
+      stage_fixed: true
+
+    ruff-format:
+      glob: "*.py"
+      run: ruff format {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    pytest:
+      run: pytest -x --tb=short
+      tags: tests

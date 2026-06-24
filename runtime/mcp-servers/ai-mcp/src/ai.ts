@@ -1,6 +1,6 @@
 import { log } from "@framework/mcp-shared";
 
-export type ModelId = "gemini-2.0-flash" | "gemini-2.0-pro" | "gemma-3-27b-it" | "deep-research-pro-preview-12-2025";
+export type ModelId = "gemini-2.0-flash" | "gemini-2.0-pro" | "qwen3:8b" | "deep-research-pro-preview-12-2025";
 
 export interface AiConfig {
   geminiApiKey?: string;

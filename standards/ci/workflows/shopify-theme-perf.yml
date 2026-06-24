@@ -1,0 +1,207 @@
+name: Shopify Theme Performance & A11y (reusable)
+
+# Lighthouse perf + a11y gates for Shopify themes via Shopify's OFFICIAL
+# action (Docker-based). Rolling our own `shopify theme push --unpublished`
+# was abandoned at v1.4.3: the CLI refuses piped stdin for prompts and has
+# no flag for the theme name when --unpublished is set. The official
+# action handles the lifecycle internally.
+#
+# Required per-repo secrets:
+#   SHOPIFY_FLAG_STORE       — <domain>.myshopify.com
+#   SHOPIFY_CLI_THEME_TOKEN  — Admin API access token from a Shopify Custom
+#                              App (Settings → Apps → Develop apps →
+#                              read_themes,write_themes,read_products,
+#                              read_content scopes → install → reveal token)
+#   SHOPIFY_STORE_PASSWORD   — storefront password for locked dev stores.
+#                              Required so LHCI audits preview pages, not /password.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      min-score-performance:
+        type: string
+        default: '1.0'
+        description: >-
+          Lighthouse perf TARGET for the homepage. Report-only by default (see
+          perf-blocking) — GitHub-hosted runners are too noisy to gate perf reliably.
+      min-score-accessibility:
+        type: string
+        default: '0.9'
+        description: >-
+          Lighthouse a11y floor for the homepage (HARD gate). 0.9 is the stable fleet
+          floor — homepages measure ~0.95 in CI, not a perfect 1.0; ratchet toward 1.0 per theme.
+      min-score-performance-secondary:
+        type: string
+        default: '0.75'
+        description: >-
+          Lighthouse perf TARGET for product + collection pages. Report-only by default
+          (see perf-blocking). Image-heavy storefront pages rarely hit a perfect 1.0;
+          ratchet toward 1.0 per theme as pages are optimized.
+      min-score-accessibility-secondary:
+        type: string
+        default: '0.9'
+        description: Lighthouse a11y floor for product + collection pages. Ratchet toward 1.0.
+      product-handle:
+        type: string
+        default: ''
+        description: Optional product handle for product-page test. Defaults to first product.
+      collection-handle:
+        type: string
+        default: ''
+        description: Optional collection handle for collection-page test. Defaults to first collection.
+      perf-blocking:
+        type: boolean
+        default: false
+        description: >-
+          When true, performance misses FAIL the job. Default false: GitHub-hosted runner
+          perf is too noisy to gate (an unchanged homepage can swing 0.68-1.0 between runs),
+          so perf is REPORT-ONLY and surfaced as warnings. Accessibility is ALWAYS hard-gated
+          (rule-based + stable). Set true on a stable/self-hosted runner to enforce perf.
+    secrets:
+      SHOPIFY_FLAG_STORE:
+        required: true
+      SHOPIFY_CLI_THEME_TOKEN:
+        required: true
+      SHOPIFY_STORE_PASSWORD:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  perf-a11y:
+    name: Lighthouse + axe-core
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 20
+    steps:
+      - name: Guard — fail loudly if secrets missing
+        env:
+          STORE: ${{ secrets.SHOPIFY_FLAG_STORE }}
+          TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          PASSWORD: ${{ secrets.SHOPIFY_STORE_PASSWORD }}
+        run: |
+          if [ -z "$STORE" ] || [ -z "$TOKEN" ] || [ -z "$PASSWORD" ]; then
+            echo "::error::SHOPIFY_FLAG_STORE, SHOPIFY_CLI_THEME_TOKEN, and SHOPIFY_STORE_PASSWORD must be set as repo secrets to run the real perf+a11y gate."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Lighthouse CI on Shopify theme
+        uses: Shopify/lighthouse-ci-action@v1.4.0
+        with:
+          store: ${{ secrets.SHOPIFY_FLAG_STORE }}
+          access_token: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+          password: ${{ secrets.SHOPIFY_STORE_PASSWORD }}
+          # The action ONLY generates the Lighthouse reports; all gating happens in the
+          # verify step below (median-aggregated, per-page, a11y-hard / perf-advisory).
+          # Both set to 0 so the action's own per-run assertion never fires — a single
+          # noisy run must not pre-empt the robust median gate downstream.
+          lhci_min_score_performance: '0'
+          lhci_min_score_accessibility: '0'
+          product_handle: ${{ inputs.product-handle }}
+          collection_handle: ${{ inputs.collection-handle }}
+
+      - name: Verify coverage + gate (a11y hard, perf advisory)
+        env:
+          HOME_PERF: ${{ inputs.min-score-performance }}
+          HOME_A11Y: ${{ inputs.min-score-accessibility }}
+          SEC_PERF: ${{ inputs.min-score-performance-secondary }}
+          SEC_A11Y: ${{ inputs.min-score-accessibility-secondary }}
+          PERF_BLOCKING: ${{ inputs.perf-blocking }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const dir = '.lighthouseci';
+          const files = fs.existsSync(dir)
+            ? fs.readdirSync(dir).filter((file) => file.startsWith('lhr-') && file.endsWith('.json'))
+            : [];
+
+          if (files.length < 3) {
+            console.error(`::error::Expected Lighthouse JSON reports for home/product/collection, found ${files.length}.`);
+            process.exit(1);
+          }
+
+          const reports = files.map((file) => {
+            const report = JSON.parse(fs.readFileSync(`${dir}/${file}`, 'utf8'));
+            const url = report.finalDisplayedUrl || report.finalUrl || report.requestedUrl || '';
+            const pathname = (() => {
+              try {
+                return new URL(url).pathname;
+              } catch {
+                return url;
+              }
+            })();
+            const perf = report.categories?.performance?.score;
+            const a11y = report.categories?.accessibility?.score;
+            console.log(`${file} ${pathname} performance=${perf} accessibility=${a11y}`);
+            return { file, pathname, perf, a11y };
+          });
+
+          const passwordReports = reports.filter((report) => report.pathname === '/password');
+          if (passwordReports.length) {
+            console.error(`::error::Lighthouse audited /password instead of the storefront preview: ${passwordReports.map((report) => report.file).join(', ')}`);
+            process.exit(1);
+          }
+
+          const hasHome = reports.some((report) => report.pathname === '/');
+          const hasProduct = reports.some((report) => report.pathname.startsWith('/products/'));
+          const hasCollection = reports.some((report) => report.pathname.startsWith('/collections/'));
+          if (!hasHome || !hasProduct || !hasCollection) {
+            console.error(`::error::Expected Lighthouse coverage for home, product, and collection pages. home=${hasHome} product=${hasProduct} collection=${hasCollection}`);
+            process.exit(1);
+          }
+
+          // Gate: accessibility is HARD (rule-based, stable in CI) — homepage to the
+          // strict bar, product/collection to the soft floor. Performance is ADVISORY
+          // by default (GitHub-hosted runner perf swings 0.68-1.0 on unchanged bytes);
+          // it is reported and warned-on, but only fails the job when perf-blocking=true
+          // (e.g. on a stable/self-hosted runner). Each page is aggregated across its
+          // LHCI runs with the median so one flaky run can't flip the gate.
+          const homePerf = Number(process.env.HOME_PERF);
+          const homeA11y = Number(process.env.HOME_A11Y);
+          const secPerf = Number(process.env.SEC_PERF);
+          const secA11y = Number(process.env.SEC_A11Y);
+          const perfBlocking = String(process.env.PERF_BLOCKING) === 'true';
+          const median = (xs) => {
+            const sorted = xs.filter((x) => typeof x === 'number').sort((a, b) => a - b);
+            return sorted.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null;
+          };
+          const byPath = {};
+          for (const r of reports) {
+            (byPath[r.pathname] ||= { perf: [], a11y: [] });
+            byPath[r.pathname].perf.push(r.perf);
+            byPath[r.pathname].a11y.push(r.a11y);
+          }
+          const a11yFailures = [];
+          const perfMisses = [];
+          for (const [pathname, scores] of Object.entries(byPath)) {
+            const isHome = pathname === '/';
+            const perfBar = isHome ? homePerf : secPerf;
+            const a11yBar = isHome ? homeA11y : secA11y;
+            const perf = median(scores.perf);
+            const a11y = median(scores.a11y);
+            console.log(`gate ${pathname} perf(median)=${perf} [target ${perfBar}] a11y(median)=${a11y} [gate ${a11yBar}]`);
+            if (a11y === null || a11y < a11yBar) a11yFailures.push(`${pathname} accessibility ${a11y} < ${a11yBar}`);
+            if (perf === null || perf < perfBar) perfMisses.push(`${pathname} performance ${perf} < ${perfBar}`);
+          }
+          if (perfMisses.length) {
+            const body = perfMisses.join('\n  ');
+            if (perfBlocking) {
+              console.error(`::error::Performance gate failed (perf-blocking=true):\n  ${body}`);
+            } else {
+              console.log(`::warning::[report-only] Performance below target (not gating; CI-runner perf is noisy):\n  ${body}`);
+            }
+          }
+          if (a11yFailures.length) {
+            console.error(`::error::Accessibility gate failed:\n  ${a11yFailures.join('\n  ')}`);
+          }
+          if (a11yFailures.length || (perfBlocking && perfMisses.length)) {
+            process.exit(1);
+          }
+          console.log(`Gate passed — a11y enforced (home>=${homeA11y}, product+collection>=${secA11y}); perf ${perfBlocking ? 'enforced' : 'report-only'} (home target ${homePerf}, secondary ${secPerf}).`);
+          NODE

@@ -1,0 +1,41 @@
+# Lefthook for Shopify theme repos — pre-commit fast (< 2s), pre-push heavier.
+#
+# Install once per machine:    brew install lefthook
+# Install once per repo clone: lefthook install
+#
+# Why this split:
+#   - theme-check is the canonical gate, but it takes 5-15s on a theme — too
+#     slow for every commit. CI catches it on PR; pre-push catches it on push,
+#     before CI burns minutes.
+#   - gitleaks protect --staged scans only the staged hunks (~0.5s), so it's
+#     cheap enough to run on every commit. Catches accidentally-staged tokens
+#     BEFORE they touch a branch.
+#   - Biome on assets/ is deliberately NOT here — themes lack a biome.json,
+#     so default-rules + formatter noise would fail every commit. Revisit
+#     after per-theme biome.json opt-in lands.
+
+pre-commit:
+  parallel: true
+  commands:
+    gitleaks-staged:
+      run: gitleaks protect --staged --redact --verbose
+      # Non-mutating — no stage_fixed.
+
+pre-push:
+  parallel: true
+  commands:
+    theme-check:
+      # Requires the Shopify CLI (`shopify` binary) installed locally — every
+      # theme dev needs it for `shopify theme dev` anyway, so this assumption
+      # holds for any theme team. If not installed, the hook prints a clear error.
+      run: |
+        if ! command -v shopify >/dev/null 2>&1; then
+          echo "::error::Shopify CLI not installed. Install via 'npm install -g @shopify/cli @shopify/theme' before pushing."
+          exit 1
+        fi
+        shopify theme check --fail-level=error
+      tags: ship-gate
+
+    gitleaks-full:
+      run: gitleaks detect --redact --verbose --no-banner --source .
+      tags: secrets-gate

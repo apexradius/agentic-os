@@ -26,14 +26,22 @@ Complexity is NOT just step count. Evaluate all three dimensions:
 
 Legacy heuristic (still valid as tiebreaker): <5 steps = Light, 5-15 = Medium, 15+ = Heavy.
 
+## Per-step model + effort (all levels)
+
+Every step the plan hands off carries a **recommended model tier + effort** (e.g. `Sonnet · high`,
+`Opus · xhigh`, `Haiku · low`) — cite the `model-router` skill for the tier→effort mapping. The
+session runs `opusplan` (Opus plans, Sonnet executes), so a step that needs Opus *for the build*
+must be tagged Opus or it won't get it. Level 1 tags it inline per step; Levels 2–3 carry a
+`Model · Effort` field per task. A step with no tag is not ready to hand off.
+
 ## Level 1: Quick Outline (Light)
 Output directly in conversation:
 ```
 ## Plan: [Task]
 Complexity: [score] (files: [N], APIs: [N], state: [N])
-1. [step]
-2. [step]
-3. [step]
+1. [step] — `Sonnet · medium`
+2. [step] — `Opus · xhigh`
+3. [step] — `Haiku · low`
 Ready to start? (y/n)
 ```
 
@@ -139,7 +147,7 @@ Use when implementing complex features with an AI agent:
 90/10 rule: 90% of session time in planning before touching code.
 
 ## Context Management
-- **Compaction trigger**: When token count exceeds 250K-300K, run `/compact` — reasoning quality degrades beyond this point
+- **Compaction trigger**: Follow the [context-budget ladder](../../standards/context-budget/) — the gate fires at configurable percentage rungs (default: 45 / 55 / 65 / 75 / 85 / 95% of the window) rather than a fixed token count. Keep the living handoff current at each rung; the host runtime compacts on its own schedule.
 - **WHISK Framework**: Write (externalize memory) -> Isolate (sub-agents) -> Select (just-in-time context) -> Compress (delay compaction as long as possible)
 - **After compaction**: Re-read task_plan.md, progress.md, and findings.md before resuming
 - **Context reset**: Start fresh conversation with plan file as sole input for clean implementation sessions

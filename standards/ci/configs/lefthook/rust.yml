@@ -1,0 +1,21 @@
+# Lefthook for Rust workspaces. clippy is intentionally OFF in pre-commit
+# (too slow on large crates — kills developer velocity, gets bypassed with
+# --no-verify). It runs in pre-push and CI instead.
+
+pre-commit:
+  parallel: true
+  commands:
+    cargo-fmt:
+      glob: "*.rs"
+      run: cargo fmt -- --check
+      # No stage_fixed — fmt --check is non-mutating; run `cargo fmt` manually
+      # if it fails. We don't want commits to silently reformat code.
+
+pre-push:
+  commands:
+    clippy:
+      run: cargo clippy --workspace --all-targets -- -D warnings
+      tags: lint
+    test:
+      run: cargo test --workspace
+      tags: tests
