@@ -16,6 +16,7 @@ cleared these — not that it merely ran.
 | [observability.md](observability.md) | Making the framework's own runs measurable — the run-record. |
 | [versioning.md](versioning.md) | The promise an update makes to consumers — SemVer where "breaking" = a green instance turning red. |
 | [learning.md](learning.md) | Turning accumulated run evidence into reviewed change — without an autonomous self-modifying loop. |
+| [threat-model.md](threat-model.md) | The build-time security question — untrusted input meets privilege — answered before a primitive ships. |
 
 The **prompt house style** — how agent bodies are written — is a standard too, but it lives
 with its validator in [`../../prompting/`](../../prompting/).

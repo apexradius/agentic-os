@@ -20,6 +20,7 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Context budget | [`doctrine/standards/context-budget.md`](../doctrine/standards/context-budget.md) | [`context-budget/`](context-budget/) — handoff/compaction discipline hooks + budget checks | human review / the planner role |
 | Eval / observability | [`doctrine/standards/observability.md`](../doctrine/standards/observability.md) | [`eval-harness/`](eval-harness/) — runs each skill's `eval.md`, emits a pass/fail scoreboard (sink: [`runtime/observability/`](../runtime/observability/)) | instance judge endpoint / human review of eval verdicts |
 | Versioning | [`doctrine/standards/versioning.md`](../doctrine/standards/versioning.md) | [`versioning/`](versioning/) — proves `VERSION` is valid SemVer and the `CHANGELOG`'s latest released entry matches it | human review of the bump decision (MAJOR/MINOR/PATCH) |
+| Threat model (build-time) | [`doctrine/standards/threat-model.md`](../doctrine/standards/threat-model.md) | [`threat-model/`](threat-model/) — proves every shipped `THREAT-MODEL.md` answers the four questions (trust boundary / privilege / blast radius / mitigation) | [`roles/security-reviewer.md`](../roles/security-reviewer.md) — judges whether the reasoning is right |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every

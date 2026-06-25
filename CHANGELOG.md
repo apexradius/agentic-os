@@ -8,6 +8,16 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-25
+
+### Added
+- **Build-time threat-model standard** (`doctrine/standards/threat-model.md` + `standards/threat-model/`) —
+  the design-time security discipline: before a primitive that touches untrusted input or wields privilege
+  ships, its author answers four questions (trust boundary, privilege, blast radius, mitigation). A
+  zero-dependency gate proves every shipped `THREAT-MODEL.md` answers all four; the tool-gate hook ships
+  the worked exemplar (`standards/tool-gate/THREAT-MODEL.md`). Format is enforced here; judgment stays with
+  the security-reviewer role.
+
 ## [0.2.0] - 2026-06-25
 
 ### Added
