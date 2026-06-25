@@ -17,6 +17,9 @@ cleared these — not that it merely ran.
 | [versioning.md](versioning.md) | The promise an update makes to consumers — SemVer where "breaking" = a green instance turning red. |
 | [learning.md](learning.md) | Turning accumulated run evidence into reviewed change — without an autonomous self-modifying loop. |
 | [threat-model.md](threat-model.md) | The build-time security question — untrusted input meets privilege — answered before a primitive ships. |
+| [reference-integrity.md](reference-integrity.md) | The framework's own links resolve and every standard is on its index — no silent doc rot. |
+| [primitive-integrity.md](primitive-integrity.md) | Every primitive ships its full machinery (spec + schema + creator + validator) — no half-built primitive the harness silently skips. |
+| [standard-shape.md](standard-shape.md) | The contract every standards-as-code gate obeys — node shebang, zero npm deps, parseable selftest tail. The gate that holds the gates. |
 
 The **prompt house style** — how agent bodies are written — is a standard too, but it lives
 with its validator in [`../../prompting/`](../../prompting/).
