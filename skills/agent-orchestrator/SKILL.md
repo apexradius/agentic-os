@@ -14,7 +14,7 @@ Run complex multi-step tasks by coordinating multiple agents.
 3. **Assign roles** — every agent gets a role with enforced permissions (see Role Enforcement)
 4. **Define contracts** — every agent gets a YAML contract block (see Agent Contract Format)
 5. **Validate ownership** — no two Builder agents own the same file (see Conflict Prevention)
-6. **Identify parallelism** — tasks with no shared dependencies run simultaneously
+6. **Identify parallelism** — tasks with no shared dependencies run simultaneously (the fan-out/fan-in contract this skill implements is doctrine: [../../coordination/fan-out.md](../../coordination/fan-out.md))
 7. **Launch agents** — use Agent tool with appropriate subagent_type:
    - `Explore` for research/analysis (read-only)
    - `Plan` for architecture/design

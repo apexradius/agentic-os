@@ -20,6 +20,13 @@ why — as a fact, not a question.
 "Done" means an **executable check passed and you watched it pass** — not "I reviewed the
 output." Code → run the tests. Deploy → hit the health check. Generation → validate the format.
 
+**Prefer a deterministic grader; reserve a judge for what only a judge can grade.** Classify each
+acceptance criterion: if a rule can decide it — a unit test, a schema or format validator, an
+exact match, a tool-call or decision match — that rule *is* the gate, and a model-graded "judge"
+is forbidden there. A judge is slower, costlier, and biased by answer order and verbosity, so a
+judge rubber-stamping what a test could have decided is verification theater. Reserve model
+judgment for genuinely free-form output where no rule suffices — and justify it when you do.
+
 ## The pre-ship gate
 
 Before any code goes to production — every time, no exceptions:
@@ -40,6 +47,9 @@ If any item fails, **do not ship — fix first.**
 
 When verification fails, don't patch the patch in a recursive fix loop. Revert to the last
 checkpoint, re-read the plan / `WIRING.md`, and re-implement from the corrected understanding.
+Revert the *code* — but keep the *failure evidence* in working context (the WHISK carve-out in
+[context.md](context.md)): the stack trace that just failed is what steers the re-implementation
+away from the same wall.
 
 ## Close-out: retire the plan, keep the knowledge
 
@@ -62,4 +72,4 @@ plan — that reference is exactly what step 1 moved into knowledge. This is a *
 gate**: a plan's completion isn't deterministically detectable from the file, so no validator
 enforces it — the loop does.
 
-> Last reviewed: 2026-06-22
+> Last reviewed: 2026-06-24

@@ -18,7 +18,8 @@ Keeping these layers distinct is what stops "the planner graded its own homework
 1. **Intake** — a task brief enters the [ledger](ledger.md).
 2. **Plan** — the Council co-authors a decision-complete plan (see
    [../loop/planning.md](../loop/planning.md)) and names the executor.
-3. **Build** — the executor implements the slice end-to-end against the plan.
+3. **Build** — the executor implements the slice end-to-end against the plan. When the work is
+   parallelizable, the build may fan out to many workers ([fan-out.md](fan-out.md)).
 4. **Verify** — a *different* Council member cross-reviews against the plan ([review.md](review.md)).
 5. **Escalate** — unresolved disputes and irreversible/high-risk calls go to the human
    tiebreaker.
@@ -36,4 +37,4 @@ per file, the recommended model tier + effort per slice, acceptance criteria, an
 verification command — enough that the executor makes no judgment calls the plan didn't make. A vague handoff is a planning failure, not an executor
 failure.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

@@ -12,7 +12,11 @@ recoverable.
 - **Hold** — delay compaction as long as possible; don't let it trigger mid-thought.
 - **Isolate** — push read-only research into disposable sub-agents (cheap context you throw away).
 - **Select** — load only what you need. Don't re-read a whole file for five lines.
-- **Keep lean** — summarize between phases; drop resolved context.
+- **Keep lean** — summarize between phases; drop resolved context. *Carve-out:* an **unresolved**
+  failure is not resolved context — keep failed actions, observations, and stack traces in the
+  working window until the underlying issue is fixed and verified. The model corrects course only
+  when it can see the failure it's recovering from; prune that evidence early and it repeats the
+  mistake. That evidence becomes droppable once the fix passes [Verify](verification.md), not before.
 
 ## Context budget — the percentage ladder
 
@@ -45,7 +49,8 @@ the main context compounds toward compaction.
 
 Do **not** dispatch for: actual edits, a single targeted lookup, or work that needs the
 conversation's context. The safety contract for delegation is
-[../doctrine/rules/delegation.md](../doctrine/rules/delegation.md).
+[../doctrine/rules/delegation.md](../doctrine/rules/delegation.md); the structured many-at-once
+pattern (orchestrator + workers) is [../coordination/fan-out.md](../coordination/fan-out.md).
 
 ## Two reflexes
 
@@ -57,4 +62,4 @@ conversation's context. The safety contract for delegation is
   current events, versions, prices, service status, "is X still true" — use live lookup before
   answering. Reasoning, math, and code don't need it.
 
-> Last reviewed: 2026-06-23
+> Last reviewed: 2026-06-24

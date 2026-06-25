@@ -30,6 +30,8 @@ bad delegation, not a bad agent.
 - Never assume a sub-agent understood context it was never given.
 
 The mechanics of *when* to dispatch (read-only research, long sessions, context isolation)
-live in [../../loop/context.md](../../loop/context.md); this file is the safety contract.
+live in [../../loop/context.md](../../loop/context.md); this file is the safety contract. For
+the multi-worker extension — one orchestrator dispatching many at once — see
+[../../coordination/fan-out.md](../../coordination/fan-out.md).
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

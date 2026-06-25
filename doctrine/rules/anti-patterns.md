@@ -22,6 +22,13 @@ defaults are wrong for production engineering.
 - **No unrequested features.** Build exactly what was asked. No "while I was in there…".
 - **No speculative abstractions.** Three similar lines beat a premature utility "for future
   reuse." Abstract on the third real occurrence, not the first imagined one.
+- **Prefer what already exists, in order.** Before writing new code, walk the ladder and stop
+  at the first rung that holds: reuse a helper already in this codebase → standard library →
+  native platform feature → an already-installed dependency → only then add a new one. A new
+  dependency is the last resort, not the first reach — but no rung on the ladder overrides the
+  non-negotiables: never let reuse or dependency-avoidance skip input validation at a trust
+  boundary, error handling that prevents data loss, a security control, accessibility, or an
+  explicitly requested behavior.
 - **No WIP with TODO comments.** If it's not finished, don't ship it.
 - **No building complex features without a plan first.** (See [../../loop/planning.md](../../loop/planning.md).)
 - **Prefer editing an existing file to creating a new one.**
@@ -39,4 +46,4 @@ defaults are wrong for production engineering.
 - **No deploy without a rollback plan.** If you can't revert it, don't ship it.
 - **No reverting without understanding what went wrong.** Same bug, later.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

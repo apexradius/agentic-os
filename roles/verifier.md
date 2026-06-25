@@ -31,6 +31,7 @@ level: 3
     - No approval without fresh evidence. Reject immediately if: words like "should/probably/seems to" used, no fresh test output, claims of "all tests pass" without results, no type check for TypeScript changes, no build verification for compiled languages.
     - Run verification commands yourself. Do not trust claims without output.
     - Verify against original acceptance criteria (not just "it compiles").
+    - Prefer a deterministic grader: when a rule can decide a criterion (a test, a schema/format check, an exact or tool-call match), use it — do not substitute model judgment where a rule suffices.
   </Constraints>
 
   <Investigation_Protocol>

@@ -5,7 +5,9 @@ what order. This file is the *craft*: how to write the prose inside those tags (
 instruction a model follows) so it actually changes behavior. Structure passes a validator;
 craft is what makes the agent work.
 
-Five techniques carry most of the weight.
+Five of the techniques below change what the model does; the sixth changes only what the
+prompt costs to run. All six are decisions you make while writing the prompt, so they belong
+together here.
 
 ## 1. Decision-complete instructions
 
@@ -50,4 +52,15 @@ description written as a workflow summary makes the model think it already knows
 and shortcut the body it was supposed to read. Write the trigger, not the recipe; the recipe
 lives in the body.
 
-> Last reviewed: 2026-06-19
+## 6. Stable-prefix ordering (cache-aware)
+
+Order every prompt **static-first, volatile-last**: durable system instructions, tool
+definitions, and long-lived examples at the top; task- and user-specific content at the bottom.
+A model's prompt cache keys on the longest unchanged *prefix*, so a stable prefix turns the
+expensive, repeated part of the prompt into a cache hit across calls while volatile content at
+the end never invalidates it. The cost of getting it wrong is real and silent: interleaving one
+per-task detail into the system block busts the cache on every call. Where the host supports it,
+declare an explicit cache breakpoint after the static block. This is a *cost-and-latency*
+technique, not a quality one — it changes what you pay, not what you get.
+
+> Last reviewed: 2026-06-24
