@@ -17,9 +17,11 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Mirror parity | [`doctrine/README.md`](../doctrine/README.md) — single source ("everything else is a mirror") | [`mirror-parity/`](mirror-parity/) — co-owned manual pairs keep the same outline | human review of mirrored prose |
 | Session discipline | [`doctrine/standards/session-discipline.md`](../doctrine/standards/session-discipline.md) | [`session-discipline/`](session-discipline/) — PIV planning gate + lifecycle hooks | human review / the planner role |
 | Continuous integration | [`doctrine/standards/ci.md`](../doctrine/standards/ci.md) | [`ci/`](ci/) — reusable workflows + shared tool configs (zone-pure source the instance's delivery repo syncs from) | CodeRabbit / Greptile PR review (Tiers 2–3) |
+| Context budget | [`doctrine/standards/context-budget.md`](../doctrine/standards/context-budget.md) | [`context-budget/`](context-budget/) — handoff/compaction discipline hooks + budget checks | human review / the planner role |
+| Eval / observability | [`doctrine/standards/observability.md`](../doctrine/standards/observability.md) | [`eval-harness/`](eval-harness/) — runs each skill's `eval.md`, emits a pass/fail scoreboard (sink: [`runtime/observability/`](../runtime/observability/)) | instance judge endpoint / human review of eval verdicts |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
 `framework/standards/*/validate.mjs` alongside the primitive validators and runs its selftest.
 
-> Last reviewed: 2026-06-23
+> Last reviewed: 2026-06-25

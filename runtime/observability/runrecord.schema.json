@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "run-record",
+  "description": "One closed-task run-record. The fields are the observability standard (framework/doctrine/standards/observability.md); the store and the log path are instance-owned. Append-only NDJSON, one object per line, redacted before write.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts", "task_id", "slice", "verify"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time", "description": "When this run closed (ISO 8601, injected from the runtime clock)." },
+    "task_id": { "type": "string", "description": "The ledger task id this run was." },
+    "slice": { "type": "string", "description": "The slice of that task this run covered." },
+    "model": { "type": "string", "description": "Opaque instance model/tier label — the framework never enumerates model names." },
+    "effort": { "type": "string", "description": "Opaque reasoning-effort label." },
+    "duration": { "type": "number", "minimum": 0, "description": "Wall-clock in MILLISECONDS." },
+    "attempts": { "type": "integer", "minimum": 1, "description": "How many implement→verify iterations the run took." },
+    "tokens": {
+      "description": "Output/total tokens, or an {in,out} split.",
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "in": { "type": "integer", "minimum": 0 }, "out": { "type": "integer", "minimum": 0 } }
+        }
+      ]
+    },
+    "cost": { "type": "number", "minimum": 0, "description": "What the run spent, in the instance's unit." },
+    "verify": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["first_pass", "result"],
+      "properties": {
+        "first_pass": { "type": "boolean", "description": "Did Verify pass on the first attempt?" },
+        "result": { "type": "string", "enum": ["pass", "fail"], "description": "The verify result at close." }
+      }
+    },
+    "gate_decisions": {
+      "type": "array",
+      "description": "Redacted gate trail — records THAT a gate decided, never the payload it decided on.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision", "rules", "reason_hash"],
+        "properties": {
+          "decision": { "type": "string", "enum": ["allow", "ask", "deny"] },
+          "rules": { "type": "array", "items": { "type": "string" } },
+          "reason_hash": { "type": "string", "description": "sha256/12 of the reason — correlates identical reasons, reveals nothing." }
+        }
+      }
+    },
+    "metadata": { "type": "object", "description": "Instance escape hatch for extra structured fields. Must carry no secrets (data-handling.md)." }
+  }
+}

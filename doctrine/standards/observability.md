@@ -40,7 +40,9 @@ A measurable system improves on evidence instead of argument:
   than from the last thing someone happened to remember.
 
 This standard defines the *contract* — the fields, and the append-only, redacted shape. The sink and
-the readers are the runtime's to build; the point is that nothing closes a task without leaving a
-trace of how the run actually went.
+the readers now exist: [`framework/runtime/observability/`](../../runtime/observability/) builds and
+stores the record (opt-in, fail-open, redacted), and [`framework/standards/eval-harness/`](../../standards/eval-harness/)
+is its first writer — its scoreboard lands one run-record per gradeable eval. The point is that nothing
+closes a task without leaving a trace of how the run actually went.
 
 > Last reviewed: 2026-06-24
