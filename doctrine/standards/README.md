@@ -15,6 +15,7 @@ cleared these — not that it merely ran.
 | [session-discipline.md](session-discipline.md) | Making the PIV planning phase structural — no edit without a plan. |
 | [observability.md](observability.md) | Making the framework's own runs measurable — the run-record. |
 | [versioning.md](versioning.md) | The promise an update makes to consumers — SemVer where "breaking" = a green instance turning red. |
+| [learning.md](learning.md) | Turning accumulated run evidence into reviewed change — without an autonomous self-modifying loop. |
 
 The **prompt house style** — how agent bodies are written — is a standard too, but it lives
 with its validator in [`../../prompting/`](../../prompting/).

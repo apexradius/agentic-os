@@ -9,6 +9,7 @@ Apex-free; source committed, build artifacts gitignored. Apex wiring lives in `a
 | [`council/`](council/) | The council orchestrator (`council`). | Stage 4A–4B ✅ |
 | [`scheduler/`](scheduler/) | The proactive-loop tick — selects ready/due tasks over the ledger (model: [`coordination/scheduler.md`](../coordination/scheduler.md)). Zero-dep, read-only. | active |
 | [`observability/`](observability/) | The run-record sink — append-only, redacted run-records per closed task (model: [`doctrine/standards/observability.md`](../doctrine/standards/observability.md)). Zero-dep, opt-in, fail-open. | active |
+| [`learning/`](learning/) | The run-record analyzer — turns a window of run-records into signals + bounded review candidates (model: [`doctrine/standards/learning.md`](../doctrine/standards/learning.md)). Zero-dep, read-only, never edits the framework. | active |
 | [`mcp-shared/`](mcp-shared/) | The shared MCP factory (`createApexServer`, error handling, breaker, health) — `@framework/mcp-shared`. | Stage 4D ✅ |
 | [`mcp-servers/`](mcp-servers/) | First-party MCP servers (`@framework/<name>-mcp`). 11 TS on the factory (ai, browser, core, data, github, seo, canva, tools, commerce, social, automation) + 3 legacy JS (telemetry, google-drive, omnibus). | Stage 4E ✅ |
 | [`router/`](router/) | The routing engine: `prompt-router-mcp` (`@framework/prompt-router-mcp`, workspace member) + a Python `semantic/` classifier + a `harness/`. Instance routes/library → `apex/config`. | Stage 4G ✅ |

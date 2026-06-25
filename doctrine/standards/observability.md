@@ -37,7 +37,8 @@ A measurable system improves on evidence instead of argument:
   results land in a queryable place; the run-record is that place.
 - **The learning loop becomes data-driven** — "which gates catch the most real failures, which rules
   get skipped under pressure" becomes answerable, so doctrine evolves from accumulated outcomes rather
-  than from the last thing someone happened to remember.
+  than from the last thing someone happened to remember. The [learning standard](learning.md) defines that
+  loop; [`framework/runtime/learning/`](../../runtime/learning/) reads these records to surface its signals.
 
 This standard defines the *contract* — the fields, and the append-only, redacted shape. The sink and
 the readers now exist: [`framework/runtime/observability/`](../../runtime/observability/) builds and
@@ -45,4 +46,4 @@ stores the record (opt-in, fail-open, redacted), and [`framework/standards/eval-
 is its first writer — its scoreboard lands one run-record per gradeable eval. The point is that nothing
 closes a task without leaving a trace of how the run actually went.
 
-> Last reviewed: 2026-06-24
+> Last reviewed: 2026-06-25

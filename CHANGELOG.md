@@ -8,6 +8,15 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-25
+
+### Added
+- **Empirical learning loop** (`doctrine/standards/learning.md` + `runtime/learning/`) — a zero-dependency
+  analyzer over the observability run-record log that surfaces recurring failures, rework hotspots,
+  duration/cost outliers, and one-sided gates as a **bounded list of review candidates** for a
+  human/Council retro. Reads only; has no path that edits the framework — guarding the
+  autonomous-self-modification failure mode the standard names.
+
 ## [0.1.0] - 2026-06-25
 
 First tagged version. The public tree has existed since 2026-06-20; this draws the initial version line
