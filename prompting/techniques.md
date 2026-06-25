@@ -5,8 +5,8 @@ what order. This file is the *craft*: how to write the prose inside those tags (
 instruction a model follows) so it actually changes behavior. Structure passes a validator;
 craft is what makes the agent work.
 
-Five of the techniques below change what the model does; the sixth changes only what the
-prompt costs to run. All six are decisions you make while writing the prompt, so they belong
+Six of the techniques below change what the model does; the seventh changes only what the
+prompt costs to run. All seven are decisions you make while writing the prompt, so they belong
 together here.
 
 ## 1. Decision-complete instructions
@@ -52,7 +52,20 @@ description written as a workflow summary makes the model think it already knows
 and shortcut the body it was supposed to read. Write the trigger, not the recipe; the recipe
 lives in the body.
 
-## 6. Stable-prefix ordering (cache-aware)
+## 6. Declare the output contract
+
+Tell the model the exact shape of what it must return — the fields, their types, the order — not
+just the task. An instruction that ends "…and report what you find" gets prose; one that ends
+"return `{verdict, evidence[], confidence}`" gets something the next step can parse without a
+second model call. The half authors forget is the **degenerate case**: name the shape for empty,
+refusal, and uncertainty too, or the model invents one under pressure — an apology, an "N/A", a
+confidently guessed answer where it should have abstained. A contract that says
+`{verdict: "INSUFFICIENT_EVIDENCE", missing: […]}` gives uncertainty a home instead of forcing a
+false pick. In an agent body this is the `<Output_Format>` block ([agent-prompt.md](agent-prompt.md));
+a runtime that routes prompts enforces the same contract as a schema on the way out, so the
+discipline holds whether or not a human wrote the prompt.
+
+## 7. Stable-prefix ordering (cache-aware)
 
 Order every prompt **static-first, volatile-last**: durable system instructions, tool
 definitions, and long-lived examples at the top; task- and user-specific content at the bottom.

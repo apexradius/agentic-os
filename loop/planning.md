@@ -28,6 +28,18 @@ Resolve unknowns the right way *before* writing the plan: discoverable facts get
 preferences get one round of questions. (See
 [../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md).)
 
+## Define success up front
+
+A plan that doesn't say what "done" looks like can't be verified — criteria invented *after* the
+build are shaped by whatever got built, which is verification theatre. So before Implement starts,
+the plan names its **acceptance criteria**, and for each one the **machine check that decides it**:
+a deterministic grader (a test, a schema or format check, an exact match, a tool-call or decision
+match) wherever a rule can settle it, and a model-graded judge reserved only for genuinely free-form
+output no rule can score. Writing the check next to the criterion is what makes
+[Verify](verification.md) a gate rather than an opinion — the criteria are the contract Verify holds
+the work to, and the [coordination ledger](../coordination/ledger.md) carries the same
+`acceptance_criteria` + `verification_command` pair when the task is shared.
+
 ## Evidence-driven hypothesis ranking
 
 When the work is diagnostic — a bug, a regression, an unknown cause — the plan is a ranked set
@@ -40,4 +52,4 @@ of hypotheses, not a single guess:
 Track uncertainty explicitly: what would change the ranking, and which probe would tell you.
 This is the same discipline the [root-cause law](../doctrine/rules/root-cause.md) requires.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

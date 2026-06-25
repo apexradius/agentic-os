@@ -51,6 +51,28 @@ Revert the *code* — but keep the *failure evidence* in working context (the WH
 [context.md](context.md)): the stack trace that just failed is what steers the re-implementation
 away from the same wall.
 
+## The bounded convergent loop
+
+Verify is a loop, not a gate you pass once. A failed check sends the work back to Implement under
+the *same* plan — that re-entry is **reiteration**, and it is the normal path, not an error. Three
+things keep reiteration from running away:
+
+- **Convergence.** Every step the loop may re-run must be **idempotent** — running it twice lands
+  the same state as running it once
+  ([../doctrine/rules/idempotency.md](../doctrine/rules/idempotency.md)). A non-idempotent retry
+  doesn't fix the failure, it doubles it.
+- **A ceiling.** The implement→verify cycle carries an explicit budget: a default cap of *N* failed
+  iterations on the same slice (the instance sets *N*; three is a sane default), plus any token or
+  wall-clock ceiling the instance imposes. Each iteration must change the input that caused the
+  failure — re-running an identical attempt and expecting a different result is exactly the waste
+  the cap exists to kill.
+- **A stop.** When the ceiling is hit, the loop **stops and escalates** instead of burning the rest
+  of the window. Escalation is one mechanism at two scales: a solo runtime halts and asks
+  ([../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md)); a multi-agent
+  runtime hands to the Council tiebreaker or a human
+  ([../coordination/council.md](../coordination/council.md)). Stopping with a clear "tried *N* times,
+  here is the wall" beats a silent infinite grind.
+
 ## Close-out: retire the plan, keep the knowledge
 
 A plan is scaffolding, not a record. Once the work is verified done, the plan has served its

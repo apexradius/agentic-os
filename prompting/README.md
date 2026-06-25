@@ -5,7 +5,7 @@ Two layers, two files:
 | File | Owns |
 |---|---|
 | [agent-prompt.md](agent-prompt.md) | **Structure** — the `<Agent_Prompt>` XML contract: which tags exist, their order, the two required shapes. The skeleton every agent body fills. |
-| [techniques.md](techniques.md) | **Craft** — how to write the prose *inside* those tags so it works: six techniques, from decision-complete instructions to cache-aware prompt ordering. |
+| [techniques.md](techniques.md) | **Craft** — how to write the prose *inside* those tags so it works: seven techniques, from decision-complete instructions to cache-aware prompt ordering. |
 
 `agent-prompt.md` is enforced by the agents primitive
 ([../primitives/agents/](../primitives/agents/)): its validator checks the required `<Role>`

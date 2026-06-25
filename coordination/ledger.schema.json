@@ -94,6 +94,23 @@
     "last_heartbeat_pid": { "type": "integer" },
     "created_at": { "type": "string", "format": "date-time" },
     "updated_at": { "type": "string", "format": "date-time" },
+    "transitions": {
+      "type": "array",
+      "description": "Optional append-only audit trace of lifecycle changes — the cause behind each status transition. The latest ledger line still wins for current state; this records why the state got there.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["at", "to_status"],
+        "properties": {
+          "at": { "type": "string", "format": "date-time", "description": "When the transition happened." },
+          "by": { "type": "string", "description": "Role/agent that made the transition." },
+          "from_status": { "type": "string", "description": "Status before the transition." },
+          "to_status": { "type": "string", "description": "Status after the transition." },
+          "rationale": { "type": "string", "description": "Why the transition happened — the decision behind it." },
+          "evidence": { "type": "string", "description": "Optional pointer to proof — a commit, an artifact, a log location." }
+        }
+      }
+    },
     "metadata": {
       "type": "object",
       "description": "Instance-specific extension fields the generic model does not define."

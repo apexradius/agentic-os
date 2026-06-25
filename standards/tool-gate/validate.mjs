@@ -8,12 +8,14 @@
 //   3. INTEGRATION — the on-disk fixtures behave: green = no findings/allow-or-ask,
 //      red = denied (blocking), ask = flagged-but-not-denied (notes only).
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 import { buildSurface, surfacesFromJsonl } from "./lib/parse.mjs";
 import { scanSurface, decide } from "./gate.mjs";
+import { auditDecision } from "./lib/audit.mjs";
 import { RULES } from "./rules/index.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -118,6 +120,25 @@ const ask = decideAll("fixtures/ask/suspicious.jsonl");
 ok("integration: every ask call is flagged", ask.every((r) => r.findings.length > 0));
 ok("integration: no ask call is denied (notes only)", ask.every((r) => r.decision === "ask"),
   ask.filter((r) => r.decision !== "ask").map((r) => r.surface.command).join(" | "));
+
+// 4. Audit log — opt-in, append-only, redacted (framework/doctrine/standards/data-handling.md).
+const auditPath = join(tmpdir(), "tool-gate-audit-selftest.log");
+const cleanAudit = () => { try { if (existsSync(auditPath)) unlinkSync(auditPath); } catch {} };
+cleanAudit();
+const deniedResult = decide({ tool: "Bash", input: { command: "rm -rf /tmp/secretproj-xyz" } });
+ok("audit: off by default writes nothing",
+  auditDecision(deniedResult, { logPath: undefined }) === null && !existsSync(auditPath));
+const auditRec = auditDecision(deniedResult, { logPath: auditPath });
+ok("audit: a configured decision is recorded", !!auditRec && auditRec.decision === "deny");
+const auditLines = existsSync(auditPath) ? readFileSync(auditPath, "utf8").trim().split("\n").filter(Boolean) : [];
+ok("audit: a denied call yields exactly one line", auditLines.length === 1, `got ${auditLines.length}`);
+const auditLine = auditLines[0] || "";
+const auditParsed = (() => { try { return JSON.parse(auditLine); } catch { return {}; } })();
+ok("audit: record has only redacted keys",
+  JSON.stringify(Object.keys(auditParsed).sort()) === JSON.stringify(["decision", "reason_hash", "rules", "tool", "ts"]));
+ok("audit: reason is a 12-hex digest, not raw text", /^[0-9a-f]{12}$/.test(auditParsed.reason_hash || ""));
+ok("audit: the raw command never reaches the log", !auditLine.includes("secretproj-xyz") && !auditLine.includes("rm -rf"));
+cleanAudit();
 
 // Report (mirrors the other selftests).
 const failed = checks.filter((c) => !c.pass);

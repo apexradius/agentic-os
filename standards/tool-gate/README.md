@@ -45,6 +45,30 @@ It maps the gate's decision to the runtime's permission decision (`deny` blocks,
 the human, `allow` pre-clears) and **fails open** on its own error — a gate bug must never wedge
 the agent.
 
+## Audit log (opt-in)
+
+The gate decides on every call but, by default, remembers nothing — so after a session you can't ask
+what it denied or how often it asked. Set `TOOLGATE_AUDIT_LOG` to a writable path and the hook appends
+one NDJSON line per decision:
+
+```json
+{"ts":"2026-06-24T17:00:00.000Z","tool":"Bash","decision":"deny","rules":["recursive-force-delete"],"reason_hash":"a1b2c3d4e5f6"}
+```
+
+It records *that* a decision happened — the tool, the verdict, which rules fired, and a hash of the
+reason — and **never** the raw command, file content, path, or reason text. That keeps the trail
+compliant with the [data-handling standard](../../doctrine/standards/data-handling.md) (prove the gate
+acted without preserving the payload it acted on) and makes it the concrete `gate_decisions` stream the
+[observability standard](../../doctrine/standards/observability.md) names. Writing is **fail-open**: a
+logging fault is swallowed, never blocking the call the gate already decided.
+
+Read the trail back with the bundled reader:
+
+```bash
+node framework/standards/tool-gate/lib/audit.mjs <logfile> --denied            # only the denials
+node framework/standards/tool-gate/lib/audit.mjs <logfile> --since 2026-06-24  # since a timestamp
+```
+
 ## What it checks (9 rules)
 
 Each rule cites the `tool-gate.md` clause it enforces. Severity is **blocking** (a
@@ -94,4 +118,4 @@ The selftest proves, per rule, that a RED call is flagged and a GREEN call is no
 severity maps to the right decision, then runs the on-disk [`fixtures/`](fixtures/) end-to-end:
 `green/*` clean, `red/*` denied, `ask/*` flagged-but-not-denied.
 
-> Last reviewed: 2026-06-25
+> Last reviewed: 2026-06-24

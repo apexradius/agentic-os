@@ -9,5 +9,7 @@ set how *good* the work must be — rules are binary: a rule is either kept or b
 | [decision-making.md](decision-making.md) | Find the answer before asking; declare assumptions before acting. |
 | [anti-patterns.md](anti-patterns.md) | The recurring failure modes — never do these. |
 | [delegation.md](delegation.md) | Sub-agents start cold; verify before and after. |
+| [reversibility.md](reversibility.md) | Classify blast radius before acting; irreversible earns ceremony. |
+| [idempotency.md](idempotency.md) | A retried step must converge — twice lands the same state as once. |
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

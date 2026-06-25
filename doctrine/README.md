@@ -18,6 +18,8 @@ Two shelves:
 | [rules/decision-making.md](rules/decision-making.md) | You're unsure, blocked, or about to ask a question |
 | [rules/anti-patterns.md](rules/anti-patterns.md) | Always — these are the failure modes that erode trust |
 | [rules/delegation.md](rules/delegation.md) | Before dispatching a sub-agent |
+| [rules/reversibility.md](rules/reversibility.md) | Before a destructive, irreversible, or hard-to-undo action |
+| [rules/idempotency.md](rules/idempotency.md) | Before retrying or re-running a step that mutates state |
 | [standards/excellence.md](standards/excellence.md) | Before deciding what "good enough" means |
 | [standards/communication.md](standards/communication.md) | Before writing a response to the user |
 | [standards/design.md](standards/design.md) | Any UI, frontend, or document surface |
@@ -43,4 +45,4 @@ The framework earns the right to exist by staying small. Six rules govern every 
    vendor its bloat into this tree.
 6. **Commit source, gitignore artifacts. Secrets live in a secrets manager, never a file.**
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-24

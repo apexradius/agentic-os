@@ -15,6 +15,7 @@
 // the gate is a safety net, not the only line of defense.
 
 import { decide } from "../gate.mjs";
+import { auditDecision } from "../lib/audit.mjs";
 
 function emit(permissionDecision, reason) {
   process.stdout.write(JSON.stringify({
@@ -44,7 +45,9 @@ process.stdin.on("end", () => {
     return emit("allow", `tool-gate skipped (unparseable event: ${err.message})`);
   }
   try {
-    const { decision, reason, findings } = decide(event);
+    const result = decide(event);
+    const { decision, reason, findings } = result;
+    auditDecision(result); // opt-in (TOOLGATE_AUDIT_LOG), fail-open, redacted — never blocks the call
     const detail = findings.length
       ? `${reason} [${findings.map((f) => f.rule).join(", ")}]`
       : reason;

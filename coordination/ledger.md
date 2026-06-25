@@ -37,4 +37,14 @@ single-turn rule "no parallel edits to the same file"
 A cross-reviewer is the one allowed exception: it may edit the files under review during its
 round, after which ownership flips back ([review.md](review.md)).
 
-> Last reviewed: 2026-06-19
+## The audit trace
+
+State tells you *what* a task is now; it doesn't tell you *why* it got there. An optional
+`transitions` array on the record carries that — one append-only entry per lifecycle change (`at`,
+`by`, `from_status`, `to_status`, `rationale`, and an optional `evidence` pointer). It is the
+portable form of a signed review note: an escalated or cancelled task stays greppable for its
+current state *and* legible for the decision behind it. The trace is append-within-record, so the
+latest-line-wins rule still decides current state — `transitions` records the path, not the
+position.
+
+> Last reviewed: 2026-06-24
