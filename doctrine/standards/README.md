@@ -14,8 +14,9 @@ cleared these — not that it merely ran.
 | [context-budget.md](context-budget.md) | Keeping the living handoff fresh as the context window fills. |
 | [session-discipline.md](session-discipline.md) | Making the PIV planning phase structural — no edit without a plan. |
 | [observability.md](observability.md) | Making the framework's own runs measurable — the run-record. |
+| [versioning.md](versioning.md) | The promise an update makes to consumers — SemVer where "breaking" = a green instance turning red. |
 
 The **prompt house style** — how agent bodies are written — is a standard too, but it lives
 with its validator in [`../../prompting/`](../../prompting/).
 
-> Last reviewed: 2026-06-24
+> Last reviewed: 2026-06-25

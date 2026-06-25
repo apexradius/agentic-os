@@ -12,6 +12,10 @@ specifics (hosts, credentials, client names, tuned config) into a separate *inst
 that the framework reads through environment variables and config files — never by editing
 the framework itself.
 
+**Version:** [`VERSION`](VERSION) (SemVer) · changes in [`CHANGELOG.md`](CHANGELOG.md) · the
+contract in [`doctrine/standards/versioning.md`](doctrine/standards/versioning.md). A release is
+a public sync; an instance pins the version it synced and re-runs `validate.mjs --all` on update.
+
 ## The zone model
 
 The framework draws one hard line:

@@ -19,6 +19,7 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Continuous integration | [`doctrine/standards/ci.md`](../doctrine/standards/ci.md) | [`ci/`](ci/) — reusable workflows + shared tool configs (zone-pure source the instance's delivery repo syncs from) | CodeRabbit / Greptile PR review (Tiers 2–3) |
 | Context budget | [`doctrine/standards/context-budget.md`](../doctrine/standards/context-budget.md) | [`context-budget/`](context-budget/) — handoff/compaction discipline hooks + budget checks | human review / the planner role |
 | Eval / observability | [`doctrine/standards/observability.md`](../doctrine/standards/observability.md) | [`eval-harness/`](eval-harness/) — runs each skill's `eval.md`, emits a pass/fail scoreboard (sink: [`runtime/observability/`](../runtime/observability/)) | instance judge endpoint / human review of eval verdicts |
+| Versioning | [`doctrine/standards/versioning.md`](../doctrine/standards/versioning.md) | [`versioning/`](versioning/) — proves `VERSION` is valid SemVer and the `CHANGELOG`'s latest released entry matches it | human review of the bump decision (MAJOR/MINOR/PATCH) |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
