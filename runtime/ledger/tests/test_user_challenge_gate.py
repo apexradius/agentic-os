@@ -60,7 +60,7 @@ class UserChallengeGateTests(unittest.TestCase):
         run_review(self.tmp, "codex", "T", "--challenge")
         t = task_status(self.tmp, "T")
         self.assertEqual(t["status"], "pending-human")
-        self.assertEqual(t["escalation_to"], "ayo")
+        self.assertEqual(t["escalation_to"], "operator")
         self.assertIn("user_challenge", t)
         self.assertEqual(sorted(t["user_challenge"]["challengers"]), ["claude", "codex"])
         esc = (self.tmp / "escalations.jsonl").read_text()

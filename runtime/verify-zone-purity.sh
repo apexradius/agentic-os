@@ -28,6 +28,8 @@ SCAN_ROOT="$(cd .. && pwd)"        # framework/ — scan the WHOLE tree, not jus
 #   deploy paths   : /srv/apex, /srv/state/apex, /opt/apex
 #   agent vault    : \.gemini/ (path form ONLY — does NOT match .geminiApiKey / Gemini API refs)
 #   secrets/users  : vardra, /home/adam, /Users/apex/ApexRadius
+#   operator name  : ayo, ayokunle (the owner-name leak class — \bayo\b is word-bounded so
+#                    it does NOT match 'layout'/'crayon'; ayokunle is matched as a substring)
 # NOT gated: the APEX_<NAME> env-var NAMESPACE (41 files / 188 refs). Those are a config
 # namespace, not infra disclosure — they carry no host/IP/secret VALUE (the values they point
 # at ARE gated above). Renaming cascades to apex/config + live env + plists for ~zero purity
@@ -36,7 +38,7 @@ SCAN_ROOT="$(cd .. && pwd)"        # framework/ — scan the WHOLE tree, not jus
 # serverInfo + the `mcp__apex-omnibus-mcp__*` tool-call prefix ecosystem-wide) — same namespace
 # class as APEX_; renaming them is a massive cascade. Their infra PATHS (`/opt/apex-omnibus`,
 # `/srv/state/apex-omnibus`) ARE gated, via `/opt/apex` + `/srv/state/apex`.
-PAT='apexradius|apex-radius-platform|apex radius|02_Ecosystem|tradeops|kovara|perucas|oaf|148\.113|100\.68|/srv/apex|/srv/state/apex|/opt/apex|\.gemini/|vardra|/home/adam|/Users/apex|/Volumes/ApexMain'
+PAT='ayokunle|\bayo\b|apexradius|apex-radius-platform|apex radius|02_Ecosystem|tradeops|kovara|perucas|oaf|148\.113|100\.68|/srv/apex|/srv/state/apex|/opt/apex|\.gemini/|vardra|/home/adam|/Users/apex|/Volumes/ApexMain'
 ALLOW=".zone-residual.allow"
 
 if [ ! -f "$ALLOW" ]; then

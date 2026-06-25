@@ -44,6 +44,12 @@ MIRROR_OWED = STATE / "mirror-owed"
 ROLES_FILE = Path(os.environ.get("AORG_ROLES_FILE", ROOT / "roles.json"))
 POLICY_DIR = Path(os.environ.get("AORG_POLICY_DIR", ROOT / "policy"))
 WORKSPACE = Path(os.environ.get("AORG_WORKSPACE", "~")).expanduser()
+# Operator identity — the human tiebreaker/approver. Env-mediated (SEAM neutralization class):
+# generic default "operator"; the instance sets AORG_OPERATOR (+ the alias lists) in its env so
+# behavior is byte-identical under the live env. Removes the only owner-name coupling from the copy.
+OPERATOR = os.environ.get("AORG_OPERATOR", "operator")
+OPERATOR_EXACT = {OPERATOR} | {x.strip().casefold() for x in os.environ.get("AORG_OPERATOR_EXACT", "").split(os.pathsep) if x.strip()}
+OPERATOR_CONTAINS = tuple(x.strip().casefold() for x in os.environ.get("AORG_OPERATOR_CONTAINS", "").split(os.pathsep) if x.strip())
 TMP_ROOT = Path("/private/tmp") if Path("/private/tmp").exists() else Path("/tmp")
 OLLAMA_DEFAULT_MODEL = os.environ.get("AORG_OLLAMA_MODEL", os.environ.get("AORG_LOCAL_MODEL", "qwen3:8b"))
 VPS_MIRROR_HOST = os.environ.get("AORG_VPS_MIRROR_HOST", "")
@@ -895,7 +901,7 @@ def text_has_policy_secret_context(text: str) -> bool:
 def policy_denial(task: dict) -> tuple[str, str] | None:
     # Human assignees receive inbox/approval/FYI items, not sandboxed execution.
     # The executor allowlist cannot apply to a human because they do not have
-    # *.allow.toml files. Without this exemption, FYI/escalation tasks to Ayo
+    # *.allow.toml files. Without this exemption, FYI/escalation tasks to the operator
     # are spuriously blocked as missing_allowlist.
     if task_assignee_is_human(task):
         return None
@@ -2026,8 +2032,8 @@ def cmd_task_check(args: argparse.Namespace) -> None:
 
     committer_value = args.committer_role or args.committer
     committer_role = infer_committer_role(committer_value)
-    if committer_role == "ayo":
-        print(f"task-check ok {args.task_id or '-'} ayo_exempt")
+    if committer_role == OPERATOR:
+        print(f"task-check ok {args.task_id or '-'} {OPERATOR}_exempt")
         return
     if not args.task_id:
         print("missing_task_trailer", file=sys.stderr)
@@ -2339,8 +2345,8 @@ def infer_committer_role(raw_value: str | None = None) -> str | None:
             return "codex"
         if "claude" in normalized:
             return "claude"
-        if "ayo-fam" in normalized or "ayokunle" in normalized or normalized in {"ayo", "ayo famuagun"}:
-            return "ayo"
+        if normalized in OPERATOR_EXACT or any(sub in normalized for sub in OPERATOR_CONTAINS):
+            return OPERATOR
     return None
 
 
@@ -2398,7 +2404,7 @@ def task_check_status_denial(task: dict, *, review_fix: bool) -> str | None:
 
 
 def task_check_actor_denial(task: dict, role: str, *, review_fix: bool) -> str | None:
-    if role == "ayo":
+    if role == OPERATOR:
         return None
     expected = task.get("assignee")
     if review_fix and task.get("status") == "review-pending":
@@ -2621,7 +2627,7 @@ def other_frontier(role: str) -> str:
     return "claude"
 
 
-def approval_by_ayo_with_override_scope(*tasks: dict | None) -> bool:
+def approval_by_operator_with_override_scope(*tasks: dict | None) -> bool:
     for task in tasks:
         if not task:
             continue
@@ -2629,7 +2635,7 @@ def approval_by_ayo_with_override_scope(*tasks: dict | None) -> bool:
             if not isinstance(approval, dict):
                 continue
             if (
-                approval.get("approved_by") == "ayo"
+                approval.get("approved_by") == OPERATOR
                 and approval.get("scope") in OPERATOR_OVERRIDE_SCOPES
             ):
                 return True
@@ -2647,10 +2653,10 @@ def review_self_denial(task: dict, parent: dict | None, args: argparse.Namespace
                 implementer_roles.add(role)
     if args.role not in implementer_roles:
         return None
-    if getattr(args, "operator_override", False) and approval_by_ayo_with_override_scope(task, parent):
+    if getattr(args, "operator_override", False) and approval_by_operator_with_override_scope(task, parent):
         return None
     if getattr(args, "operator_override", False):
-        return "self_review_denied:operator_override_requires_ayo_approval"
+        return "self_review_denied:operator_override_requires_operator_approval"
     return "self_review_denied"
 
 
@@ -3273,7 +3279,7 @@ def cmd_assign(args: argparse.Namespace) -> None:
     if denial:
         task["status"] = "pending-human"
         task["blocked_reason"] = f"{denial[0]} {denial[1]}"
-        task["escalation_to"] = args.escalation_to or "ayo"
+        task["escalation_to"] = args.escalation_to or OPERATOR
     with task_write_lock():
         tasks = read_tasks_unlocked()
         sibling_denial = sibling_assign_denial(tasks, task)
@@ -3808,8 +3814,8 @@ def cmd_review(args: argparse.Namespace) -> None:
             sys.exit(2)
         reviewer = task.get("reviewer") or other_frontier(task.get("assignee", ""))
         # Council v2: either frontier peer may register a review/challenge (the other
-        # frontier is the appeals path now that Gemini is decommissioned), plus Ayo.
-        allowed_reviewers = {reviewer, "ayo", *FRONTIER_AGENTS}
+        # frontier is the appeals path now that Gemini is decommissioned), plus the operator.
+        allowed_reviewers = {reviewer, OPERATOR, *FRONTIER_AGENTS}
         if args.role not in allowed_reviewers:
             print(f"task reviewer is {reviewer}, not {args.role}", file=sys.stderr)
             sys.exit(2)
@@ -3861,13 +3867,13 @@ def cmd_review(args: argparse.Namespace) -> None:
             task["evidence"] = evidence
             task["files_touched"] = []
             task["risk"] = "Review task"
-            task["vna"] = "On pass, parent closes. On fail, the reviewer's repairs re-hand to the other frontier agent for re-review, capped at 2 rounds then escalated to Ayo."
+            task["vna"] = "On pass, parent closes. On fail, the reviewer's repairs re-hand to the other frontier agent for re-review, capped at 2 rounds then escalated to the operator."
             task["review_passed"] = args.decision == "pass"
             task["reviewed_at"] = review["reviewed_at"]
             task["blocked_reason"] = None
         # User Challenge gate: when 2+ DISTINCT reviewers flag (--challenge) that the
         # user's STATED direction should change, the task must never auto-decide on the
-        # reviewers' say-so. It escalates to the human (Ayo), regardless of pass/fail.
+        # reviewers' say-so. It escalates to the human operator, regardless of pass/fail.
         # A single challenge is recorded but does not block (one model can't derail).
         challengers = sorted({
             r["reviewer"] for r in review_target.get("reviews", []) if r.get("challenge")
@@ -3877,7 +3883,7 @@ def cmd_review(args: argparse.Namespace) -> None:
             review_target["review_passed"] = False
             review_target["reviewed_at"] = review["reviewed_at"]
             review_target["escalated_at"] = review["reviewed_at"]
-            review_target["escalation_to"] = "ayo"
+            review_target["escalation_to"] = OPERATOR
             review_target["escalation_priority"] = "P1"
             review_target["blocked_reason"] = (
                 "user_challenge:" + ",".join(challengers)
@@ -3896,7 +3902,7 @@ def cmd_review(args: argparse.Namespace) -> None:
                 "reason": review_target["blocked_reason"],
                 "evidence": evidence,
                 "priority": "P1",
-                "escalation_to": "ayo",
+                "escalation_to": OPERATOR,
                 "requesting_identity": f"aorg-review-gate:{args.role}",
                 "timestamp": review["reviewed_at"],
                 "kind": "user_challenge",
@@ -3911,14 +3917,14 @@ def cmd_review(args: argparse.Namespace) -> None:
             # Council v2 capped ping-pong: the reviewer has repaired the defects it
             # found; re-hand to the OTHER frontier agent to re-review the repairs.
             # After COUNCIL_REVIEW_ROUND_CAP rounds without convergence, freeze and
-            # escalate to Ayo with the disputed state — never loop forever.
+            # escalate to the operator with the disputed state — never loop forever.
             current_round = int(task.get("review_round", 1))
             review_target["review_passed"] = False
             review_target["reviewed_at"] = review["reviewed_at"]
             review_target["review_round"] = current_round
             if current_round >= COUNCIL_REVIEW_ROUND_CAP:
                 review_target["status"] = "pending-human"
-                review_target["escalation_to"] = "ayo"
+                review_target["escalation_to"] = OPERATOR
                 review_target["escalation_priority"] = "P1"
                 review_target["escalated_at"] = review["reviewed_at"]
                 review_target["blocked_reason"] = (
@@ -3929,7 +3935,7 @@ def cmd_review(args: argparse.Namespace) -> None:
                     "reason": review_target["blocked_reason"],
                     "evidence": evidence,
                     "priority": "P1",
-                    "escalation_to": "ayo",
+                    "escalation_to": OPERATOR,
                     "requesting_identity": f"aorg-review-gate:{args.role}",
                     "timestamp": review["reviewed_at"],
                     "kind": "council_review_cap",
@@ -3954,7 +3960,7 @@ def cmd_review(args: argparse.Namespace) -> None:
                 candidate["evidence"] = evidence
                 candidate["files_touched"] = []
                 candidate["risk"] = "Review task"
-                candidate["vna"] = "On pass, parent closes. On fail, the reviewer's repairs re-hand to the other frontier agent for re-review, capped at 2 rounds then escalated to Ayo."
+                candidate["vna"] = "On pass, parent closes. On fail, the reviewer's repairs re-hand to the other frontier agent for re-review, capped at 2 rounds then escalated to the operator."
         report_title = task.get("title")
         write_tasks_unlocked(tasks)
 
@@ -5929,7 +5935,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
         "id": "smoke-approval-gate",
         "title": "Approve VPS smoke",
         "task": "Human approval gate for a VPS-scoped action.",
-        "assignee": "ayo",
+        "assignee": OPERATOR,
         "status": "pending",
         "repo": "/var/www/example",
         "files": [],
@@ -5937,7 +5943,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
         "mode": "approval",
         "sandbox_profile": None,
         "risk_level": "high",
-        "approvals": [{"approved_by": "ayo", "approved_at": now(), "reason": "smoke"}],
+        "approvals": [{"approved_by": OPERATOR, "approved_at": now(), "reason": "smoke"}],
         "claimed_at": None,
         "claimed_by": None,
         "review_required": True,
@@ -5963,7 +5969,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     try:
         cmd_complete(
             argparse.Namespace(
-                role="ayo",
+                role=OPERATOR,
                 task_id="smoke-approval-gate",
                 summary="Approval gate closed after recorded approval.",
                 evidence=["note:smoke"],
@@ -6104,7 +6110,7 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
         print(f"FAIL: round-2 review task not spawned for claude: {rehanded}", file=sys.stderr)
         sys.exit(1)
 
-    # Council v2 CAP: round-2 fail freezes and escalates to Ayo (no infinite loop).
+    # Council v2 CAP: round-2 fail freezes and escalates to the operator (no infinite loop).
     cmd_review(
         argparse.Namespace(
             role="claude",
@@ -6120,10 +6126,10 @@ def cmd_hardening_smoke(_: argparse.Namespace) -> None:
     if (
         not capped_parent
         or capped_parent.get("status") != "pending-human"
-        or capped_parent.get("escalation_to") != "ayo"
+        or capped_parent.get("escalation_to") != OPERATOR
         or not str(capped_parent.get("blocked_reason", "")).startswith("council_review_cap_reached")
     ):
-        print(f"FAIL: round-2 fail did not escalate to Ayo: {capped_parent}", file=sys.stderr)
+        print(f"FAIL: round-2 fail did not escalate to the operator: {capped_parent}", file=sys.stderr)
         sys.exit(1)
 
     parent_review_task = {
@@ -6379,7 +6385,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--operator-override",
         action="store_true",
-        help="allow self-review only with a recorded Ayo approval scoped to operator/self-review override",
+        help="allow self-review only with a recorded operator approval scoped to operator/self-review override",
     )
     p.add_argument("--agent-host")
     p.add_argument("--agent-pid", type=int)
@@ -6413,13 +6419,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--reason", required=True)
     p.add_argument("--evidence", required=True)
     p.add_argument("--priority", default="P1")
-    p.add_argument("--to", default="ayo")
+    p.add_argument("--to", default=OPERATOR)
     p.add_argument("--requesting-identity", default=os.environ.get("APEX_AGENT_IDENTITY", "unknown"))
     p.set_defaults(func=cmd_escalate)
 
     p = sub.add_parser("approve")
     p.add_argument("task_id")
-    p.add_argument("--by", default="ayo")
+    p.add_argument("--by", default=OPERATOR)
     p.add_argument("--reason", required=True)
     p.add_argument("--scope", default="resume")
     p.add_argument("--evidence", nargs="*")

@@ -255,7 +255,7 @@ export function registerCalendarTools(server: McpServer): void {
     },
   );
 
-  server.tool('calendar_quick_add', 'Create an event using natural language (e.g. "Lunch with Ayo tomorrow at noon")', {
+  server.tool('calendar_quick_add', 'Create an event using natural language (e.g. "Lunch with Sam tomorrow at noon")', {
     text: z.string().describe('Natural language event description'),
     calendarId: z.string().optional().describe('Calendar ID (default: "primary")'),
   }, async ({ text, calendarId = 'primary' }) => {

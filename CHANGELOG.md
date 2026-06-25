@@ -8,6 +8,39 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-25
+
+### Changed
+- **Operator identity is now env-mediated in the bundled control-plane engine** — the last of the
+  owner-name coupling staged in 0.7.1. The name was a *functional* identity constant (~30 sites plus a
+  named function) in the self-protected ledger/council engine: committer-exemption checks, escalation
+  targets, the self-review override gate, the reviewer allow-set, and CLI `--to`/`--by` defaults. These
+  now read `OPERATOR` / `OPERATOR_EXACT` / `OPERATOR_CONTAINS` from the environment with a neutral
+  `operator` default; the instance supplies the real name and aliases via its own env, so every identity
+  check resolves byte-identically under the live deployment. The coupled test fixture and two assertions
+  were genericized to match.
+
+### Fixed
+- **Zone-purity tripwire now catches the owner-name class.** The gate is a snapshot-diff denylist and its
+  match pattern simply never listed the owner name, so every owner-name line was invisible to it — the
+  root cause of the 0.7.1 leak. The pattern now includes a word-bounded match on the owner's first name
+  (word-bounded so it cannot match unrelated words such as `layout` or `crayon`) plus the longer surname
+  form, with a comment documenting the class. Bundled atomically with the engine change: hardening the
+  gate before the engine was genericized would have reddened CI, and whitelisting the name would have
+  re-published it. (This entry deliberately names no owner-name literal — the gate scans the changelog
+  too, and the whole point is that the published tree carries no operator identity.)
+
+### Changed
+- **Operator-name coupling genericized out of the public tree.** The framework owner's first name had
+  leaked into runtime code and docs as a literal — an MCP calendar tool's natural-language example, an
+  Apify Keychain account-name fallback, a router telemetry comment, prompt-os test fixtures, the
+  agents-primitive zone-guard example, and the ledger/council engine docs. All now use a neutral
+  placeholder (`Sam` / "the operator" / a generic example name). One harder case remains staged: the
+  bundled control-plane engine carries the name as a *functional* operator-identity constant in ~30
+  sites; that is being env-mediated (a generic `operator` default the instance overrides) and the
+  zone-purity tripwire hardened to catch the owner-name class (a word-bounded match on the owner name),
+  both landing in a follow-up patch behind the engine's self-protection gate.
+
 ## [0.7.0] - 2026-06-25
 
 ### Added

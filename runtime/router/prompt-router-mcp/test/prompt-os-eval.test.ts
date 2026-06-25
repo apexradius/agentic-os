@@ -138,7 +138,7 @@ describe('runTier1 — negative fixtures', () => {
 id: ${slug}
 version: 1.0.0
 domain: lifecycle
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8]
 status: published
 contract_version: "1.0"

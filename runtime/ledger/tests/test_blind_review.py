@@ -7,7 +7,7 @@ applied) so the suite stays green pre-slice-C.
 
 Invariants under test:
   INV-1/2  --blind RETAINS the real reviewer name on the record; the User Challenge gate keeps
-           counting DISTINCT REAL names, so two blinded challengers still escalate to ayo.
+           counting DISTINCT REAL names, so two blinded challengers still escalate to the operator.
   rotation alias_registry pseudonyms rotate across rounds and are distinct within a round.
   sealed   reveal_at is null until explicitly revealed.
   opt-in   without --blind the review record is byte-compatible (no blinded/alias fields).
@@ -106,7 +106,7 @@ class BlindReviewTests(unittest.TestCase):
         run_review(self.tmp, "codex", "T", "--challenge", "--blind")
         t = task_status(self.tmp, "T")
         self.assertEqual(t["status"], "pending-human")
-        self.assertEqual(t["escalation_to"], "ayo")
+        self.assertEqual(t["escalation_to"], "operator")
         self.assertEqual(sorted(t["user_challenge"]["challengers"]), ["claude", "codex"])
 
     def test_without_blind_is_byte_compatible(self):

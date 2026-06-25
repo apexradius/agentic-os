@@ -49,6 +49,7 @@ column names the value-class removed; the real instance values are in the adopte
 ### `ledger/aorg`
 | Was | Now | Why behavior-preserving |
 |---|---|---|
+| Operator-identity literals (`<operator>` name, ~30 sites + a named fn) | `OPERATOR` / `OPERATOR_EXACT` / `OPERATOR_CONTAINS` env-reads (default `"operator"`) | Instance env supplies the real name + aliases; under the live env every identity check resolves exactly as before. |
 | `AORG_WORKSPACE` default `<adopter-workspace>` | default `~` | Live env always sets it; `~` is the generic fallback. |
 | `AORG_VPS_MIRROR_HOST` default `<vps-target>` | default `""` | `should_mirror_vps_state()` gates on `AORG_VPS_MIRROR`/STATE==default and returns `False` off-topology — empty host never fires unconfigured. |
 | `AORG_VPS_MIRROR_STATE_DIR` default `<canonical-home>/…/state` | default `""` | Only used when mirroring is enabled (host set). |

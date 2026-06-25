@@ -475,7 +475,7 @@ def write_handoff(args: argparse.Namespace) -> int:
         "**Default executor:** Claude implements the locked handoff unless this handoff names a different single owner.\n\n"
         "**Finalizer:** Codex checks the result against this handoff, runs the strongest practical verification, fixes any defects directly, and records final evidence. Do not route routine defects back to the executor.\n\n"
         "**Completion criteria:** implementation complete, Codex finalization complete, verification commands recorded, evidence report written.\n\n"
-        "**Escalation:** reopen Council only for a plan/scope change. Escalate to Ayo only for destructive, production-risk, billing, outbound, auth, legal, or irreversible decisions.\n\n"
+        "**Escalation:** reopen Council only for a plan/scope change. Escalate to the operator only for destructive, production-risk, billing, outbound, auth, legal, or irreversible decisions.\n\n"
         "## Recorded Dissents\n\n"
     )
     dissents = [d for item in state["items"] for d in item.get("dissents", [])]

@@ -611,8 +611,6 @@ function getApifyToken() {
   const accounts = Array.from(new Set([
     process.env.USER,
     os.userInfo().username,
-    'ayo',
-    'Ayo',
   ].filter(Boolean)));
 
   for (const account of accounts) {

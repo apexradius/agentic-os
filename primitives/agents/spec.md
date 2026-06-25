@@ -76,8 +76,8 @@ producing invalid TOML.
      `<Core_Context>` + `<Workflow>` (operating roles)
    - contains no `"""` (would break the Codex emit)
 
-Plus a **zone guard**: any file under `framework/roles/` containing Apex coupling (a
-hostname, client, product, or `Ayo`) fails. A missing `model` is a *warning*, not an
+Plus a **zone guard**: any file under `framework/roles/` containing instance coupling (a
+hostname, client, product, or an operator's name) fails. A missing `model` is a *warning*, not an
 error — a role may legitimately inherit the session default.
 
 ## Constraints (what NOT to do)

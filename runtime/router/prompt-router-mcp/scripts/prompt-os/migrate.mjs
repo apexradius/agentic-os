@@ -69,7 +69,7 @@ function frontmatter(slug, domain) {
     `id: ${slug}`,
     'version: 1.0.0',
     `domain: ${domain}`,
-    'owner: ayo',
+    'owner: sam',
     'model_targets: [claude-opus-4-8]',
     'status: draft',
     'contract_version: "1.0"',

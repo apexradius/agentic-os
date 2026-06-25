@@ -11,7 +11,7 @@
  * BEST-EFFORT: any write failure is caught and emitted to stderr only.
  * A telemetry failure MUST NEVER propagate into the routing path.
  *
- * FUTURE UPGRADE (deferred per Ayo decision 2026-06-16):
+ * FUTURE UPGRADE (deferred per a maintainer decision 2026-06-16):
  *   Replace / augment file writes with the omnibus telemetry MCP:
  *     mcp__apex-omnibus-mcp__telemetry__telemetry_log_action
  *   That requires a cross-process MCP call from the router server — not

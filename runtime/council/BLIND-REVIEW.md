@@ -33,7 +33,7 @@
   `Reviewer-X` pseudonym and is stripped of the author's alias/signature/persona text (no de-anon by
   fingerprint over a small pool).
 - **Opt-in only** — `--blind`, `AORG_BLIND_REVIEW=1`, and the sealed phase default OFF; existing
-  flows are unchanged until the metric shows an effect and Ayo flips them.
+  flows are unchanged until the metric shows an effect and the operator flips them.
 
 ## Verify
 
@@ -42,7 +42,7 @@ cd framework/runtime/ledger/tests && python3 -m pytest test_blind_review.py test
 AORG_STATE_DIR=~/.local/state/aorg python3 framework/runtime/council/council_dissent_metric.py
 ```
 
-## Rollout status (slice G — pending Ayo)
+## Rollout status (slice G — pending the operator)
 
 Blinding is OFF by default. Next: run blinded + unblinded reviews, compare the two dissent rates,
 set the threshold that means "blinding works" + the default-on task class, then flip

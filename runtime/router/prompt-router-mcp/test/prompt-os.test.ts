@@ -49,7 +49,7 @@ describe('parseFrontmatter', () => {
     const text = `---
 id: my-prompt
 version: 1.0.0
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8, gpt-5.2]
 status: draft
 quoted_double: "hello world"
@@ -188,7 +188,7 @@ Done when complete.
 id: ${id}
 version: 1.0.0
 domain: ${domain}
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8]
 status: ${status}
 contract_version: "1.0"
@@ -211,7 +211,7 @@ describe('broken fixtures — error code assertions', () => {
     const text = `---
 id: my-test-prompt
 version: 1.0.0
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8]
 status: draft
 contract_version: "1.0"
@@ -338,7 +338,7 @@ Do it.
 id: my-test-prompt
 version: 1.0.0
 domain: services
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8]
 status: draft
 contract_version: "1.0"
@@ -367,7 +367,7 @@ updated: 2026-01-01
 id: my-test-prompt
 version: 1.0.0
 domain: services
-owner: ayo
+owner: sam
 model_targets: [claude-opus-4-8]
 status: draft
 contract_version: "1.0"

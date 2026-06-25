@@ -30,8 +30,8 @@
       "limits": ["no production writes"],
       "policy_window": {"type": "agent"}
     },
-    "ayo": {
-      "display": "Ayo",
+    "operator": {
+      "display": "Operator",
       "authority": "human",
       "model": "human",
       "command": "true",

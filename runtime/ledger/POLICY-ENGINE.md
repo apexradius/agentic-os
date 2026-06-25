@@ -34,7 +34,7 @@ path is **not** a raw `Write`/`cp` by an agent. It is:
 
 1. Claude authors an **idempotent applier** script (reviewable, re-runnable, no side effects on
    re-run).
-2. **Ayo `!`-runs it** in-session — TouchID-recorded, a sanctioned gated channel, not a block.
+2. **The human operator `!`-runs it** in-session — TouchID-recorded, a sanctioned gated channel, not a block.
 
 This is a Stage-≥6 decision and must be logged in `apex/config/RISKS.md` (risk R4) with its own
 rollback. Until then: **reference only.**
