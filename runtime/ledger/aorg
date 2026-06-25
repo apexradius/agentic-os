@@ -44,6 +44,17 @@ MIRROR_OWED = STATE / "mirror-owed"
 ROLES_FILE = Path(os.environ.get("AORG_ROLES_FILE", ROOT / "roles.json"))
 POLICY_DIR = Path(os.environ.get("AORG_POLICY_DIR", ROOT / "policy"))
 WORKSPACE = Path(os.environ.get("AORG_WORKSPACE", "~")).expanduser()
+READ_BEFORE = tuple(
+    Path(item).expanduser()
+    for item in os.environ.get("AORG_READ_BEFORE", "").split(os.pathsep)
+    if item.strip()
+)
+RAG_GATE_PATH = Path(os.environ["AORG_RAG_GATE"]).expanduser() if os.environ.get("AORG_RAG_GATE") else None
+PLAN_HYGIENE_PATH = (
+    Path(os.environ["AORG_PLAN_HYGIENE_PATH"]).expanduser()
+    if os.environ.get("AORG_PLAN_HYGIENE_PATH")
+    else None
+)
 # Operator identity — the human tiebreaker/approver. Env-mediated (SEAM neutralization class):
 # generic default "operator"; the instance sets AORG_OPERATOR (+ the alias lists) in its env so
 # behavior is byte-identical under the live env. Removes the only owner-name coupling from the copy.
@@ -3165,11 +3176,15 @@ def cmd_brief(args: argparse.Namespace) -> None:
     except Exception:
         pass
 
+    read_before = READ_BEFORE or (
+        PLATFORM_ROOT / "AGENTS.md",
+        ROOT / "README.md",
+        PLATFORM_ROOT / "framework" / "loop" / "README.md",
+        PLATFORM_ROOT / "framework" / "coordination" / "README.md",
+    )
     print("Read before work:")
-    print(f"- {ROOT / 'ORG_CHART.md'}")
-    print(f"- {ROOT / 'protocol.md'}")
-    print(f"- {WORKSPACE / '00_Knowledge_Base/Brain/memory/Brain.md'}")
-    print(f"- {WORKSPACE / '00_Knowledge_Base/Brain/rules/prime-standards-addendum.md'}")
+    for path in read_before:
+        print(f"- {path}")
     print()
     print("Responsibilities:")
     for item in role["responsibilities"]:
@@ -5061,16 +5076,16 @@ def run_local_agent_doctor() -> int:
     else:
         doctor_report(results, "WARN", "hooks", "node or hooks dir missing")
 
-    brain = WORKSPACE / "00_Knowledge_Base" / "Brain"
-    rag_gate = brain / "scripts" / "apex_rag_gate.py"
-    if rag_gate.exists():
-        proc = doctor_command([sys.executable, str(rag_gate), "--self-test"], cwd=brain, timeout=60)
+    if RAG_GATE_PATH and RAG_GATE_PATH.exists():
+        proc = doctor_command([sys.executable, str(RAG_GATE_PATH), "--self-test"], cwd=RAG_GATE_PATH.parent, timeout=60)
         if proc.returncode == 0:
             doctor_report(results, "PASS", "RAG gate", command_excerpt(proc))
         else:
             doctor_report(results, "FAIL", "RAG gate", command_excerpt(proc) or f"exit={proc.returncode}")
+    elif RAG_GATE_PATH:
+        doctor_report(results, "WARN", "RAG gate", f"missing {RAG_GATE_PATH}")
     else:
-        doctor_report(results, "WARN", "RAG gate", f"missing {rag_gate}")
+        doctor_report(results, "PASS", "RAG gate", "not configured")
 
     try:
         findings, notes = run_billing_scan(include_vps=False)
@@ -5127,8 +5142,10 @@ def run_local_agent_doctor() -> int:
     except Exception as exc:
         doctor_report(results, "WARN", "secret-deny posture", type(exc).__name__)
 
-    prime_plan = brain / "plans" / "Apex Prime Development.md"
-    run_plan_hygiene_doctor(results, prime_plan)
+    if PLAN_HYGIENE_PATH:
+        run_plan_hygiene_doctor(results, PLAN_HYGIENE_PATH)
+    else:
+        doctor_report(results, "PASS", "plan hygiene", "not configured")
 
     failures = [item for item in results if item[0] == "FAIL"]
     warnings = [item for item in results if item[0] == "WARN"]

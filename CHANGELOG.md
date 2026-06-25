@@ -8,6 +8,20 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-25
+
+### Changed
+- **The `aorg` engine reads its instance paths from the environment.** The bundled ledger/council CLI
+  (`runtime/ledger/aorg`) hard-coded one instance's knowledge-base layout — the brief's "read before
+  work" list, the RAG-gate self-test path, and the plan-hygiene target all pointed at a specific
+  `Brain` knowledge tree. These are now env-mediated: `AORG_READ_BEFORE` (a path list), `AORG_RAG_GATE`,
+  and `AORG_PLAN_HYGIENE_PATH`, each with a generic fallback — the brief falls back to the framework's
+  own READMEs, and an unconfigured gate or hygiene check reports `PASS "not configured"` instead of
+  warning on a missing instance file. Removes the last instance-path coupling from the engine copy, so
+  a bare extraction's `aorg` doctor is green without an instance present; behavior is byte-identical
+  under the live env, which supplies the real paths. (Not breaking: an unset instance gets a more
+  lenient PASS than the old WARN; a configured one is unchanged.)
+
 ## [0.8.0] - 2026-06-25
 
 ### Added
