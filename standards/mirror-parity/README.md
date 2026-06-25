@@ -1,8 +1,8 @@
 # mirror-parity
 
 A deterministic check that **co-owned manual pairs keep the same skeleton**. The framework runs
-two runtimes off mirrored manuals — Claude reads [`CLAUDE.md`](../../../CLAUDE.md), Codex reads
-[`AGENTS.md`](../../../AGENTS.md) — and the contract is that the two stay *diff-able*: same
+two runtimes off mirrored manuals — Claude reads `CLAUDE.md`, Codex reads `AGENTS.md` — and the
+contract is that the two stay *diff-able*: same
 sections, same order, different voice. Prose says "keep them in sync"; this gate proves it. It
 enforces the single-source rule in [`doctrine/README.md`](../../doctrine/README.md) ("one thing
 is true; everything else is a mirror") at the one place the framework keeps a hand-maintained

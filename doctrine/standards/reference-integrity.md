@@ -11,9 +11,12 @@ when two sessions edit the tree at once. This standard makes the references mach
 
 ## The bar
 
-1. **Every internal link resolves.** Every relative markdown link or image in the framework's architectural
-   docs points at a file or directory that exists. External links (`http(s):`, `mailto:`) and pure `#anchors`
-   are out of scope — the gate proves the *tree's own* links, not the live web.
+1. **Every internal link resolves — inside the tree.** Every relative markdown link or image in the
+   framework's architectural docs points at a file or directory that exists *within the framework root*. A
+   link whose target escapes the root (`../../../CLAUDE.md` reaching for an instance manual one level above
+   `framework/`) is broken **even when it resolves in a private superproject** — it 404s in the published tree
+   where the framework *is* the root. The gate proves the tree's own links, so an escaping link is flagged
+   regardless of local existence. External links (`http(s):`, `mailto:`) and pure `#anchors` are out of scope.
 2. **Every standard and rule is on its map.** Every doctrine standard (`doctrine/standards/*.md`) and rule
    (`doctrine/rules/*.md`) is listed in its index, and every standards-as-code gate (`standards/*/` with a
    `validate.mjs`) is listed in the standards index. No standard or rule exists that the map doesn't show; and

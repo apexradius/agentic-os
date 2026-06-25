@@ -7,8 +7,8 @@
 // real surface. Primitive bodies (skills/, roles/) are out of scope — their own validators cover them, and
 // their prose carries intentional placeholders/templates.
 
-import { existsSync, readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { join, dirname, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
@@ -37,9 +37,17 @@ export function relativeLinkTargets(md) {
   }
   return out;
 }
-/** Targets in `md` (located at `filePath`) that don't resolve to a real file/dir. */
-export function brokenLinksIn(filePath, md) {
-  return relativeLinkTargets(md).filter((t) => !existsSync(resolve(dirname(filePath), t)));
+/** Targets in `md` (located at `filePath`) that don't resolve to a real in-tree file/dir.
+ *  A target that resolves OUTSIDE `root` is broken-on-extraction: it may resolve in a private
+ *  superproject (`../../../CLAUDE.md` → the instance manual) yet 404 in the published tree where the
+ *  framework IS the root. It is flagged regardless of local existence — the gate proves the *tree's
+ *  own* links, and a link that escapes the tree is not one of them. (root optional: omitted ⇒ existence-only.) */
+export function brokenLinksIn(filePath, md, root) {
+  return relativeLinkTargets(md).filter((t) => {
+    const abs = resolve(dirname(filePath), t);
+    if (root && abs !== root && !abs.startsWith(root + sep)) return true;
+    return !existsSync(abs);
+  });
 }
 /** Names whose expected reference token `wrap(name)` is absent from the index text. */
 export function unindexed(names, indexText, wrap) {
@@ -58,6 +66,10 @@ try {
   ok("brokenLinksIn: flags the missing target only", broken.length === 1 && broken[0] === "missing.md", broken.join(","));
   ok("brokenLinksIn: a resolvable file is not flagged", !broken.includes("exists.md"));
   ok("brokenLinksIn: a directory link ('./') resolves", !broken.includes("./"));
+  mkdirSync(join(dir, "sub"));
+  const esc = brokenLinksIn(join(dir, "sub", "doc.md"), "[ok](../) [esc](../../)", dir);
+  ok("brokenLinksIn: an in-root link passes the root check", !esc.includes("../"));
+  ok("brokenLinksIn: a link escaping the root is flagged though its target exists on disk", esc.includes("../../"));
 } finally { rmSync(dir, { recursive: true, force: true }); }
 ok("unindexed: flags only the unlisted name", unindexed(["a.md", "b.md"], "see [a](a.md)", (n) => `(${n})`).join(",") === "b.md");
 
@@ -78,7 +90,7 @@ ok("scan: the architectural surface is non-empty", surface.length > 20, `files=$
 
 let brokenTotal = 0, firstBroken = "";
 for (const f of surface) {
-  const b = brokenLinksIn(f, readFileSync(f, "utf8"));
+  const b = brokenLinksIn(f, readFileSync(f, "utf8"), ROOT);
   if (b.length) { brokenTotal += b.length; if (!firstBroken) firstBroken = `${f.slice(ROOT.length + 1)} -> ${b[0]}`; }
 }
 ok("scan: every internal link in the architectural docs resolves", brokenTotal === 0, `${brokenTotal} broken; first: ${firstBroken}`);

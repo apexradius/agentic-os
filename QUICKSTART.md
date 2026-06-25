@@ -17,15 +17,17 @@ git clone <the agentic-os repository URL>
 # or vendor the framework/ tree of a superproject directly into your repo
 ```
 
-## 2. Prove it runs — zero install
+## 2. Prove it runs
 
-The validators and the zone-purity gate are **zero-dependency by contract** (the
-[standard-shape](standards/standard-shape/) gate enforces it). Before wiring anything, prove a
-clean checkout is green:
+The **standards-as-code gates and the zone-purity tripwire are zero-dependency** (the
+[standard-shape](standards/standard-shape/) gate enforces it for the gates). The umbrella harness
+additionally parses frontmatter and JSON-Schema-validates primitives, so install its toolchain
+once, then run both checks:
 
 ```bash
-node primitives/_lib/validate.mjs --all   # every primitive + every standards-as-code gate
-bash runtime/verify-zone-purity.sh        # proves the tree carries zero instance coupling
+( cd primitives/_lib && npm ci )           # harness toolchain: ajv, yaml (one-time)
+node primitives/_lib/validate.mjs --all    # every primitive + every standards-as-code gate
+bash runtime/verify-zone-purity.sh         # proves the tree carries zero instance coupling (no install)
 ```
 
 A clean checkout reports `ALL VALID (…)` and zero residuals. If either fails on an untouched
@@ -58,9 +60,9 @@ Don't adopt everything at once. Pick the smallest useful slice:
 ## 5. Keep it honest in CI
 
 The framework validates itself on every push via
-[`.github/workflows/framework-validate.yml`](.github/workflows/framework-validate.yml) — the
-same two commands from step 2. Adopt that workflow (or fold the two commands into your existing
-pipeline) so your synced copy can never silently drift out of conformance. Pin the version you
+[`.github/workflows/framework-validate.yml`](.github/workflows/framework-validate.yml) — the same
+checks from step 2 (it `npm ci`s the harness toolchain first). Adopt that workflow (or fold the
+checks into your existing pipeline) so your synced copy can never silently drift out of conformance. Pin the version you
 synced (see [`VERSION`](VERSION)) and re-run `validate.mjs --all` whenever you update.
 
 ## Extending the framework

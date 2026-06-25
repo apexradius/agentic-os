@@ -63,9 +63,11 @@ python3 -m pytest runtime/ledger/tests/ -q
 
 ## Validate
 
-Every primitive carries a validator; the umbrella runner checks them all:
+Every primitive carries a validator; the umbrella runner checks them all. The runner parses
+frontmatter and JSON-Schema-validates primitives, so install its toolchain once first:
 
 ```bash
+( cd primitives/_lib && npm ci )   # harness toolchain: ajv, yaml (one-time)
 node primitives/_lib/validate.mjs --all
 ```
 

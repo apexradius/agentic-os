@@ -11,7 +11,9 @@ other standard.
 
 - **Link integrity** — every relative markdown link/image in the **architectural surface** (doctrine, the
   standards-as-code, primitive specs, coordination, the loop, prompting, top-level READMEs, runtime docs)
-  resolves to a real file or directory. External links and pure `#anchors` are out of scope.
+  resolves to a real file or directory **inside the framework root**. A link that escapes the root (resolving
+  to an instance file in a private superproject, e.g. `../../../CLAUDE.md`) is flagged even if it exists
+  locally — it would 404 on extraction. External links and pure `#anchors` are out of scope.
 - **Index parity** — every doctrine standard (`doctrine/standards/*.md`) and rule (`doctrine/rules/*.md`) is
   listed in its index, and every standards-as-code gate (`standards/*/` with a `validate.mjs`) is listed in the
   standards index. Because the index rows are themselves links, the link scan proves the reverse: no listed

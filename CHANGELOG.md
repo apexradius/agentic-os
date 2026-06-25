@@ -8,6 +8,33 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-25
+
+### Added
+- **Reference-integrity now catches escaping links.** A relative link whose target resolves *outside* the
+  framework root — e.g. `../../../CLAUDE.md` reaching for an instance manual one level above `framework/` — is
+  now flagged even when it resolves in a private superproject, because it 404s in the published tree where the
+  framework *is* the root. Closes a blind spot: the gate validated against the local filesystem, so escaping
+  links passed in the private tree and broke only on extraction — the exact failure the standard exists to
+  prevent.
+
+### Fixed
+- **Self-validating CI installs the harness toolchain.** The 0.6.0 workflow claimed the umbrella harness was
+  zero-dependency and ran it with no install; on a clean CI runner it died with `ERR_MODULE_NOT_FOUND: yaml`
+  (the harness parses frontmatter via `yaml` and JSON-Schema-validates via `ajv`, declared in
+  `primitives/_lib/package.json`). Added an `npm ci` step and corrected the wording in the workflow,
+  `README.md`, and `QUICKSTART.md`: the standards-as-code gates and the zone-purity tripwire are
+  zero-dependency; the umbrella harness needs its `_lib` toolchain.
+- **mirror-parity README's escaping links removed.** Its `../../../CLAUDE.md` / `../../../AGENTS.md` links
+  reached for the instance manuals above the framework root (broken on extraction); they are now inline code,
+  since those manuals are a framework *convention* at the consumer's project root, not files in the tree. Both
+  this and the CI fix were surfaced by the new self-validating CI on its first real run.
+
+### Breaking (pre-1.0)
+- An instance whose framework docs contain a link escaping the framework root will now **fail**
+  reference-integrity (it was already broken on extraction; the gate now reports it in the private tree too).
+  Fix by pointing the link inside the tree or de-linking the out-of-tree reference.
+
 ## [0.6.0] - 2026-06-25
 
 ### Added

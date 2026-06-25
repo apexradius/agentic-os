@@ -6,9 +6,10 @@
 # is itself gated by them. A consumer who extracts this tree inherits a working CI starter.
 #
 # Paths are relative to the repository root — in the published framework, this tree *is* the
-# root, so the harness sits at `primitives/_lib/validate.mjs`. The harness and the zone-purity
-# gate are zero-dependency by contract (enforced by the standard-shape gate), so there is no
-# install step: a checkout and a Node runtime are all that is required.
+# root, so the harness sits at `primitives/_lib/validate.mjs`. The standards-as-code gates and the
+# zone-purity tripwire are zero-dependency; the umbrella harness parses YAML frontmatter and
+# JSON-Schema-validates primitives, so it needs its `_lib` toolchain (ajv, yaml) — hence the
+# `npm ci` step before it runs.
 name: framework-validate
 
 on:
@@ -27,7 +28,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Standards + primitive harness (zero-dependency)
+      - name: Install harness toolchain (ajv, yaml)
+        working-directory: primitives/_lib
+        run: npm ci
+      - name: Standards + primitive harness
         run: node primitives/_lib/validate.mjs --all
-      - name: Zone-purity tripwire
+      - name: Zone-purity tripwire (zero-dependency)
         run: bash runtime/verify-zone-purity.sh
