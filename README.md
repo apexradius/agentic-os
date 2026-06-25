@@ -13,7 +13,8 @@ that the framework reads through environment variables and config files — neve
 the framework itself.
 
 **New here?** [`QUICKSTART.md`](QUICKSTART.md) takes you from a fresh clone to a validated framework
-wired into your own project in five steps.
+wired into your own project in five steps. **Changing it?** [`CONTRIBUTING.md`](CONTRIBUTING.md)
+covers the zone line, the two checks every change must pass, and how to add a building block.
 
 **Version:** [`VERSION`](VERSION) (SemVer) · changes in [`CHANGELOG.md`](CHANGELOG.md) · the
 contract in [`doctrine/standards/versioning.md`](doctrine/standards/versioning.md). A release is

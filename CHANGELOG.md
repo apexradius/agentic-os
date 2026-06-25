@@ -8,6 +8,20 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-06-25
+
+### Changed
+- **The AI-failure-mode lens is now reachable from the self-verify phase.** It shipped in 0.8.0 inside
+  `coordination/review.md` — reachable by a cross-reviewer but invisible to a *solo* agent verifying
+  its own work, which is exactly where its modes (fabricated verification, silent fallback) should be
+  caught before "done." `loop/verification.md` now applies the lens at the pre-ship gate, naming the
+  two most lethal modes at that phase and single-sourcing the full catalog to the review doc. Closes
+  the gap where single-agent operation never saw the lens.
+
+### Fixed
+- **`CONTRIBUTING.md` is no longer an orphan.** The contribution guide existed but `README.md` linked
+  only `QUICKSTART.md`; the README now points at both — adopt via QUICKSTART, extend via CONTRIBUTING.
+
 ## [0.8.1] - 2026-06-25
 
 ### Changed

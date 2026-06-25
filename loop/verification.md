@@ -43,6 +43,25 @@ Before any code goes to production — every time, no exceptions:
 
 If any item fails, **do not ship — fix first.**
 
+## Apply the AI-failure-mode lens — even solo
+
+The pre-ship checklist catches what's *missing*; this lens catches what's plausibly *wrong*.
+Agent-produced work fails in characteristic ways that are invisible to its own author, so the
+verifier must probe them deliberately — and a cross-reviewer is not always there. In solo
+operation you run the lens against your own work; the two modes most lethal at *this* phase:
+
+- **Fabricated verification** — "tests pass" / "done" with no command actually run, or a test
+  that asserts nothing (tautology, mocked to green). This phase exists for the *observed* result;
+  a completion claim without one is not done, it is `[unverified]`.
+- **Silent fallback** — a `try/catch` or a default that turned a failure into quiet-but-wrong
+  behavior, making the path *look* green. Trigger the error path, not just the happy one.
+
+The full catalog — hallucinated surface, plausible-but-wrong, scope drift, confident staleness,
+with how to probe each — is the single-sourced table in
+[the cross-review lens](../coordination/review.md). A solo runtime applies that lens to its own
+output before declaring done; a multi-agent one gets it twice — self here, then a different
+reviewer in [cross-review](../coordination/review.md).
+
 ## Rollback on verify failure
 
 When verification fails, don't patch the patch in a recursive fix loop. Revert to the last
