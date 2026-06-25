@@ -37,6 +37,19 @@ single-turn rule "no parallel edits to the same file"
 A cross-reviewer is the one allowed exception: it may edit the files under review during its
 round, after which ownership flips back ([review.md](review.md)).
 
+**Section-level ownership for shared artifacts.** A few files are *meant* to carry many hands over
+their life — a shared plan/progress doc, a long-lived knowledge file, the prose companion to this
+ledger. Write-locking the whole path serializes contributors that never touch the same lines. For
+these, ownership may be claimed at **section** granularity: a task owns named, disjoint sections
+(e.g. `plan.md#progress`) rather than the whole path, and two tasks may hold different sections of
+one file at once. Two floors keep it safe: (1) the sections must be **genuinely disjoint, and one
+declared role is the sole mutator of structure** — adding, removing, or reordering sections — so two
+agents never both restructure the file out from under each other; (2) it changes the *ownership
+unit*, not the laws of physics — concurrent byte-level writes to one file still corrupt, so section
+edits still serialize through the ledger (each in its own turn), they are never simultaneous.
+Default to whole-file ownership; reach for sections only when a shared artifact is provably a
+contention point.
+
 ## The audit trace
 
 State tells you *what* a task is now; it doesn't tell you *why* it got there. An optional
@@ -47,4 +60,4 @@ current state *and* legible for the decision behind it. The trace is append-with
 latest-line-wins rule still decides current state — `transitions` records the path, not the
 position.
 
-> Last reviewed: 2026-06-24
+> Last reviewed: 2026-06-25

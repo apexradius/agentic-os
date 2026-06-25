@@ -12,6 +12,9 @@ specifics (hosts, credentials, client names, tuned config) into a separate *inst
 that the framework reads through environment variables and config files — never by editing
 the framework itself.
 
+**New here?** [`QUICKSTART.md`](QUICKSTART.md) takes you from a fresh clone to a validated framework
+wired into your own project in five steps.
+
 **Version:** [`VERSION`](VERSION) (SemVer) · changes in [`CHANGELOG.md`](CHANGELOG.md) · the
 contract in [`doctrine/standards/versioning.md`](doctrine/standards/versioning.md). A release is
 a public sync; an instance pins the version it synced and re-runs `validate.mjs --all` on update.
@@ -76,6 +79,11 @@ bash runtime/verify-zone-purity.sh
 
 A clean checkout reports zero residuals. Any instance-specific literal that lands here is, by
 construction, absent from the snapshot and fails the gate.
+
+Both commands run in CI on every push via
+[`.github/workflows/framework-validate.yml`](.github/workflows/framework-validate.yml) — the
+framework dogfooding its own gate. Adopt that workflow (or fold the two commands into your own
+pipeline) so a synced copy can't silently drift out of conformance.
 
 ## License
 

@@ -1,0 +1,33 @@
+# framework-validate — the framework dogfooding its own gate.
+#
+# This tree ships a `ci/` standard full of reusable workflows for *consumer* repos, and a
+# one-command harness that enforces every other standard. This workflow closes the loop: it
+# runs that harness on the framework's OWN pull requests, so the repo that preaches CI gates
+# is itself gated by them. A consumer who extracts this tree inherits a working CI starter.
+#
+# Paths are relative to the repository root — in the published framework, this tree *is* the
+# root, so the harness sits at `primitives/_lib/validate.mjs`. The harness and the zone-purity
+# gate are zero-dependency by contract (enforced by the standard-shape gate), so there is no
+# install step: a checkout and a Node runtime are all that is required.
+name: framework-validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Standards + primitive harness (zero-dependency)
+        run: node primitives/_lib/validate.mjs --all
+      - name: Zone-purity tripwire
+        run: bash runtime/verify-zone-purity.sh

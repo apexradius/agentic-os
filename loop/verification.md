@@ -65,13 +65,19 @@ things keep reiteration from running away:
   iterations on the same slice (the instance sets *N*; three is a sane default), plus any token or
   wall-clock ceiling the instance imposes. Each iteration must change the input that caused the
   failure — re-running an identical attempt and expecting a different result is exactly the waste
-  the cap exists to kill.
+  the cap exists to kill. **Watch the trend, not just the count.** A *converging* loop shrinks its
+  failure surface each pass — fewer failing checks, a smaller diff, the error moving rather than
+  repeating. A loop whose failure surface is flat across two passes has hit a *ceiling*, not a
+  *speed-bump*: escalate then, without spending the rest of the budget to prove what the flat trend
+  already shows. The count is the hard cap; the trend is the early one — and a flatlined trend is
+  the more honest stop signal, because it distinguishes "one more pass will land it" from "stuck on
+  the same wall."
 - **A stop.** When the ceiling is hit, the loop **stops and escalates** instead of burning the rest
   of the window. Escalation is one mechanism at two scales: a solo runtime halts and asks
   ([../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md)); a multi-agent
   runtime hands to the Council tiebreaker or a human
   ([../coordination/council.md](../coordination/council.md)). Stopping with a clear "tried *N* times,
-  here is the wall" beats a silent infinite grind.
+  here is the wall — and the failure stopped shrinking after pass two" beats a silent infinite grind.
 
 ## Close-out: retire the plan, keep the knowledge
 
@@ -94,4 +100,4 @@ plan — that reference is exactly what step 1 moved into knowledge. This is a *
 gate**: a plan's completion isn't deterministically detectable from the file, so no validator
 enforces it — the loop does.
 
-> Last reviewed: 2026-06-24
+> Last reviewed: 2026-06-25

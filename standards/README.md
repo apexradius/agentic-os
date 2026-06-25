@@ -29,4 +29,7 @@ Each checker is **zone-pure generic** (zero Apex coupling — it ships with the 
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
 `framework/standards/*/validate.mjs` alongside the primitive validators and runs its selftest.
 
+**Adding a gate?** [`_creator.md`](_creator.md) is the authoring SOP — it produces a checker that
+conforms to the [`standard-shape`](standard-shape/) contract in one pass.
+
 > Last reviewed: 2026-06-25

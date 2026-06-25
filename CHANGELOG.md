@@ -8,6 +8,40 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-25
+
+### Added
+- **Self-validating CI** (`.github/workflows/framework-validate.yml`) — the framework now runs its own
+  one-command harness (`validate.mjs --all`) and the zone-purity tripwire on every push/PR. The repo that
+  ships a `ci/` standard and preaches CI gates is now gated by them; an adopter who extracts the tree inherits
+  a working, zero-install CI starter. Closes the gap where `ci/` shipped consumer templates but applied none to
+  the framework itself.
+- **Quickstart adoption guide** (`QUICKSTART.md`, linked from `README.md`) — a five-step on-ramp from a fresh
+  clone to a validated framework wired into a consumer project: get it → prove it runs (zero install) → read the
+  map → wire one slice → keep it honest in CI. The published framework previously had no "how do I use this" path.
+- **Standards creator** (`standards/_creator.md`) — the authoring SOP for a new standards-as-code gate, the
+  sibling to each primitive's `creator.md`: when a gate is warranted, the shape contract it must satisfy, the
+  step list (ground first, RED/GREEN selftest, index, changelog), a copy-paste skeleton, and the anti-patterns.
+  Closes the asymmetry where primitives had creators but the enforcement layer's own authoring was undocumented.
+- **Roles documented as a validated class** (`roles/README.md`) — clarified that role definitions are not loose
+  prose: they are schema-validated and zone-guarded by the `agents` primitive validator and run under
+  `validate.mjs --all`. No machinery added — the validation already existed; the README now points to it.
+- **Evidence floor for cross-review** (`coordination/review.md`) — a reviewer's defect must carry evidence
+  (a `file:line`, a failing command's output, a named acceptance criterion, or a dated source); an ungrounded
+  finding is labeled `[unverified]` and cannot, on its own, bounce the work back or block the ship. Kills the
+  costly review failure where a confident-but-stale "this looks wrong" burns a whole round. Names the two
+  altitude failures (tunnel / fog) the floor drags a reviewer off.
+
+### Changed
+- **Convergence-trend escalation** (`loop/verification.md`) — the bounded convergent loop now escalates on a
+  flatlined failure *trend* (failure surface not shrinking across two passes = a ceiling, not a speed-bump),
+  not only on the fixed iteration count. The count is the hard cap; the trend is the earlier, more honest stop.
+- **Section-level ownership** (`coordination/ledger.md`) — ownership may be claimed at section granularity
+  (`plan.md#progress`) for shared artifacts that genuinely carry many hands, so contributors who never touch
+  the same lines aren't serialized by a whole-file write-lock. Floors: sections genuinely disjoint + one
+  sole-mutator of structure; concurrent byte-level writes still corrupt, so edits still serialize through the
+  ledger. Default stays whole-file ownership.
+
 ## [0.5.0] - 2026-06-25
 
 ### Added
