@@ -31,6 +31,7 @@ reviewer can check it. ([Artifact shapes →](artifacts.md))
 | [planning.md](planning.md) | Plan | Planning mandate, decision-complete plans, evidence-driven ranking |
 | [artifacts.md](artifacts.md) | Plan/Implement | The four artifacts + the one artifact-path standard |
 | [verification.md](verification.md) | Verify | Definition of done, the pre-ship gate, rollback-on-fail, plan close-out |
+| [durability.md](durability.md) | Verify/All | Surviving process crash: the step journal, the replay rule, idempotency keys, exactly-once |
 | [context.md](context.md) | All | Surviving long sessions: WHISK, compaction recovery, VNA, sub-agent dispatch, the reflexes |
 
 The law these obey is [`../doctrine/`](../doctrine/). How agents hand work to each other is

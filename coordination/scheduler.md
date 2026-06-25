@@ -22,6 +22,38 @@ core. Handing the plan to the executor/Council, claiming the task, and stamping 
 are instance actions, because they mutate live state and must flow through the ledger engine's
 claim path (file-ownership, liveness) — see [`ledger.md`](ledger.md) and [`liveness.md`](liveness.md).
 
+## The proactive loop (wiring the tick)
+
+The tick selects; it does not act. An instance turns it into a **proactive agent** by wrapping it
+in a loop that the cadence fires. The portable shape — each step already has a home in this
+framework, so the loop is wiring, not new machinery:
+
+1. **Single-instance guard.** Take a lockfile (PID + liveness check) so two ticks never overlap
+   ([liveness.md](liveness.md)). A stale lock whose holder is dead is reclaimed.
+2. **Tick.** Run the read-only tick → the ordered dispatch plan.
+3. **Bound the batch.** Take as many tasks as the instance allows per tick (one is the safe
+   default — it bounds a crash's blast radius to a single task).
+4. **Risk floor.** Skip any task whose `risk_level` is `high`/`critical` — those route to the human
+   tiebreaker, never to autonomous dispatch ([review.md](review.md)).
+5. **Claim.** Move the task to `claimed` with the owner stamp, through the ledger engine's claim
+   path so file-ownership and liveness hold ([ledger.md](ledger.md)).
+6. **Replay check.** Before any side-effecting step, ask the durability journal whether this exact
+   step already completed; if so, skip it and reuse the recorded result
+   ([../loop/durability.md](../loop/durability.md)).
+7. **Dispatch.** Hand the task to the executor (a one-shot is the simplest faithful form: a fresh
+   bounded context that pulls layered memory, does the work, exits). Journal the step.
+8. **Verify.** Run the task's deterministic check ([../loop/verification.md](../loop/verification.md)).
+   A machine check decides done — not the executor's own say-so.
+9. **Bounded reiterate.** On verify-failure, re-dispatch carrying the failure evidence, up to the
+   loop's ceiling *N*. Each iteration must change the failing input.
+10. **Close or escalate.** Pass → record verification + complete + stamp `last_run_at` (the
+    recurrence anchor). Ceiling hit → escalate with the "tried *N* times" evidence and stop.
+11. **Release + exit.** Drop the lock and exit; the cadence re-invokes next interval.
+
+Every step here is an **instance action** because each mutates live state — which is exactly why
+the tick itself stays pure and stops at step 2. The framework supplies the selection logic, the
+ledger engine, the journal, and the verify loop; the instance supplies the clock and the executor.
+
 ## Cadence fields
 
 Two optional ledger fields ([`ledger.schema.json`](ledger.schema.json)) drive timing:

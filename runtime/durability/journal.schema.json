@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core.dev/schemas/runtime/durability.journal.json",
+  "title": "durability journal entry",
+  "description": "One step record in an append-only durability journal — a single JSON object per line. The replay log a killed loop reads to skip a side-effecting step it already completed (framework/loop/durability.md). The store and path are instance-owned; the framework hardcodes neither. Append-only NDJSON; the latest matching entry wins.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ts", "task_id", "step"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time", "description": "When this step record was written (ISO 8601, injected from the runtime clock)." },
+    "task_id": { "type": "string", "description": "The ledger task id this step belongs to." },
+    "step": { "type": "string", "minLength": 1, "description": "The named step within the task's run (e.g. claim, dispatch, verify, complete, escalate). Instance-defined; the framework fixes no set." },
+    "attempt": { "type": "integer", "minimum": 1, "description": "Which implement→verify attempt this record belongs to (the bounded-reiteration index)." },
+    "idempotency_key": { "type": "string", "description": "Deterministic key for a side-effecting step: hash(task_id + step + salient_inputs). Re-execution with the same key must be a no-op at the side-effect boundary; replay matches on it." },
+    "result": { "type": "string", "enum": ["start", "ok", "fail", "pass", "skipped-replay"], "description": "Step outcome. start = begun (not yet done); ok/pass = completed successfully (replay-eligible); fail = ran but failed; skipped-replay = short-circuited because a prior ok was found." },
+    "evidence": { "type": "string", "description": "Pointer to proof — a result-file path, an exit code, a log location. Never the raw payload (data-handling.md)." },
+    "metadata": { "type": "object", "description": "Instance escape hatch for extra structured fields. Must carry no secrets." }
+  }
+}
