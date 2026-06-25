@@ -8,6 +8,29 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-25
+
+### Added
+- **Portable status line** (`runtime/statusline/`) — a four-row Claude Code status line
+  (location · session · limits · priority) rendered from the status-line JSON, with
+  green→yellow→red gauges on the effort, context, and rate fields so an approaching limit reads at a
+  glance. Zero instance coupling: the only project-specific input is the task file behind Row 4,
+  supplied via `CLAUDE_STATUSLINE_TASKS_FILE` (unset ⇒ the row is omitted, the rest unaffected).
+  Closes the gap where the framework documented the loop but shipped no at-a-glance view of an
+  agent's live state.
+- **`junior-to-senior` skill** (`skills/junior-to-senior/`) — a deliberate second pass that lifts a
+  working first draft to senior grade via a six-check lens: edge cases, the invariant (made loud),
+  the failure class (swept, not patched), fit & naming, verification you actually ran, and the
+  unstated assumption. The portable form of the average→senior→prime quality ladder; carries a
+  failing-baseline eval. Distinct from `senior-architect` (diagrams/ADRs). Adapted from
+  JuliusBrussee/skills (MIT).
+- **AI-failure-mode lens for cross-review** (`coordination/review.md`) — a named lens the reviewer
+  of agent-produced work applies by default, since the characteristic failures are invisible to the
+  author: hallucinated surface, plausible-but-wrong, silent fallback, scope drift, fabricated
+  verification, and confident staleness, each with how to probe it. Complements the evidence floor —
+  the lens says *where to look*, the floor says *how to report* — so a lens finding is still
+  `[unverified]` until grounded.
+
 ## [0.7.2] - 2026-06-25
 
 ### Changed
