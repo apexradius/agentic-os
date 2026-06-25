@@ -69,6 +69,15 @@
       "type": "string",
       "description": "Machine check that proves the task done."
     },
+    "due_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Earliest time the scheduler may dispatch this task. Absent = dispatchable as soon as it is ready (dependencies met)."
+    },
+    "schedule": {
+      "type": "string",
+      "description": "Recurring cadence for a proactive task, as an interval expression (e.g. '@every 30m', '@every 1h', '@every 90s'). The scheduler re-dispatches when the interval has elapsed since metadata.last_run_at. Full cron is the instance's job; this is the portable heartbeat form."
+    },
     "review_required": {
       "type": "boolean",
       "description": "Whether completion routes to cross-review (Council default: true)."

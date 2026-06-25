@@ -13,6 +13,7 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Standard | Prose (law) | Enforcement (here) | Judgment layer |
 |---|---|---|---|
 | Design taste | [`doctrine/standards/design.md`](../doctrine/standards/design.md) | [`design-gate/`](design-gate/) — deterministic anti-pattern scanner | [`roles/design-critic.md`](../roles/design-critic.md) |
+| Tool-gate (safer-by-default) | [`doctrine/standards/tool-gate.md`](../doctrine/standards/tool-gate.md) | [`tool-gate/`](tool-gate/) — deterministic HITL tool-call gate (allow/ask/deny) + PreToolUse hook | [`roles/security-reviewer.md`](../roles/security-reviewer.md) |
 | Mirror parity | [`doctrine/README.md`](../doctrine/README.md) — single source ("everything else is a mirror") | [`mirror-parity/`](mirror-parity/) — co-owned manual pairs keep the same outline | human review of mirrored prose |
 | Session discipline | [`doctrine/standards/session-discipline.md`](../doctrine/standards/session-discipline.md) | [`session-discipline/`](session-discipline/) — PIV planning gate + lifecycle hooks | human review / the planner role |
 | Continuous integration | [`doctrine/standards/ci.md`](../doctrine/standards/ci.md) | [`ci/`](ci/) — reusable workflows + shared tool configs (zone-pure source the instance's delivery repo syncs from) | CodeRabbit / Greptile PR review (Tiers 2–3) |

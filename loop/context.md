@@ -18,6 +18,36 @@ recoverable.
   when it can see the failure it's recovering from; prune that evidence early and it repeats the
   mistake. That evidence becomes droppable once the fix passes [Verify](verification.md), not before.
 
+## Layered memory — the persistence stack
+
+WHISK keeps the *window* lean; this keeps the *durable* memory honest. A persistent agent does
+not have one memory — it has a **stack of layers that differ by lifespan and scope**, and the
+discipline is putting each fact in the layer that matches how long it stays true. (This is the
+layered-memory model the self-improving agents — Hermes Agent, OpenClaw — are built on, stated
+as doctrine rather than wired to any one store.)
+
+| Layer | Holds | Lifespan | Where |
+|---|---|---|---|
+| **Standing notes** | Facts about the world the agent operates in — systems, topology, models, contracts | Long-lived; carries a verification date | the instance's knowledge zone (e.g. a `memory.md`) |
+| **Lessons** | Distilled "we learned X the hard way" operating corrections | Long-lived | a `lessons.md` |
+| **User model** | How the *operator* wants work done — preferences, standing corrections, communication style | Long-lived; updated as the relationship evolves | a `user-model.md` |
+| **Session history** | What was in flight when a session ended — the very next action, uncommitted state | Short-lived; pruned once it graduates | `handoffs/` |
+| **Skills** | Reusable *procedures* — how to do a recurring task | Long-lived; earns its context via an eval | the skills corpus |
+
+Two rules keep the stack from rotting:
+
+- **Right layer, not every layer.** A fact lives in exactly one layer. A durable truth in a
+  handoff is lost at the next prune; a transient state in the standing notes is a lie within a
+  week. When a handoff contains something durable, **graduate it** (into notes / lessons / user
+  model / a distilled skill) and let the handoff stay disposable.
+- **Freshness over faith.** Long-lived layers carry the date they were last verified; treat a
+  stale fact as *re-verify before acting*, not as truth. When live reality contradicts a layer,
+  reality wins and you fix the layer in the same pass.
+
+The model is generic; the **content** is instance state (knowledge is state, not law). Procedural
+memory has its own guardrail — recurring successes become skills only through the gated
+`distill-skill` flow, never auto-written.
+
 ## Context budget — the percentage ladder
 
 As context fills, the [context-budget standard](../standards/context-budget/) enforces a

@@ -1,7 +1,7 @@
 # framework/coordination — how agents work together
 
 When more than one agent touches the same work, coordination keeps them from colliding,
-duplicating effort, or rubber-stamping each other. The model has five parts:
+duplicating effort, or rubber-stamping each other. The model has six parts:
 
 | File | Answers |
 |---|---|
@@ -10,6 +10,7 @@ duplicating effort, or rubber-stamping each other. The model has five parts:
 | [ledger.md](ledger.md) | How work is tracked, and how file-ownership prevents collisions. |
 | [review.md](review.md) | How agents check each other's work without deadlocking. |
 | [liveness.md](liveness.md) | How a stalled or dead agent is detected and recovered. |
+| [scheduler.md](scheduler.md) | How the proactive loop picks the tasks that are ready and due to dispatch. |
 
 The machine-readable contract for a single task is
 [`ledger.schema.json`](ledger.schema.json); the model that schema encodes is described in

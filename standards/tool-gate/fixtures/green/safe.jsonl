@@ -1,0 +1,11 @@
+// Safe tool calls — every line MUST produce zero findings (decision allow or ask, never deny).
+{"tool":"Bash","input":{"command":"ls -la src"}}
+{"tool":"Bash","input":{"command":"git status"}}
+{"tool":"Bash","input":{"command":"git diff --stat"}}
+{"tool":"Bash","input":{"command":"grep -rn TODO src | head -20"}}
+{"tool":"Bash","input":{"command":"cat README.md | wc -l"}}
+{"tool":"Bash","input":{"command":"node framework/primitives/_lib/validate.mjs --all"}}
+{"tool":"Bash","input":{"command":"rm build/output.tmp"}}
+{"tool":"Write","input":{"file_path":"src/app.js","content":"export const add = (a, b) => a + b;\n"}}
+{"tool":"Edit","input":{"file_path":"README.md","new_string":"Run the setup steps below to get started."}}
+{"tool":"Bash","input":{"command":"curl -s https://api.example.com/health"}}
