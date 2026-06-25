@@ -8,6 +8,18 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-25
+
+### Added
+- **`context-canary` skill** (`skills/context-canary/`) — a per-turn integrity signal (first line of every
+  reply: name + turn counter + honest self-check) that converts silent context degradation into a binary,
+  zero-effort, per-turn check, plus a trip protocol (checkpoint → re-anchor → deliberate reset → re-install).
+  The *behavioral* complement to a token-% context guard: the guard watches window capacity, the canary
+  watches whether the model still attends to what's already in the window (adherence/compaction drift a
+  percentage gauge is blind to). Carries `references/research.md` (the four degradation modes) and a
+  failing-baseline `eval.md`. Adapted from `JuliusBrussee/skills` (MIT); genericized to zone-pure framework
+  form (runtime name fills in via the `[name]` arg).
+
 ## [0.4.0] - 2026-06-25
 
 ### Added
