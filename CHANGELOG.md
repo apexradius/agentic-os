@@ -8,6 +8,40 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-25
+
+### Added
+- **Eval primitive** (`primitives/eval/`) — a portable Task/Solver/Scorer contract with
+  `task`, `solver`, `scorer`, pass threshold, and deterministic-vs-judge grading mode. The
+  primitive validates shape and cross-field mode consistency while keeping model calls,
+  judge endpoints, and provider-specific execution instance-owned.
+- **Judge rigor gates** (`standards/judge-bias/`, `standards/judge-validity/`) — judge-backed
+  evals now have deterministic guardrails for order-swap judging, cross-judge separation,
+  verbosity/self-preference controls, and paired gold-set agreement via Cohen's kappa. The
+  eval harness carries real portable gate/gold-set artifacts so the gates scan actual
+  inputs, not just inline fixtures.
+- **Faithfulness trace gate** (`standards/faithfulness-trace/`) — closeout traces now have an
+  executable shape: every done claim must carry evidence type, pointer, observed result, and
+  timestamp. This catches the failure where completion is asserted without proof.
+- **Executable orchestration manifest gate** (`coordination/orchestration.md` +
+  `standards/orchestration-manifest/`) — multi-agent DAGs now have a portable manifest
+  contract for owners, dependencies, owned files, validation commands, output artifacts, and
+  resume keys, with deterministic checks for missing validation commands and cycles.
+
+### Changed
+- **Agent runtime contracts are now first-class optional metadata.** The agents primitive
+  accepts an optional `runtime_contract` block for input/output schema refs, tool-parameter
+  schema refs, bounded retry count, and declared handoff targets. Existing agents stay valid;
+  enforcement remains runtime-owned.
+- **Context-budget now offloads oversized tool results.** The hook writes large `PostToolUse`
+  payloads to a session-local result file and emits only a compact preview plus pointer,
+  preserving context while failing open on all write/offload errors.
+
+### Fixed
+- **Session-discipline selftests no longer share a fixed session ID.** The validator's
+  selftest session and fixture names derive from a unique per-run ID, so simultaneous runs
+  cannot collide on the same session artifacts.
+
 ## [0.8.2] - 2026-06-25
 
 ### Changed

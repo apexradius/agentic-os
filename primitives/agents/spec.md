@@ -31,6 +31,27 @@ written as "does X; use when Y", never a workflow summary). `disallowedTools` is
 **read-only-lane** mechanism: an analyst/reviewer role lists `Write, Edit` here so it
 physically cannot mutate the tree.
 
+### Optional runtime contract
+
+An agent may declare `runtime_contract` when a runtime needs machine-readable I/O
+boundaries:
+
+```yaml
+runtime_contract:
+  input_schema: schemas/review-input.schema.json
+  output_schema: schemas/review-output.schema.json
+  tool_param_schemas:
+    web_search: schemas/web-search-params.schema.json
+  retry_limit: 2
+  handoff_targets:
+    - verifier
+```
+
+The primitive validator checks this block structurally only. It accepts schema pointers
+or inline schema objects, bounds `retry_limit`, and requires handoff targets to be
+kebab-case. Runtime enforcement, retry behavior, and tool-parameter validation remain
+instance-owned.
+
 ## Single source, two runtimes (the build)
 
 An agent is authored **once** as a canonical `.md`, and emitted to both runtime
@@ -69,6 +90,7 @@ producing invalid TOML.
 `validate.mjs` checks an agent in two separable layers, because they need different tools:
 
 1. **Frontmatter** → `ajv` against `agents.schema.json`. Structured, machine-checkable.
+   This includes the optional `runtime_contract` block when present.
 2. **Body** → code, because XML is not JSON. The rules (see the house style):
    - wrapped in `<Agent_Prompt>…</Agent_Prompt>`
    - contains the required `<Role>`

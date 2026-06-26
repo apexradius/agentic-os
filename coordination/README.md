@@ -11,11 +11,15 @@ duplicating effort, or rubber-stamping each other. The model has six parts:
 | [review.md](review.md) | How agents check each other's work without deadlocking. |
 | [liveness.md](liveness.md) | How a stalled or dead agent is detected and recovered. |
 | [scheduler.md](scheduler.md) | How the proactive loop picks the tasks that are ready and due to dispatch. |
+| [orchestration.md](orchestration.md) | How multi-agent DAGs declare owners, dependencies, validation, outputs, and resume keys. |
 
 The machine-readable contract for a single task is
 [`ledger.schema.json`](ledger.schema.json); the model that schema encodes is described in
-[ledger.md](ledger.md). The runtime that *implements* all of this (the ledger engine) is
-extracted later — coordination here is the **model**, not the code.
+[ledger.md](ledger.md). The machine-readable contract for a multi-agent DAG is described
+in [orchestration.md](orchestration.md) and checked by
+[`../standards/orchestration-manifest/`](../standards/orchestration-manifest/). The runtime
+that *implements* all of this (the ledger engine) is extracted later — coordination here
+is the **model**, not the code.
 
 This is the multi-agent layer on top of the single-agent [loop](../loop/README.md) and the
 shared [doctrine](../doctrine/README.md) every agent obeys.

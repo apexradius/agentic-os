@@ -1,0 +1,21 @@
+{
+  "id": "eval-harness-judge-required-path",
+  "applies_to": "eval-harness results marked gradeable:false and routed to an instance judge",
+  "deterministic_first": true,
+  "order_swap": {
+    "enabled": true,
+    "require_consistent_verdict": true
+  },
+  "agreement": {
+    "required": true,
+    "on_disagreement": "escalate"
+  },
+  "judge_separation": {
+    "policy": "different-model-preferred",
+    "fallback": "record-reason"
+  },
+  "rubric_controls": [
+    "verbosity-neutral",
+    "self-preference-neutral"
+  ]
+}

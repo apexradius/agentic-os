@@ -3,9 +3,9 @@
 // (`validate.mjs --all`). If python3 is absent, each integration check is SKIPPED
 // with a one-line notice and the selftest exits 0 (mirrors session-discipline's
 // ethos of never breaking a bare-node `--all` run). When python3 is present, all
-// four event branches are exercised against an isolated tmp HOME.
+// event branches are exercised against an isolated tmp HOME.
 
-import { mkdtempSync, writeFileSync, rmSync, existsSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,6 +48,8 @@ if (!hasPython) {
   skip("PreToolUse: unknown event → exit 0 (fail-open)");
   skip("PreToolUse: no session_id → exit 0 (fail-open)");
   skip("PostToolUse: no session_id → exit 0 (fail-open)");
+  skip("PostToolUse: small result → no offload");
+  skip("PostToolUse: large result → offloads file + emits pointer");
   skip("UserPromptSubmit: no session_id → exit 0 (fail-open)");
   skip("PreCompact: no handoff file → exit 0 (fail-open)");
   console.log("context-budget: python3 not found — python-dependent checks skipped");
@@ -66,7 +68,12 @@ if (!hasPython) {
     process.exit(1);
   }
 
-  const baseEnv = { HOME: tmpHome };
+  // Prepend system paths so hooks find the real python3, not version-manager shims
+  // (e.g. mise, pyenv) that require the real HOME to resolve their config.
+  const baseEnv = {
+    HOME: tmpHome,
+    PATH: `/usr/bin:/bin:/usr/sbin:/sbin:${process.env.PATH || ""}`,
+  };
 
   function runHook(payload, extraEnv = {}) {
     return spawnSync("python3", [HOOK], {
@@ -95,6 +102,43 @@ if (!hasPython) {
     });
     ok("PostToolUse: no session_id → exit 0 (fail-open)", r3.status === 0,
       `exit ${r3.status}\n${r3.stderr}`);
+
+    // ── 3b. PostToolUse: small result stays inline/no output ───────────────────
+    const small = runHook({
+      hook_event_name: "PostToolUse",
+      session_id: "test001",
+      tool_name: "Read",
+      tool_response: "small payload",
+    }, { CTXGUARD_OFFLOAD_CHARS: "20", CTXGUARD_OFFLOAD_PREVIEW_CHARS: "8" });
+    ok("PostToolUse: small result → exit 0", small.status === 0,
+      `exit ${small.status}\n${small.stderr}`);
+    ok("PostToolUse: small result → no offload", (small.stdout || "") === "",
+      `stdout: ${small.stdout.slice(0, 120)}`);
+
+    // ── 3c. PostToolUse: large result writes session-local file + pointer ──────
+    const largePayload = "X".repeat(60);
+    const large = runHook({
+      hook_event_name: "PostToolUse",
+      session_id: "test001",
+      tool_name: "Read",
+      tool_response: largePayload,
+    }, { CTXGUARD_OFFLOAD_CHARS: "20", CTXGUARD_OFFLOAD_PREVIEW_CHARS: "10" });
+    ok("PostToolUse: large result → exit 0", large.status === 0,
+      `exit ${large.status}\n${large.stderr}`);
+    const offloadDir = join(tmpHome, ".claude", "session-env", "test001", "tool-results");
+    const offloaded = existsSync(offloadDir)
+      ? readdirSync(offloadDir).filter((f) => f.endsWith(".txt"))
+      : [];
+    const offloadFile = offloaded.length ? join(offloadDir, offloaded[0]) : "";
+    let largeHasPointer = false;
+    try {
+      const out = JSON.parse(large.stdout || "{}");
+      const ctx = out.hookSpecificOutput && out.hookSpecificOutput.additionalContext;
+      largeHasPointer = typeof ctx === "string" && ctx.includes(offloadFile) && ctx.includes("Preview:");
+    } catch { /* largeHasPointer stays false */ }
+    ok("PostToolUse: large result → offloads file + emits pointer",
+      offloadFile && existsSync(offloadFile) && statSync(offloadFile).size === largePayload.length && largeHasPointer,
+      `stdout: ${large.stdout.slice(0, 160)}`);
 
     // ── 4. UserPromptSubmit: no session_id → exit 0 ────────────────────────────
     const r4 = runHook({ hook_event_name: "UserPromptSubmit" });

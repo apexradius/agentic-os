@@ -21,8 +21,10 @@ If you're unsure, default to `framework/roles/` and strip the specifics into
 1. **Frontmatter.** `name` (kebab-case, == filename stem), a `description` that is a
    *load signal* ("does X; use when Y" — not a workflow recap), and `model`. Add
    `disallowedTools: Write, Edit` for any read-only/reviewer role (the read-only lane).
-   Add `tools` / `mcpServers` / `skills` only if the role needs them. Stay inside the
-   fields in `agents.schema.json` — unknown fields fail validation.
+   Add `tools` / `mcpServers` / `skills` only if the role needs them. Add
+   `runtime_contract` only when the runtime needs explicit input/output schemas, tool
+   parameter schemas, retry bounds, or declared handoff targets. Stay inside the fields
+   in `agents.schema.json` — unknown fields fail validation.
 2. **Body.** One `<Agent_Prompt>` root. `<Role>` is required and must state what the agent
    does **and what it does not own** (the hand-off boundary). Then pick the shape:
    - reasoning/judgment role → add `<Constraints>`

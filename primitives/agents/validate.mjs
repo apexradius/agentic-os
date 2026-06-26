@@ -99,11 +99,41 @@ function collectTargets(args) {
   return out.sort();
 }
 
+function runtimeContractSelftest() {
+  const base = {
+    name: "runtime-contract-fixture",
+    description: "Fixture proving optional runtime contracts validate structurally.",
+  };
+  const good = {
+    ...base,
+    runtime_contract: {
+      input_schema: "schemas/input.schema.json",
+      output_schema: { type: "object" },
+      tool_param_schemas: {
+        read_file: "schemas/read-file.schema.json",
+      },
+      retry_limit: 2,
+      handoff_targets: ["verifier"],
+    },
+  };
+  const badRetry = {
+    ...base,
+    runtime_contract: { retry_limit: 99 },
+  };
+  const badTarget = {
+    ...base,
+    runtime_contract: { handoff_targets: ["Verifier"] },
+  };
+  return validateFrontmatter(good) && !validateFrontmatter(badRetry) && !validateFrontmatter(badTarget);
+}
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 if (process.argv[1] && process.argv[1].endsWith("validate.mjs")) {
   const targets = collectTargets(process.argv.slice(2));
   let failed = 0;
   let warned = 0;
+  const schemaSelftestOk = runtimeContractSelftest();
+  console.log(`  ${schemaSelftestOk ? "ok  " : "FAIL"} runtime_contract schema selftest`);
   for (const t of targets) {
     const { errors, warnings } = validateAgentFile(t);
     const rel = t.startsWith(REPO + "/") ? t.slice(REPO.length + 1) : t;
@@ -120,5 +150,5 @@ if (process.argv[1] && process.argv[1].endsWith("validate.mjs")) {
     }
   }
   console.log(`\nagents: ${targets.length - failed}/${targets.length} valid${warned ? `, ${warned} with warnings` : ""}`);
-  process.exit(failed ? 1 : 0);
+  process.exit(failed || !schemaSelftestOk ? 1 : 0);
 }

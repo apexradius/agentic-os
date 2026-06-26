@@ -84,18 +84,26 @@ try {
   process.exit(1);
 }
 
+const runId = `selftest-${process.pid}-${Date.now()}`;
 const sessionsDir = join(tmpHome, ".claude", "sessions");
 const archiveDir = join(sessionsDir, "archive");
 const pointerFile = join(sessionsDir, ".current-session");
 const discoveryFlag = join(tmpHome, ".claude", ".discovery-mode");
-const baseEnv = { HOME: tmpHome };
+// Prepend system paths so hooks find the real python3, not version-manager shims
+// (e.g. mise, pyenv) that require the real HOME to resolve their config.
+const baseEnv = {
+  HOME: tmpHome,
+  PATH: `/usr/bin:/bin:/usr/sbin:/sbin:${process.env.PATH || ""}`,
+};
 
 try {
 
   // ── 1. session-start.sh ────────────────────────────────────────────────────
-  // Force a fresh session by setting a deterministic CLAUDE_SESSION_ID
+  // Force a fresh session with a per-run id. The isolated HOME already prevents
+  // real-session writes; the unique id prevents concurrent selftests from ever
+  // sharing fixture names inside that HOME.
   const startResult = runHook("session-start.sh", {
-    env: { ...baseEnv, CLAUDE_SESSION_ID: "selftest001" },
+    env: { ...baseEnv, CLAUDE_SESSION_ID: runId },
   });
 
   const sessionFiles = existsSync(sessionsDir)
@@ -175,7 +183,7 @@ VERIFICATION_PLAN:
   // 4b. Edit to sessions path → should exit 0
   const editSession = JSON.stringify({
     tool_name: "Edit",
-    tool_input: { file_path: join(sessionsDir, "SESSION-selftest001.md"), old_string: "a", new_string: "b" },
+    tool_input: { file_path: join(sessionsDir, `SESSION-${runId}.md`), old_string: "a", new_string: "b" },
   });
   const roEditAllowed = runHook("read-only-gate.sh", {
     env: { ...baseEnv },

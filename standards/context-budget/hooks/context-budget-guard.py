@@ -2,7 +2,7 @@
 """
 context-budget-guard.py — Living-Handoff Context Guard
 
-One hook, four roles (branches on hook_event_name):
+One hook, five roles (branches on hook_event_name):
 
   PreToolUse       The freshness ladder. When context crosses a rung whose handoff
                    has not yet been written/refreshed, momentarily DENY non-handoff
@@ -13,6 +13,8 @@ One hook, four roles (branches on hook_event_name):
 
   PostToolUse      When a Write/Edit lands on the session HANDOFF file, record the
                    rung the current context satisfies (marks the handoff "current").
+                   When a tool result is oversized, write it to a session-scoped
+                   file and emit only a compact preview + pointer into context.
 
   UserPromptSubmit Inject a one-line budget advisory (context %, handoff status, path).
                    Awareness only — never blocks.
@@ -38,12 +40,17 @@ Env overrides:
   CTXGUARD_CREATE   first-handoff rung, percent     (default 45)
   CTXGUARD_LADDER   refresh rungs, csv percent       (default "55,65,75,85,95")
   CTXGUARD_DROP     pct drop that signals a compaction reset (default 10)
+  CTXGUARD_OFFLOAD_CHARS          result offload threshold chars (default 50000)
+  CTXGUARD_OFFLOAD_PREVIEW_CHARS  result preview chars          (default 2000)
+  CTXGUARD_OFFLOAD_DIR            explicit result output dir    (default session-local)
 """
 
 import json
+import hashlib
 import os
 import re
 import sys
+import time
 
 # ---- config -----------------------------------------------------------------
 
@@ -58,6 +65,9 @@ def _int_env(name, default):
 WINDOW = _int_env("CTXGUARD_WINDOW", 1_000_000)
 CREATE_RUNG = _int_env("CTXGUARD_CREATE", 45)
 DROP = _int_env("CTXGUARD_DROP", 10)
+OFFLOAD_CHARS = _int_env("CTXGUARD_OFFLOAD_CHARS", 50_000)
+OFFLOAD_PREVIEW_CHARS = _int_env("CTXGUARD_OFFLOAD_PREVIEW_CHARS", 2_000)
+OFFLOAD_DIR = os.environ.get("CTXGUARD_OFFLOAD_DIR", "")
 
 
 def _ladder():
@@ -108,6 +118,12 @@ def _handoff_path(session_id):
 
 def _sidecar_path(session_id):
     return os.path.join(_session_dir(session_id), "context-guard.json")
+
+
+def _tool_results_dir(session_id):
+    if OFFLOAD_DIR:
+        return os.path.expanduser(OFFLOAD_DIR)
+    return os.path.join(_session_dir(session_id), "tool-results")
 
 
 def rung_for(pct):
@@ -188,6 +204,71 @@ def save_sidecar(session_id, state):
 
 def emit(obj):
     sys.stdout.write(json.dumps(obj))
+
+
+def _safe_name(value):
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", str(value or "tool")).strip("-")
+    return name[:48] or "tool"
+
+
+def _stringify(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2)
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _result_candidates(data):
+    keys = [
+        "tool_response",
+        "tool_result",
+        "tool_output",
+        "result",
+        "output",
+        "content",
+        "stdout",
+        "stderr",
+    ]
+    out = []
+    for key in keys:
+        if key in data:
+            text = _stringify(data.get(key))
+            if text:
+                out.append((key, text))
+    return out
+
+
+def offload_large_result(data, session_id):
+    if OFFLOAD_CHARS <= 0 or not session_id:
+        return ""
+    candidates = _result_candidates(data)
+    if not candidates:
+        return ""
+    source_key, payload = max(candidates, key=lambda item: len(item[1]))
+    if len(payload) <= OFFLOAD_CHARS:
+        return ""
+    try:
+        directory = _tool_results_dir(session_id)
+        os.makedirs(directory, exist_ok=True)
+        digest = hashlib.sha256(payload.encode("utf-8", errors="replace")).hexdigest()[:12]
+        stamp = int(time.time() * 1000)
+        tool = _safe_name(data.get("tool_name", "tool"))
+        path = os.path.join(directory, f"{tool}-{stamp}-{digest}.txt")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+    except OSError:
+        return ""
+
+    preview = payload[:max(0, OFFLOAD_PREVIEW_CHARS)]
+    if len(payload) > len(preview):
+        preview += "\n...[tool result offloaded; preview truncated]..."
+    return (
+        "[context-budget] Large PostToolUse result offloaded to {path} "
+        "({chars} chars from {source}). Preview:\n\n{preview}"
+    ).format(path=path, chars=len(payload), source=source_key, preview=preview)
 
 
 def is_handoff_write(tool_name, tool_input, handoff_path):
@@ -279,17 +360,25 @@ def handle_posttooluse(data):
     if not session_id:
         return 0
     handoff_path = _handoff_path(session_id)
-    if not is_handoff_write(data.get("tool_name", ""), data.get("tool_input", {}), handoff_path):
-        return 0
-    pct = context_pct(data.get("transcript_path"))
-    state = load_sidecar(session_id)
-    required = rung_for(pct) if pct is not None else 0
-    # A fresh handoff satisfies every rung at or below the current context. If written
-    # proactively below the first rung, still credit the first rung.
-    state["last_handoff_rung"] = max(state["last_handoff_rung"], required or CREATE_RUNG)
-    if pct is not None:
-        state["last_seen_pct"] = pct
-    save_sidecar(session_id, state)
+    if is_handoff_write(data.get("tool_name", ""), data.get("tool_input", {}), handoff_path):
+        pct = context_pct(data.get("transcript_path"))
+        state = load_sidecar(session_id)
+        required = rung_for(pct) if pct is not None else 0
+        # A fresh handoff satisfies every rung at or below the current context. If written
+        # proactively below the first rung, still credit the first rung.
+        state["last_handoff_rung"] = max(state["last_handoff_rung"], required or CREATE_RUNG)
+        if pct is not None:
+            state["last_seen_pct"] = pct
+        save_sidecar(session_id, state)
+
+    offload = offload_large_result(data, session_id)
+    if offload:
+        emit({
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": offload,
+            }
+        })
     return 0
 
 

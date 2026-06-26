@@ -52,6 +52,50 @@
       "type": "array",
       "items": { "type": "string" },
       "uniqueItems": true
+    },
+    "runtime_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "Optional portable runtime I/O contract. The primitive validator checks structure only; enforcement belongs to the runtime instance.",
+      "properties": {
+        "input_schema": { "$ref": "#/definitions/schemaRef" },
+        "output_schema": { "$ref": "#/definitions/schemaRef" },
+        "tool_param_schemas": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/schemaRef" },
+          "description": "Map of tool name to JSON-Schema object or schema pointer."
+        },
+        "retry_limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "Bounded retry count; runtime enforcement is instance-owned."
+        },
+        "handoff_targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "uniqueItems": true,
+          "description": "Declared agent/role targets this agent may hand off to."
+        }
+      }
+    }
+  },
+  "definitions": {
+    "schemaRef": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1
+        }
+      ]
     }
   }
 }

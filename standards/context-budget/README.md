@@ -13,19 +13,20 @@ from advisory prose into a runtime constraint.
 ## Run it
 
 ```bash
-# Selftest only (proves hook compiles, exercises all four branches):
+# Selftest only (proves hook compiles, exercises all event branches):
 node framework/standards/context-budget/validate.mjs
 
 # Full harness (runs this alongside every other primitive and standard):
 node framework/primitives/_lib/validate.mjs --all
 ```
 
-## What it enforces (1 hook, 4 event branches)
+## What it enforces (1 hook, 5 event branches)
 
 | Branch | Event | Behavior |
 |---|---|---|
 | Ladder gate | `PreToolUse` | Denies mutating tools when the current rung's handoff is not yet written/refreshed; read-only tools, the handoff write, and the Skill tool are always allowed |
 | Rung credit | `PostToolUse` | When a write lands on the HANDOFF file, records the satisfied rung in a per-session sidecar so the gate knows the handoff is current |
+| Result offload | `PostToolUse` | Copies oversized tool results to a session-local file and emits only a compact preview plus pointer back into context |
 | Budget advisory | `UserPromptSubmit` | Injects a one-line advisory once context exceeds `CTXGUARD_CREATE − 5%`; awareness only, never blocks |
 | Compaction seed | `PreCompact` | Feeds the HANDOFF contents into the runtime's auto-compaction `additionalContext` so the compaction summary is seeded with structured session state |
 
@@ -54,6 +55,9 @@ releases on the next one once the handoff is refreshed.
 | `CTXGUARD_CREATE` | `45` | Percentage at which the first handoff must be created |
 | `CTXGUARD_LADDER` | `55,65,75,85,95` | Comma-separated refresh rungs (percentages) |
 | `CTXGUARD_DROP` | `10` | Percentage drop that signals a compaction reset (resets the ladder) |
+| `CTXGUARD_OFFLOAD_CHARS` | `50000` | Minimum PostToolUse result size before the hook offloads it |
+| `CTXGUARD_OFFLOAD_PREVIEW_CHARS` | `2000` | Maximum characters echoed back into context for an offloaded result |
+| `CTXGUARD_OFFLOAD_DIR` | unset | Optional explicit directory for offloaded result files; unset means the session-local `tool-results/` directory |
 
 ## Install
 
@@ -148,6 +152,10 @@ checkpoints, and post-compact restores from whichever is freshest.
 - **No hard-stop.** The gate momentarily denies a single tool call and releases on the
   next call once the handoff is refreshed. There is no lock, no session freeze, and no
   escalation path.
+- **No guaranteed host-side result replacement.** The offload path writes the oversized
+  payload and emits a compact pointer/preview. A host that still injects the original
+  full result is outside this standard's control; the portable guarantee is that a
+  bounded reference exists for recovery and review.
 
 ## Honest limitation
 
@@ -157,6 +165,10 @@ this framework's test suite (the harness cannot trigger a real compaction). The 
 fails gracefully — if the handoff file does not exist, the branch exits 0 and the
 compaction proceeds normally. The handoff file persists on disk regardless.
 
+Large result offload is also fail-open. If the session directory cannot be created or
+the file cannot be written, the hook exits 0 with no pointer rather than blocking the
+tool result.
+
 ## Verify
 
 ```bash
@@ -165,4 +177,4 @@ node framework/primitives/_lib/validate.mjs --all       # full harness
 bash framework/runtime/verify-zone-purity.sh            # zero instance coupling
 ```
 
-> Last reviewed: 2026-06-23
+> Last reviewed: 2026-06-25

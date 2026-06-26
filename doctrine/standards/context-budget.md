@@ -66,13 +66,26 @@ honest limitation: the `PreCompact` `additionalContext` injection path degrades
 gracefully if the handoff file does not exist — the compaction proceeds normally, and the
 handoff file persists on disk regardless.
 
+## Oversized tool-result offload
+
+Tool results can consume the same scarce context as conversation. A runtime hook that sees
+an oversized `PostToolUse` result should write the full result to a session-local file and
+emit only a compact pointer plus preview into context. The default threshold is 50,000
+characters and the default preview is 2,000 characters; instances may tune both.
+
+The offload path is a context-preservation mechanism, not a security boundary. It must fail
+open: if the output directory cannot be created or the write fails, the original tool flow
+continues. A host may still inject the full original result; the portable requirement is that
+the framework provides a bounded pointer artifact the agent can cite, re-open, or carry
+through compaction.
+
 ## Instance configuration
 
 Instances copy the hook from this standard's `hooks/` directory to `~/.claude/hooks/`
 and wire it in `settings.json` using `examples/settings.json` as a template. The four
 event registrations (PreToolUse, PostToolUse, UserPromptSubmit, PreCompact) all invoke
 the same script — the script branches on `hook_event_name`. Instance-specific window
-sizes, ladder percentages, or downstream hooks belong in the instance configuration,
-not here.
+sizes, ladder percentages, offload thresholds, or downstream hooks belong in the instance
+configuration, not here.
 
-> Last reviewed: 2026-06-23
+> Last reviewed: 2026-06-25

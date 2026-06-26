@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/eval/eval.schema.json",
+  "title": "Agentic OS eval definition",
+  "description": "Validates a portable Task/Solver/Scorer eval definition. Runtime execution, model calls, and provider-specific judge APIs stay instance-owned.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "task", "solver", "scorer"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 96
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500
+    },
+    "grading_mode": {
+      "type": "string",
+      "enum": ["deterministic", "judge"],
+      "default": "deterministic"
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dataset, fixture, or prompt-pack pointer. May be a relative file path, URI, or instance-owned locator."
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_schema": {
+          "$ref": "#/definitions/schemaRef"
+        },
+        "expected_output_schema": {
+          "$ref": "#/definitions/schemaRef"
+        }
+      }
+    },
+    "solver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["agent", "skill", "command", "mcp-tool", "custom"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        }
+      }
+    },
+    "scorer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "threshold"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["deterministic", "judge"]
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "metric": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "judge_gate": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Pointer to a judge-gate artifact that satisfies the judge-bias and judge-validity standards."
+        }
+      }
+    }
+  },
+  "definitions": {
+    "schemaRef": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "minProperties": 1
+        }
+      ]
+    }
+  }
+}
