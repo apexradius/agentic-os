@@ -20,6 +20,48 @@ covers the zone line, the two checks every change must pass, and how to add a bu
 contract in [`doctrine/standards/versioning.md`](doctrine/standards/versioning.md). A release is
 a public sync; an instance pins the version it synced and re-runs `validate.mjs --all` on update.
 
+## Start Here
+
+| You are | Start with | Time |
+|---|---|---:|
+| Trying the framework | [`QUICKSTART.md`](QUICKSTART.md) | 10 min |
+| Adopting it into an instance | [The zone model](#the-zone-model) and [docs/architecture.md](docs/architecture.md) | 20 min |
+| Changing framework rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) and `primitives/_lib/validate.mjs` | 20 min |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Instance[Instance zone] -->|configures| Runtime[runtime]
+    Runtime --> Primitives[primitives]
+    Runtime --> Coordination[coordination]
+    Runtime --> Loop[loop]
+
+    subgraph Framework
+        Doctrine[doctrine] --> Loop
+        Doctrine --> Standards[standards]
+        Primitives --> Agents[agents]
+        Primitives --> Skills[skills]
+        Primitives --> Hooks[hooks]
+        Standards --> Validators[validators]
+    end
+
+    Validators -->|enforce| FrameworkGate[framework gate]
+    Runtime -->|routes| Agents
+```
+
+## Validation Workflow
+
+```mermaid
+flowchart TD
+    Change([Framework change]) --> Validate[node primitives/_lib/validate.mjs --all]
+    Validate --> Purity[bash runtime/verify-zone-purity.sh]
+    Purity --> Pass{Both pass?}
+    Pass -->|yes| Release[Version or sync]
+    Pass -->|no| Fix[Fix schema or coupling]
+    Fix --> Validate
+```
+
 ## The zone model
 
 The framework draws one hard line:
@@ -87,6 +129,8 @@ Both commands run in CI on every push via
 [`.github/workflows/framework-validate.yml`](.github/workflows/framework-validate.yml) — the
 framework dogfooding its own gate. Adopt that workflow (or fold the two commands into your own
 pipeline) so a synced copy can't silently drift out of conformance.
+
+More visual detail: [docs/architecture.md](docs/architecture.md).
 
 ## License
 
