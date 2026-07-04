@@ -51,6 +51,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
 
 # ---- config -----------------------------------------------------------------
 
@@ -241,6 +242,15 @@ def _result_candidates(data):
     return out
 
 
+def _append_offload_index(directory, row):
+    try:
+        path = os.path.join(directory, "index.jsonl")
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+    except OSError:
+        pass  # fail open — the payload file and pointer are the primary path
+
+
 def offload_large_result(data, session_id):
     if OFFLOAD_CHARS <= 0 or not session_id:
         return ""
@@ -250,10 +260,12 @@ def offload_large_result(data, session_id):
     source_key, payload = max(candidates, key=lambda item: len(item[1]))
     if len(payload) <= OFFLOAD_CHARS:
         return ""
+    payload_bytes = payload.encode("utf-8", errors="replace")
+    full_digest = hashlib.sha256(payload_bytes).hexdigest()
     try:
         directory = _tool_results_dir(session_id)
         os.makedirs(directory, exist_ok=True)
-        digest = hashlib.sha256(payload.encode("utf-8", errors="replace")).hexdigest()[:12]
+        digest = full_digest[:12]
         stamp = int(time.time() * 1000)
         tool = _safe_name(data.get("tool_name", "tool"))
         path = os.path.join(directory, f"{tool}-{stamp}-{digest}.txt")
@@ -265,6 +277,16 @@ def offload_large_result(data, session_id):
     preview = payload[:max(0, OFFLOAD_PREVIEW_CHARS)]
     if len(payload) > len(preview):
         preview += "\n...[tool result offloaded; preview truncated]..."
+    _append_offload_index(directory, {
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "tool_name": str(data.get("tool_name", "tool")),
+        "source_key": source_key,
+        "byte_count": len(payload_bytes),
+        "char_count": len(payload),
+        "sha256": full_digest,
+        "path": path,
+        "preview": preview,
+    })
     return (
         "[context-budget] Large PostToolUse result offloaded to {path} "
         "({chars} chars from {source}). Preview:\n\n{preview}"

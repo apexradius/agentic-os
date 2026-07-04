@@ -76,4 +76,9 @@ node framework/standards/eval-harness/validate.mjs    # MOCK-model selftest: par
 node framework/primitives/_lib/validate.mjs --all      # runs the above inside the full harness
 ```
 
+The fixture directory also carries judge governance artifacts used by the judge standards:
+`judge-gate.json`, `judge-validity-gold.json`, and `judge-replay.json`. They prove that the
+judge-required path declares bias controls, validates agreement against a gold set, and records
+an order-swap replay artifact.
+
 > Last reviewed: 2026-06-25

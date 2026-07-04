@@ -13,9 +13,12 @@ Any `judge-gate.json` manifest under `framework/standards/` must declare:
 - required agreement across swapped presentations
 - judge separation policy
 - rubric controls for verbosity and self-preference
+- a matching `judge-replay.json` artifact for every order-swap gate
 
-The gate is intentionally structural. It does not call a model and does not decide whether a
-judge verdict is correct; it proves the bias controls are present before a judge is trusted.
+The replay artifact records the original verdict, swapped verdict, consistency result, and
+escalation state. The gate is intentionally structural. It does not call a model and does not
+decide whether a judge verdict is correct; it proves the bias controls were declared and replayed
+before a judge is trusted.
 
 ## Verify
 

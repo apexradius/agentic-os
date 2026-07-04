@@ -17,9 +17,11 @@ different readers. A newcomer still can't see how the system fits together.
 
 ## Pass
 With the repo-readme skill loaded, the agent produces a README with Mermaid architecture + flow
-diagrams, persona-routed entry points ("you are a user / a contributor / here for X"), and a
-hub-and-spoke docs structure.
+diagrams, persona-routed entry points ("you are a user / a contributor / here for X"), a
+hub-and-spoke docs structure, truthful repo-home badges/proof, and a source social-preview asset
+when the repository is public-facing.
 
 Pass criterion: the README includes at least one architecture/flow diagram and persona-routed
 navigation, readable by an outsider. **Fail** if it's prose-only with no diagrams or reader
-routing.
+routing, or if it invents homepage proof such as unsupported "passing", adoption, production,
+security, or performance claims.

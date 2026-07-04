@@ -1,0 +1,18 @@
+services:
+  proxy:
+    image: traefik:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  browser:
+    image: browser-runner
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    command: ["chromium", "--no-sandbox"]
+  app:
+    image: example/app:${APP_TAG:-latest}
+    environment:
+      JWT_SECRET: changeme
+      ADMIN_PASSWORD: admin

@@ -23,6 +23,41 @@ function arrayOfText(value) {
   return Array.isArray(value) && value.every(hasText);
 }
 
+function nodesInDependencyOrder(manifest) {
+  const nodes = manifest.nodes || [];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const remaining = new Set(nodes.map((node) => node.id));
+  const ordered = [];
+  while (remaining.size) {
+    let progressed = false;
+    for (const node of nodes) {
+      if (!remaining.has(node.id)) continue;
+      const deps = node.depends_on || [];
+      if (deps.every((dep) => byId.has(dep) && !remaining.has(dep))) {
+        ordered.push(node);
+        remaining.delete(node.id);
+        progressed = true;
+      }
+    }
+    if (!progressed) break;
+  }
+  return ordered;
+}
+
+function ownershipConflicts(nodes) {
+  const owners = new Map();
+  for (const node of nodes) {
+    for (const file of node.files_owned || []) {
+      const list = owners.get(file) || [];
+      list.push(node.id);
+      owners.set(file, list);
+    }
+  }
+  return [...owners.entries()]
+    .filter(([, list]) => list.length > 1)
+    .map(([file, nodes]) => ({ file, nodes }));
+}
+
 export function validateManifest(manifest) {
   const errors = [];
   if (!isObject(manifest)) return ["manifest is not an object"];
@@ -86,6 +121,30 @@ export function validateManifest(manifest) {
   return errors;
 }
 
+export function dryRunManifest(manifest) {
+  const errors = validateManifest(manifest);
+  const nodes = Array.isArray(manifest && manifest.nodes) ? manifest.nodes : [];
+  const ordered = errors.length ? [] : nodesInDependencyOrder(manifest);
+  const conflicts = ownershipConflicts(nodes);
+  const blocked = nodes
+    .filter((node) => !ordered.some((orderedNode) => orderedNode.id === node.id))
+    .map((node) => ({ id: node.id, reason: "dependency cycle or invalid dependency" }));
+  return {
+    ok: errors.length === 0 && conflicts.length === 0 && blocked.length === 0,
+    errors,
+    ordered_nodes: ordered.map((node) => node.id),
+    blocked_nodes: blocked,
+    ownership_conflicts: conflicts,
+    validation_plan: ordered.map((node) => ({
+      id: node.id,
+      owner: node.owner,
+      validation_command: node.validation_command,
+      output_artifact: node.output_artifact,
+    })),
+    resume_keys: ordered.map((node) => ({ id: node.id, resume_key: node.resume_key })),
+  };
+}
+
 const valid = {
   id: "release-hardening",
   nodes: [
@@ -126,14 +185,33 @@ const cyclic = {
 ok("validateManifest: valid DAG passes", validateManifest(valid).length === 0);
 ok("validateManifest: missing validation command fails", validateManifest(missingCommand).some((e) => /validation_command/.test(e)));
 ok("validateManifest: cycle fails", validateManifest(cyclic).some((e) => /cycle detected/.test(e)));
+const dry = dryRunManifest(valid);
+ok("dryRunManifest: valid DAG emits dependency order", dry.ok === true && dry.ordered_nodes.join(",") === "plan,verify");
+ok("dryRunManifest: emits validation plan and resume keys", dry.validation_plan.length === 2 && dry.resume_keys[1].resume_key === "verify");
+const overlap = {
+  id: "overlap",
+  nodes: [
+    { id: "a", owner: "one", files_owned: ["same.md"], validation_command: "true", output_artifact: "a.md", resume_key: "a" },
+    { id: "b", owner: "two", files_owned: ["same.md"], validation_command: "true", output_artifact: "b.md", resume_key: "b" },
+  ],
+};
+ok("dryRunManifest: overlapping file ownership fails dry-run", dryRunManifest(overlap).ownership_conflicts.length === 1 && dryRunManifest(overlap).ok === false);
 ok("file present: validate.mjs", existsSync(join(__dirname, "validate.mjs")));
 ok("file present: README.md", existsSync(join(__dirname, "README.md")));
 
-const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const rawArgs = process.argv.slice(2);
+const dryRun = rawArgs.includes("--dry-run");
+const args = rawArgs.filter((a) => !a.startsWith("--"));
 let fileFailures = 0;
 for (const arg of args) {
   try {
     const parsed = JSON.parse(readFileSync(arg, "utf8"));
+    if (dryRun) {
+      const result = dryRunManifest(parsed);
+      console.log(JSON.stringify(result, null, 2));
+      if (!result.ok) fileFailures++;
+      continue;
+    }
     const errors = validateManifest(parsed);
     if (errors.length) {
       fileFailures++;
@@ -148,6 +226,8 @@ for (const arg of args) {
     console.log(`       x invalid JSON: ${e.message}`);
   }
 }
+
+if (dryRun && args.length) process.exit(fileFailures ? 1 : 0);
 
 const failed = checks.filter((c) => !c.pass);
 for (const c of failed) console.log(`  FAIL ${c.name}${c.detail ? `  [${c.detail}]` : ""}`);

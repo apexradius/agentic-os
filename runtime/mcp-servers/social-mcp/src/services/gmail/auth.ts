@@ -1,5 +1,5 @@
 import { oauth2 as oauth2Api } from "@googleapis/oauth2";
-import { OAuth2Client } from "google-auth-library";
+import { OAuth2Client } from "googleapis-common";
 import http from "http";
 import { URL } from "url";
 import { GMAIL_SCOPES, OAUTH_REDIRECT_URI, OAUTH_PORT } from "./constants.js";

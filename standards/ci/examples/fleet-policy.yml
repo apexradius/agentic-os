@@ -18,6 +18,6 @@ concurrency:
 
 jobs:
   fleet-policy:
-    uses: <your-org>/ci-templates/.github/workflows/fleet-policy.yml@<tag>
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/fleet-policy.yml@<tag>
     with:
       fleet-directory: 'fleet'

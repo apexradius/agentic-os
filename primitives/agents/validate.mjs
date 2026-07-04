@@ -18,8 +18,11 @@ import { compileSchema, formatErrors } from "../_lib/schema.mjs";
 import { loadCoupling } from "../_lib/zone-coupling.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO = join(__dirname, "..", "..", "..");
-const SOURCE_DIRS = [join(REPO, "framework", "roles"), join(REPO, "apex", "agents")];
+const NESTED_REPO = join(__dirname, "..", "..", "..");
+const EXTRACTED_REPO = join(__dirname, "..", "..");
+const REPO = existsSync(join(NESTED_REPO, "framework")) ? NESTED_REPO : EXTRACTED_REPO;
+const FRAMEWORK_ROLE_DIRS = [join(REPO, "framework", "roles"), join(REPO, "roles")];
+const SOURCE_DIRS = [...FRAMEWORK_ROLE_DIRS, join(REPO, "apex", "agents")];
 
 const schema = JSON.parse(readFileSync(join(__dirname, "agents.schema.json"), "utf8"));
 const validateFrontmatter = compileSchema(schema);
@@ -78,7 +81,7 @@ function checkBody(body, errors) {
 }
 
 function checkZone(path, raw, errors) {
-  if (path.includes(`${REPO}/framework/roles/`)) {
+  if (FRAMEWORK_ROLE_DIRS.some((dir) => path.includes(`${dir}/`))) {
     const biz = raw.match(COUPLING);
     if (biz) errors.push(`framework/roles must be Apex-free, but body/frontmatter contains '${biz[0]}'`);
     const rt = raw.match(RUNTIME_COUPLING);
@@ -115,6 +118,14 @@ function runtimeContractSelftest() {
       retry_limit: 2,
       handoff_targets: ["verifier"],
     },
+    runtime_contract_examples: {
+      valid_inputs: [{ artifact: "reports/trace.json" }],
+      invalid_inputs: [{ artifact: "" }],
+      valid_outputs: [{ verdict: "pass" }],
+      invalid_tool_params: {
+        read_file: [{ path: "" }],
+      },
+    },
   };
   const badRetry = {
     ...base,
@@ -124,7 +135,26 @@ function runtimeContractSelftest() {
     ...base,
     runtime_contract: { handoff_targets: ["Verifier"] },
   };
-  return validateFrontmatter(good) && !validateFrontmatter(badRetry) && !validateFrontmatter(badTarget);
+  const badExamplesWithoutContract = {
+    ...base,
+    runtime_contract_examples: {
+      valid_inputs: [{ artifact: "reports/trace.json" }],
+    },
+  };
+  const badEmptyExamples = {
+    ...base,
+    runtime_contract: { input_schema: "schemas/input.schema.json" },
+    runtime_contract_examples: {
+      valid_inputs: [],
+    },
+  };
+  return (
+    validateFrontmatter(good) &&
+    !validateFrontmatter(badRetry) &&
+    !validateFrontmatter(badTarget) &&
+    !validateFrontmatter(badExamplesWithoutContract) &&
+    !validateFrontmatter(badEmptyExamples)
+  );
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────

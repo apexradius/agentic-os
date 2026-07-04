@@ -24,8 +24,11 @@ import { loadCoupling, couplingMatch, GENERIC_COUPLING } from "../_lib/zone-coup
 export { couplingMatch };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO = join(__dirname, "..", "..", "..");
-const SOURCE_DIRS = [join(REPO, "framework", "skills"), join(REPO, "apex", "skills")];
+const NESTED_REPO = join(__dirname, "..", "..", "..");
+const EXTRACTED_REPO = join(__dirname, "..", "..");
+const REPO = existsSync(join(NESTED_REPO, "framework")) ? NESTED_REPO : EXTRACTED_REPO;
+const FRAMEWORK_SKILL_DIRS = [join(REPO, "framework", "skills"), join(REPO, "skills")];
+const SOURCE_DIRS = [...FRAMEWORK_SKILL_DIRS, join(REPO, "apex", "skills")];
 const BODY_LINE_BUDGET = 500; // progressive-disclosure: SKILL.md stays small, refs load on demand
 
 // ZONE guard. A framework/skills/ skill must carry ZERO Apex coupling — generic & portable.
@@ -71,7 +74,7 @@ function readSiblingTexts(skillDir) {
 // slip past the guard.
 function checkZone(path, raw, errors) {
   const abs = resolve(path);
-  if (!abs.startsWith(`${join(REPO, "framework", "skills")}/`)) return;
+  if (!FRAMEWORK_SKILL_DIRS.some((dir) => abs.startsWith(`${dir}/`))) return;
   const hit = couplingMatch([raw, ...readSiblingTexts(dirname(abs))]);
   if (hit) {
     errors.push(`framework/skills must be Apex-free, but contains '${hit}' (SKILL.md or a reference file) — route to apex/skills`);

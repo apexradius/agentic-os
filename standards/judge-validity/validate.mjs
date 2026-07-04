@@ -50,11 +50,37 @@ export function validateGoldSet(gold) {
   return { errors, kappa };
 }
 
-function walk(dir, acc = []) {
+function labelsFor(gold) {
+  return [...new Set([...(gold.ratings_a || []), ...(gold.ratings_b || [])])].sort();
+}
+
+function validateReplayGoldSet(replay, goldById) {
+  const errors = [];
+  if (!replay || typeof replay !== "object" || Array.isArray(replay)) return ["replay must be an object"];
+  const gold = replay.gold_set;
+  if (!gold || typeof gold !== "object" || Array.isArray(gold)) return ["gold_set is required"];
+  if (typeof gold.id !== "string" || !gold.id.trim()) errors.push("gold_set.id is required");
+  if (!Array.isArray(gold.labels) || gold.labels.length === 0) errors.push("gold_set.labels must be a non-empty array");
+  if (typeof gold.ratings_count !== "number") errors.push("gold_set.ratings_count must be a number");
+  if (errors.length) return errors;
+  const actual = goldById.get(gold.id);
+  if (!actual) return [`gold_set.id '${gold.id}' does not reference a real judge-validity-gold.json`];
+  const actualLabels = labelsFor(actual);
+  const replayLabels = [...gold.labels].sort();
+  if (actualLabels.join("\0") !== replayLabels.join("\0")) {
+    errors.push(`gold_set.labels must match gold labels ${actualLabels.join(",")}`);
+  }
+  if (gold.ratings_count !== actual.ratings_a.length) {
+    errors.push(`gold_set.ratings_count must equal ${actual.ratings_a.length}`);
+  }
+  return errors;
+}
+
+function walkNamed(dir, name, acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, e.name);
-    if (e.isDirectory()) walk(p, acc);
-    else if (e.name === "judge-validity-gold.json") acc.push(p);
+    if (e.isDirectory()) walkNamed(p, name, acc);
+    else if (e.name === name) acc.push(p);
   }
   return acc;
 }
@@ -69,19 +95,38 @@ const good = { id: "good", ratings_a: ["pass", "pass", "fail", "fail"], ratings_
 const bad = { id: "bad", ratings_a: ["pass", "pass", "fail", "fail"], ratings_b: ["pass", "fail", "pass", "fail"], min_kappa: 0.6 };
 ok("validateGoldSet: accepts a gold set above threshold", validateGoldSet(good).errors.length === 0);
 ok("validateGoldSet: rejects a gold set below threshold", validateGoldSet(bad).errors.some((e) => e.includes("below min_kappa")));
+const goldByIdSelftest = new Map([[good.id, good]]);
+ok("validateReplayGoldSet: accepts replay gold-set summary", validateReplayGoldSet({ gold_set: { id: "good", labels: ["fail", "pass"], ratings_count: 4 } }, goldByIdSelftest).length === 0);
+ok("validateReplayGoldSet: rejects unknown gold set", validateReplayGoldSet({ gold_set: { id: "missing", labels: ["pass"], ratings_count: 1 } }, goldByIdSelftest).some((e) => e.includes("does not reference")));
 
-const manifests = walk(join(ROOT, "standards"));
+const manifests = walkNamed(join(ROOT, "standards"), "judge-validity-gold.json");
 ok("scan: at least one real judge-validity gold set exists", manifests.length > 0, "expected a standards/*/judge-validity-gold.json");
 let firstBad = "";
+const goldById = new Map();
 for (const f of manifests) {
   try {
-    const { errors } = validateGoldSet(JSON.parse(readFileSync(f, "utf8")));
+    const gold = JSON.parse(readFileSync(f, "utf8"));
+    const { errors } = validateGoldSet(gold);
+    if (gold.id) goldById.set(gold.id, gold);
     if (errors.length && !firstBad) firstBad = `${f.slice(ROOT.length + 1)}: ${errors.join("; ")}`;
   } catch (err) {
     if (!firstBad) firstBad = `${f.slice(ROOT.length + 1)}: ${err.message}`;
   }
 }
 ok("scan: every real judge-validity gold set clears its threshold", firstBad === "", firstBad);
+
+const replayFiles = walkNamed(join(ROOT, "standards"), "judge-replay.json");
+ok("scan: at least one real judge-replay artifact exists", replayFiles.length > 0, "expected a standards/*/judge-replay.json");
+let firstBadReplay = "";
+for (const f of replayFiles) {
+  try {
+    const errors = validateReplayGoldSet(JSON.parse(readFileSync(f, "utf8")), goldById);
+    if (errors.length && !firstBadReplay) firstBadReplay = `${f.slice(ROOT.length + 1)}: ${errors.join("; ")}`;
+  } catch (err) {
+    if (!firstBadReplay) firstBadReplay = `${f.slice(ROOT.length + 1)}: ${err.message}`;
+  }
+}
+ok("scan: every judge-replay artifact references a matching gold set", firstBadReplay === "", firstBadReplay);
 
 for (const f of ["validate.mjs", "README.md"]) ok(`file present: ${f}`, existsSync(join(__dirname, f)));
 

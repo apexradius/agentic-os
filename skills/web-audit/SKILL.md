@@ -14,8 +14,8 @@ Audits the codebase that produces the live site. For live-site analysis, use `/s
 Fetch simultaneously with WebFetch:
 1. **Homepage** — `<title>`, canonical, robots meta, og:image, JSON-LD
 2. **Sitemap** — `/sitemap-index.xml` — www/non-www matches canonical?
-3. **robots.txt** — AI crawlers allowed? Sitemap + llms.txt referenced?
-4. **llms.txt** — exists? Proper Markdown structure?
+3. **robots.txt** — Googlebot allowed? Sitemap referenced? Optional non-Google AI crawler policy documented?
+4. **llms.txt** — optional support file exists? Proper Markdown structure?
 
 Then WebSearch: `site:domain.com inurl:wp- OR inurl:uncategorized` — CMS remnants?
 
@@ -28,9 +28,10 @@ Then WebSearch: `site:domain.com inurl:wp- OR inurl:uncategorized` — CMS remna
 - [ ] Title ≤ 60 chars — brand suffix logic doesn't double-append
 
 ### robots.txt
-- [ ] Allows: GPTBot, ChatGPT-User, Google-Extended, anthropic-ai, ClaudeBot, PerplexityBot, Googlebot, Bingbot
-- [ ] Blocks: CCBot, Bytespider, Diffbot (scrapers, no citation value)
-- [ ] References sitemap URL (www) + `/llms.txt`
+- [ ] Allows: Googlebot, Bingbot, and other target search crawlers
+- [ ] Optional non-Google AI crawler policy is intentional and channel-specific
+- [ ] References sitemap URL (www)
+- [ ] References `/llms.txt` only if the project intentionally publishes one
 
 ### Redirects
 - [ ] Old CMS slugs covered (`/uncategorized/*`, `/category/*`)
@@ -38,9 +39,9 @@ Then WebSearch: `site:domain.com inurl:wp- OR inurl:uncategorized` — CMS remna
 - [ ] Changed page slugs have 301s
 
 ### LLM / AEO Files
-- [ ] `/public/llms.txt` — company summary, services, key pages, contact
-- [ ] `/public/llms-full.txt` — includes full FAQ content inline
-- [ ] Both referenced from robots.txt
+- [ ] Optional `/public/llms.txt` — company summary, services, key pages, contact
+- [ ] Optional `/public/llms-full.txt` — includes selected FAQ content inline
+- [ ] Files referenced from robots.txt only when intentionally published
 
 ### Favicon
 - [ ] SVG has opaque background (not transparent), square viewBox
@@ -64,7 +65,7 @@ Then WebSearch: `site:domain.com inurl:wp- OR inurl:uncategorized` — CMS remna
 2. Missing robots meta → always render on indexable pages
 3. 404s from old CMS URLs → add 301 redirects
 4. Title > 60 chars → shorten, fix double-suffix
-5. Missing llms.txt → create from business info
+5. Missing llms.txt → create only if non-Google agent-consumption support is in scope
 6. WebP image conversion → `cwebp -q 82`, wrap in `<picture>`
 7. LCP preload → `<link rel="preload" type="image/webp">`
 8. Cache headers → add `s-maxage` for edge
@@ -78,7 +79,7 @@ Then WebSearch: `site:domain.com inurl:wp- OR inurl:uncategorized` — CMS remna
 | Title double brand suffix | Fix `.includes()` check in SEO component |
 | og:image relative URL | Use `new URL(path, site)` |
 | FAQ schema not rendering | Keep answers 30-50 words, add dateModified |
-| AI not citing content | Apply 18-token rule, add evidence panels |
+| AI not citing content | Add self-contained claims, evidence panels, and source dates |
 
 ## Shell Commands
 

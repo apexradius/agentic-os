@@ -10,6 +10,7 @@ The coordination doctrine lives in
 
 ```bash
 node framework/standards/orchestration-manifest/validate.mjs
+node framework/standards/orchestration-manifest/validate.mjs --dry-run path/to/manifest.json
 node framework/primitives/_lib/validate.mjs --all
 ```
 
@@ -22,6 +23,19 @@ node framework/primitives/_lib/validate.mjs --all
 - Node IDs are unique.
 - Dependencies point at real nodes.
 - The graph has no cycles.
+
+## Dry-run output
+
+`--dry-run` does not dispatch agents and does not run validation commands. It emits JSON with:
+
+- `ordered_nodes`
+- `blocked_nodes`
+- `ownership_conflicts`
+- `validation_plan`
+- `resume_keys`
+
+The dry-run fails when the manifest is invalid, a node cannot be ordered, or two nodes claim the
+same owned file.
 
 ## What it does not check
 

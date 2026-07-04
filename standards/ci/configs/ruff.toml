@@ -2,9 +2,9 @@
 #
 # Copy to repo root as `ruff.toml`, or reference from CI. This ends the drift
 # where the same code passes in one repo and fails in another because each repo
-# has a local pyproject with different ignores. Pin via the ci-templates version
-# tag like any other shared config; a repo with genuinely different needs keeps
-# a local override.
+# has a local pyproject with different ignores. Pin through the instance's CI
+# delivery repo like any other shared config; a repo with genuinely different
+# needs keeps a local override.
 #
 # Adopting: copy this file to <repo>/ruff.toml then run `ruff format . && ruff check .`.
 

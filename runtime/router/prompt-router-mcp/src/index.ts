@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import process from 'node:process';
 
@@ -15,7 +15,6 @@ import {
   errorMessage,
   findPrompt,
   loadLibrary,
-  packageLibraryDir,
   resolveLibraryPath,
   resolveRoutes,
   ROUTES,
@@ -39,6 +38,13 @@ const DEFAULT_LIBRARY_PATH =
   process.env['APEX_PROMPT_LIBRARY_PATH'] ??
   join(process.cwd(), 'prompt-library.md');
 const DEFAULT_WORKSPACE_PATH = process.env['APEX_PROMPT_ROUTER_WORKSPACE'] ?? process.cwd();
+
+function structuredLibraryDir(libraryPath: string): string {
+  if (libraryPath.endsWith('.md') || libraryPath.endsWith('.json')) {
+    return dirname(libraryPath);
+  }
+  return libraryPath;
+}
 
 type ToolResult = {
   content: Array<{ type: 'text'; text: string }>;
@@ -288,7 +294,7 @@ function createServer(): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
-      const index = await readIndex(packageLibraryDir());
+      const index = await readIndex(structuredLibraryDir(DEFAULT_LIBRARY_PATH));
       if (index === null) {
         return textResult({ found: false, slug: args.slug, contract: null, note: INDEX_ABSENT_NOTE });
       }
@@ -317,7 +323,7 @@ function createServer(): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
-      const index = await readIndex(packageLibraryDir());
+      const index = await readIndex(structuredLibraryDir(DEFAULT_LIBRARY_PATH));
       if (index === null) {
         return textResult({ section: args.section, count: 0, matches: [], note: INDEX_ABSENT_NOTE });
       }
@@ -343,7 +349,7 @@ function createServer(): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
-      const index = await readIndex(packageLibraryDir());
+      const index = await readIndex(structuredLibraryDir(DEFAULT_LIBRARY_PATH));
       if (index === null) {
         return textResult({ status: args.status, count: 0, matches: [], note: INDEX_ABSENT_NOTE });
       }

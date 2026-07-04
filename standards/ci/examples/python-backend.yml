@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: <your-org>/ci-templates/.github/workflows/python-backend.yml@<tag>
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/python-backend.yml@<tag>
     with:
       python-version: '3.12'
       working-directory: '.'   # Set 'backend' for repos with a backend/ subdirectory.

@@ -21,9 +21,11 @@ node framework/primitives/_lib/validate.mjs --all
   "claims": [
     {
       "claim": "Validator passes",
+      "claim_kind": "validation-passed",
       "evidence": {
         "type": "command",
-        "ref": "node framework/primitives/_lib/validate.mjs --all",
+        "command": "node framework/primitives/_lib/validate.mjs --all",
+        "exit_code": 0,
         "observed": "Exited 0 and printed ALL VALID",
         "timestamp": "2026-06-25T18:00:00Z"
       }
@@ -35,6 +37,17 @@ node framework/primitives/_lib/validate.mjs --all
 `evidence.ref` is the generic pointer. A runtime may also provide `command` or `tool`
 for richer traces; at least one of the three must be present.
 
+`claim_kind` is required for concrete completion claims and optional for legacy
+generic review notes. Supported kinds:
+
+- `validation-passed`
+- `deployed`
+- `pushed`
+- `committed`
+- `artifact-created`
+- `runtime-observed`
+- `not-verified`
+
 ## What it checks
 
 - A trace is an object with a non-empty `claims` array.
@@ -42,6 +55,10 @@ for richer traces; at least one of the three must be present.
 - Every claim has evidence.
 - Evidence declares a type, pointer, observed result summary, and timestamp.
 - Evidence type is one of `tool`, `command`, `artifact`, or `observed-output`.
+- Completion claim kinds require compatible evidence: validators need a command
+  with `exit_code: 0`, commits/pushes need git refs, deployments need a service,
+  endpoint, or runtime reference, and unverified claims must name the missing proof
+  or blocker.
 
 ## What it does not check
 

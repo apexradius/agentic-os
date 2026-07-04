@@ -224,8 +224,13 @@ export function registerMetaTools(server: McpServer, client: MetaClient): void {
         const lines = r.data.map(m => `${m.name}: ${JSON.stringify(m.values?.[0]?.value)}`);
         return toolResult(lines.join('\n') || 'No demographic data.');
       }
-      const r = await client.get<{ data: Array<{ reach_estimate: { users: number } }> }>(
-        `/${client.adAccountId}/reachestimate`, { targeting_spec: '{}' },
+      const r = await client.get<{ data: Array<Record<string, unknown>> }>(
+        `/${client.adAccountId}/insights`, {
+          fields: 'impressions,clicks,spend,reach,actions',
+          breakdowns: 'age,gender',
+          date_preset: 'maximum',
+          limit: 100,
+        },
       );
       return toolResult(JSON.stringify(r, null, 2));
     } catch (e) { return toolError(e); }

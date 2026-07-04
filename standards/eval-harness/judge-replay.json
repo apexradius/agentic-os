@@ -1,0 +1,22 @@
+{
+  "id": "eval-harness-judge-required-replay-smoke",
+  "gate_id": "eval-harness-judge-required-path",
+  "original": {
+    "presentation": "candidate-a-first",
+    "verdict": "pass"
+  },
+  "swapped": {
+    "presentation": "candidate-b-first",
+    "verdict": "pass"
+  },
+  "consistent": true,
+  "escalation": {
+    "required": false,
+    "state": "not-needed"
+  },
+  "gold_set": {
+    "id": "eval-harness-judge-required-gold-smoke",
+    "labels": ["pass", "fail"],
+    "ratings_count": 6
+  }
+}

@@ -3,7 +3,8 @@
 > An eval is a portable Task/Solver/Scorer contract. It says what task is being
 > tested, which solver is under test, how the output is scored, and what threshold
 > passes. Schema: [`eval.schema.json`](eval.schema.json). Validator:
-> [`validate.mjs`](validate.mjs). Creator: [`creator.md`](creator.md).
+> [`validate.mjs`](validate.mjs). Runner: [`run.mjs`](run.mjs). Creator:
+> [`creator.md`](creator.md).
 
 ## The shape of an eval
 
@@ -33,9 +34,9 @@ An eval is a JSON object with three required blocks:
 - **Solver** names the agent, skill, command, MCP tool, or custom runtime under test.
 - **Scorer** declares deterministic or judge grading plus the pass threshold.
 
-The primitive is intentionally about the portable contract, not execution. Runtime
-model calls, hosted judge APIs, provider-specific structured output, and result sinks
-belong to an instance.
+The primitive is intentionally portable. The included runner executes only local,
+fixture-backed deterministic evals; runtime model calls, hosted judge APIs,
+provider-specific structured output, and result sinks belong to an instance.
 
 ## Deterministic versus judge scoring
 
@@ -47,11 +48,21 @@ belong to an instance.
   at a gate artifact that satisfies the judge-bias and judge-validity standards before
   its verdicts are trusted.
 
+The deterministic runner loads `task.source` as local JSON, JSON array, `{ "cases": [] }`,
+or JSONL. Each case must provide a string `output`, `actual`, or `response`. Assertions are
+plain `contains` checks unless prefixed:
+
+- `contains:TEXT`
+- `not_contains:TEXT`
+- `regex:/PATTERN/FLAGS`
+
 ## Validation
 
-`validate.mjs` checks the JSON contract with `eval.schema.json`, then applies the
-cross-field rule that `grading_mode` and `scorer.type` match. It does not execute the
-solver or scorer.
+`validate.mjs` checks the JSON contract with `eval.schema.json`, applies the
+cross-field rule that `grading_mode` and `scorer.type` match, and selftests the
+deterministic runner. `run.mjs <eval.json>` emits JSON with a run-record-compatible
+`run_record` for deterministic evals. Judge evals validate but return `gradeable:false`
+unless an instance-owned judge runner executes them.
 
 ## Constraints
 
@@ -66,5 +77,6 @@ solver or scorer.
 
 ```bash
 node framework/primitives/_lib/validate.mjs eval
+node framework/primitives/eval/run.mjs path/to/eval.json
 node framework/primitives/_lib/validate.mjs --all
 ```

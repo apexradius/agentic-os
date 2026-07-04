@@ -9,7 +9,7 @@ it builds a prep pack from the actual attendees, history, and agenda.
 ## Baseline
 Prompt the agent **without** the meeting-prep skill loaded:
 
-> "Prep me for my 2pm with the Acme account."
+> "Prep me for my 2pm client-account meeting."
 
 Observed baseline failure: the agent offers generic advice ("review your notes, set an agenda")
 without pulling the calendar event, prior thread/context with that account, or open items. The

@@ -1,10 +1,16 @@
 # Agentic OS — a portable framework for AI agents
 
+[![Version: 0.9.0](https://img.shields.io/badge/version-0.9.0-1f6feb)](VERSION)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2ea043)](LICENSE)
+[![CI: framework-validate](https://img.shields.io/badge/ci-framework--validate-6f42c1)](.github/workflows/framework-validate.yml)
+
 A generic, instance-agnostic operating system for building, coordinating, and running AI
 agents. It defines **what each building block is and how to build it**, the **doctrine**
 every agent obeys, **how agents coordinate**, the **loop** they run, and **how they are
 prompted** — with executable validators and a zone-purity gate that keep the whole thing
 honest.
+
+![Agentic OS social preview](docs/assets/agentic-os-social-preview.svg)
 
 This directory is **self-contained and extraction-ready**: it carries zero coupling to any
 particular deployment. To use it, lift the whole directory; layer your own deployment
@@ -22,11 +28,24 @@ a public sync; an instance pins the version it synced and re-runs `validate.mjs 
 
 ## Start Here
 
-| You are | Start with | Time |
-|---|---|---:|
-| Trying the framework | [`QUICKSTART.md`](QUICKSTART.md) | 10 min |
-| Adopting it into an instance | [The zone model](#the-zone-model) and [docs/architecture.md](docs/architecture.md) | 20 min |
-| Changing framework rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) and `primitives/_lib/validate.mjs` | 20 min |
+| You are... | Start here | Time |
+|---|---|---|
+| Trying the framework | [`QUICKSTART.md`](QUICKSTART.md) and the 3-command check below | 10 min |
+| Adopting it into an instance | [The zone model](#the-zone-model) and [`docs/architecture.md`](docs/architecture.md) | 20 min |
+| Changing framework rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`primitives/_lib/validate.mjs`](primitives/_lib/validate.mjs) | 20 min |
+
+## 3-command check
+
+From a cloned copy of this repository:
+
+```bash
+cd agentic-os
+( cd primitives/_lib && npm ci )
+node primitives/_lib/validate.mjs --all && bash runtime/verify-zone-purity.sh
+```
+
+Expected result: all primitive and standards validators pass, then the zone-purity gate reports
+zero undocumented coupling.
 
 ## Architecture
 
@@ -48,18 +67,6 @@ flowchart TD
 
     Validators -->|enforce| FrameworkGate[framework gate]
     Runtime -->|routes| Agents
-```
-
-## Validation Workflow
-
-```mermaid
-flowchart TD
-    Change([Framework change]) --> Validate[node primitives/_lib/validate.mjs --all]
-    Validate --> Purity[bash runtime/verify-zone-purity.sh]
-    Purity --> Pass{Both pass?}
-    Pass -->|yes| Release[Version or sync]
-    Pass -->|no| Fix[Fix schema or coupling]
-    Fix --> Validate
 ```
 
 ## The zone model
@@ -130,7 +137,19 @@ Both commands run in CI on every push via
 framework dogfooding its own gate. Adopt that workflow (or fold the two commands into your own
 pipeline) so a synced copy can't silently drift out of conformance.
 
-More visual detail: [docs/architecture.md](docs/architecture.md).
+## Validation Workflow
+
+```mermaid
+flowchart TD
+    Change([Framework change]) --> Validate[node primitives/_lib/validate.mjs --all]
+    Validate --> Purity[bash runtime/verify-zone-purity.sh]
+    Purity --> Pass{Both pass?}
+    Pass -->|yes| Release[Version or sync]
+    Pass -->|no| Fix[Fix schema or coupling]
+    Fix --> Validate
+```
+
+More visual detail: [`docs/architecture.md`](docs/architecture.md).
 
 ## License
 

@@ -18,10 +18,15 @@ Use this when adding a new portable eval definition.
 3. Fill `solver.type` and `solver.ref`; reference the canonical primitive where possible.
 4. Choose `scorer.type` and set `grading_mode` to the same value.
 5. Add a numeric `scorer.threshold` between `0` and `1`.
-6. For deterministic evals, list the reviewable assertions or metric.
+6. For deterministic evals, list reviewable `scorer.assertions` that the runner can
+   score against fixture outputs. Use plain contains checks or the prefixes
+   `contains:`, `not_contains:`, and `regex:/.../`.
 7. For judge evals, point `scorer.judge_gate` at a gate artifact that satisfies the
    judge-bias and judge-validity standards.
 8. Run `node framework/primitives/_lib/validate.mjs eval`.
+9. When the eval is deterministic and fixture-backed, run
+   `node framework/primitives/eval/run.mjs <eval.json>` and inspect the emitted score
+   plus run-record-compatible result.
 
 ## Anti-patterns
 

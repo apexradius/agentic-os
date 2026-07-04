@@ -26,7 +26,7 @@ node framework/primitives/_lib/validate.mjs --all
 |---|---|---|
 | Ladder gate | `PreToolUse` | Denies mutating tools when the current rung's handoff is not yet written/refreshed; read-only tools, the handoff write, and the Skill tool are always allowed |
 | Rung credit | `PostToolUse` | When a write lands on the HANDOFF file, records the satisfied rung in a per-session sidecar so the gate knows the handoff is current |
-| Result offload | `PostToolUse` | Copies oversized tool results to a session-local file and emits only a compact preview plus pointer back into context |
+| Result offload | `PostToolUse` | Copies oversized tool results to a session-local file, appends `tool-results/index.jsonl`, and emits only a compact preview plus pointer back into context |
 | Budget advisory | `UserPromptSubmit` | Injects a one-line advisory once context exceeds `CTXGUARD_CREATE − 5%`; awareness only, never blocks |
 | Compaction seed | `PreCompact` | Feeds the HANDOFF contents into the runtime's auto-compaction `additionalContext` so the compaction summary is seeded with structured session state |
 
@@ -168,6 +168,11 @@ compaction proceeds normally. The handoff file persists on disk regardless.
 Large result offload is also fail-open. If the session directory cannot be created or
 the file cannot be written, the hook exits 0 with no pointer rather than blocking the
 tool result.
+
+Every successful offload also appends one JSONL row to `tool-results/index.jsonl` with
+timestamp, tool name, source key, byte/character counts, sha256 digest, payload path, and
+preview. Index writes are best-effort; an index failure never blocks the payload write or
+the tool result.
 
 ## Verify
 

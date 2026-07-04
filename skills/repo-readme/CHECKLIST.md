@@ -19,6 +19,14 @@ Run before declaring any repo's docs "done." Every box must be checked or explic
 - [ ] Section rhythm consistent: emoji anchors + `---` rules + `> 💡`/`> ⏱️` callouts.
 - [ ] Stable `<a id="…">` anchors above any heading with inbound links.
 
+## Repo home
+- [ ] H1 plus first paragraph clearly states the repo category and one-sentence promise.
+- [ ] Badges are truthful: each points to a real version, license, workflow, package, or live status source.
+- [ ] README includes a proof/check table or validation section tied to runnable commands.
+- [ ] Release posture is grounded in `VERSION`, `CHANGELOG`, releases, or another durable source.
+- [ ] Social preview source lives in `docs/assets/` and is editable source, not only an exported bitmap.
+- [ ] No adoption, security, production, performance, or status claim appears without a linked proof source.
+
 ## Structure
 - [ ] README ≤ **250 lines** (verify script #2 green) — depth moved to `docs/`.
 - [ ] Hub-and-spoke: README links to `docs/`, doesn't inline deep content.

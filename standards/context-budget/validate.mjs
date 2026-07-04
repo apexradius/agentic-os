@@ -5,7 +5,7 @@
 // ethos of never breaking a bare-node `--all` run). When python3 is present, all
 // event branches are exercised against an isolated tmp HOME.
 
-import { mkdtempSync, writeFileSync, rmSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, existsSync, mkdirSync, readdirSync, statSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +50,7 @@ if (!hasPython) {
   skip("PostToolUse: no session_id → exit 0 (fail-open)");
   skip("PostToolUse: small result → no offload");
   skip("PostToolUse: large result → offloads file + emits pointer");
+  skip("PostToolUse: large result → writes offload index row");
   skip("UserPromptSubmit: no session_id → exit 0 (fail-open)");
   skip("PreCompact: no handoff file → exit 0 (fail-open)");
   console.log("context-budget: python3 not found — python-dependent checks skipped");
@@ -139,6 +140,25 @@ if (!hasPython) {
     ok("PostToolUse: large result → offloads file + emits pointer",
       offloadFile && existsSync(offloadFile) && statSync(offloadFile).size === largePayload.length && largeHasPointer,
       `stdout: ${large.stdout.slice(0, 160)}`);
+    const indexPath = join(offloadDir, "index.jsonl");
+    let indexOk = false;
+    try {
+      const rows = readFileSync(indexPath, "utf8").trim().split(/\r?\n/).map((line) => JSON.parse(line));
+      const row = rows[rows.length - 1];
+      indexOk = (
+        row.tool_name === "Read" &&
+        row.source_key === "tool_response" &&
+        row.byte_count === largePayload.length &&
+        row.char_count === largePayload.length &&
+        typeof row.sha256 === "string" &&
+        row.sha256.length === 64 &&
+        row.path === offloadFile &&
+        typeof row.preview === "string" &&
+        row.preview.includes("tool result offloaded")
+      );
+    } catch { /* indexOk stays false */ }
+    ok("PostToolUse: large result → writes offload index row", indexOk,
+      `index: ${existsSync(indexPath) ? readFileSync(indexPath, "utf8").slice(0, 160) : "missing"}`);
 
     // ── 4. UserPromptSubmit: no session_id → exit 0 ────────────────────────────
     const r4 = runHook({ hook_event_name: "UserPromptSubmit" });

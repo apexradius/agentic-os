@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: <your-org>/ci-templates/.github/workflows/rust-workspace.yml@<tag>
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/rust-workspace.yml@<tag>
     with:
       rust-toolchain: '1.95.0'
       run-clippy: true

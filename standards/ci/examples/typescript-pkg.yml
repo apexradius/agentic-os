@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: <your-org>/ci-templates/.github/workflows/typescript-pkg.yml@<tag>
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/typescript-pkg.yml@<tag>
     with:
       node-version: '20'
       package-manager: 'npm'    # 'pnpm' | 'yarn' | 'npm'

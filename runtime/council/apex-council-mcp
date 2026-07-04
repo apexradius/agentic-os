@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Resolve the server relative to THIS launcher's dir, not APEX_AI_ORG_ROOT
-# (APEX_AI_ORG_ROOT is the council state root, set at registration time — not the code root).
-HERE="$(cd "$(dirname "$0")" && pwd)"
-exec python3 "$HERE/server.py" "$@"

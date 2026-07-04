@@ -18,20 +18,21 @@ auto-compact both rely on. Refresh = **rewrite the whole file** with the latest 
 
 ## Where it goes (do not improvise the path)
 
-`~/.claude/session-env/<session_id>/HANDOFF.md`
+The target is **runtime-owned**. The context-budget advisory printed each turn
+(`[context-budget] … path: …`) and any REFRESH-DUE deny message contain the exact
+absolute path. Use that path verbatim.
 
-The context-budget advisory printed each turn (`[context-budget] … path: …`) and any
-REFRESH-DUE deny message **both contain the exact absolute path** — use that path
-verbatim. If you have no guard line in context (you invoked `/handoff` cold), resolve it:
+Common shapes include:
 
-```bash
-# newest session-env dir = current session
-d=$(ls -dt ~/.claude/session-env/*/ 2>/dev/null | head -1); echo "${d}HANDOFF.md"
-```
+- project-local handoff lanes such as `<repo>/knowledge/handoffs/<runtime>/<session-id>.md`
+- harness-managed session files such as `~/.claude/session-env/<session_id>/HANDOFF.md`
+
+If you invoked `/handoff` cold and the current runtime did not print a target path, inspect
+the runtime's active handoff docs or hook output first. Do not guess from memory.
 
 ## Steps
 
-1. **Resolve the target path** (above). `Write` creates parent dirs, so no mkdir needed.
+1. **Resolve the target path from runtime output**. `Write` creates parent dirs, so no mkdir needed.
 2. **Capture real git state** (read-only — these are on the guard's allow-list, so they
    pass even while a refresh is due):
    ```bash
@@ -83,7 +84,7 @@ d=$(ls -dt ~/.claude/session-env/*/ 2>/dev/null | head -1); echo "${d}HANDOFF.md
 ```
 
 ## Constraints (what NOT to do)
-- Do **not** write anywhere except the resolved `HANDOFF.md` path — the hook and
+- Do **not** write anywhere except the runtime-provided handoff path — the hook and
   auto-compact key on that exact location.
 - Do **not** drop the marker comment — without it the guard cannot read the rung.
 - Do **not** turn this into a full report — it's a working record, kept terse and current.

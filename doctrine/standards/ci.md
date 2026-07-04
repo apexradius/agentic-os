@@ -58,10 +58,9 @@ published repository — you cannot reference a workflow from an arbitrary path
 in an arbitrary repo. The framework's `standards/ci/workflows/` directory is
 the **generic source**; it cannot be the resolution target directly.
 
-The instance's **delivery repo** (e.g. `<your-org>/ci-templates`) is the
-published copy. Its `.github/workflows/` directory is populated from the
-framework source and tagged with semantic versions. Callers reference the
-delivery repo by org/repo/tag.
+The instance's **delivery repo** is the published copy. Its `.github/workflows/`
+directory is populated from the framework source and tagged with semantic
+versions. Callers reference the delivery repo by org/repo/tag.
 
 This is the same relationship the framework has with its public counterpart
 (`agentic-os`): framework owns the generic source; the instance owns the
@@ -72,9 +71,9 @@ delivery. The framework source is never directly consumed by production callers.
 ```
 framework/standards/ci/workflows/*.yml
          ↓ instance sync (copy to delivery repo .github/workflows/)
-<your-org>/ci-templates (delivery repo, semantic-versioned tags)
+<your-org>/<ci-delivery-repo> (delivery repo, semantic-versioned tags)
          ↓ version pin in caller repos
-every consuming repo (.github/workflows/ci.yml calls uses: <your-org>/ci-templates/...)
+every consuming repo (.github/workflows/ci.yml calls uses: <your-org>/<ci-delivery-repo>/...)
 ```
 
 The instance owns:

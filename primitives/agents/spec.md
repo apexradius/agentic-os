@@ -45,12 +45,23 @@ runtime_contract:
   retry_limit: 2
   handoff_targets:
     - verifier
+runtime_contract_examples:
+  valid_inputs:
+    - artifact: reports/review.json
+  invalid_inputs:
+    - artifact: ""
+  valid_outputs:
+    - verdict: pass
+  invalid_tool_params:
+    web_search:
+      - query: ""
 ```
 
 The primitive validator checks this block structurally only. It accepts schema pointers
 or inline schema objects, bounds `retry_limit`, and requires handoff targets to be
-kebab-case. Runtime enforcement, retry behavior, and tool-parameter validation remain
-instance-owned.
+kebab-case. `runtime_contract_examples` is optional, but if present it must be attached
+to a `runtime_contract` and must contain non-empty example lists/maps. Runtime enforcement,
+retry behavior, and tool-parameter validation remain instance-owned.
 
 ## Single source, two runtimes (the build)
 
@@ -90,7 +101,8 @@ producing invalid TOML.
 `validate.mjs` checks an agent in two separable layers, because they need different tools:
 
 1. **Frontmatter** → `ajv` against `agents.schema.json`. Structured, machine-checkable.
-   This includes the optional `runtime_contract` block when present.
+   This includes the optional `runtime_contract` and `runtime_contract_examples` blocks
+   when present.
 2. **Body** → code, because XML is not JSON. The rules (see the house style):
    - wrapped in `<Agent_Prompt>…</Agent_Prompt>`
    - contains the required `<Role>`

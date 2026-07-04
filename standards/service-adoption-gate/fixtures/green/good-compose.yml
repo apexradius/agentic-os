@@ -1,0 +1,16 @@
+services:
+  proxy:
+    image: traefik:v3.1.2
+    read_only: true
+  browser:
+    image: browser-runner:1.2.3
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command: ["chromium"]
+  app:
+    image: example/app@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}

@@ -6,6 +6,9 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["name", "description"],
+  "dependencies": {
+    "runtime_contract_examples": ["runtime_contract"]
+  },
   "properties": {
     "name": {
       "type": "string",
@@ -80,6 +83,39 @@
           },
           "uniqueItems": true,
           "description": "Declared agent/role targets this agent may hand off to."
+        }
+      }
+    },
+    "runtime_contract_examples": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "Optional structural examples for runtime contracts. These are fixtures only; runtime validation remains instance-owned.",
+      "properties": {
+        "valid_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {}
+        },
+        "invalid_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {}
+        },
+        "valid_outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {}
+        },
+        "invalid_tool_params": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {}
+          },
+          "description": "Map of tool name to invalid parameter examples."
         }
       }
     }

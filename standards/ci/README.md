@@ -53,13 +53,13 @@ GitHub resolves reusable workflows at a specific path structure:
 
 This means workflows must exist under `.github/workflows/` in a **delivery
 repo** — the framework `workflows/` directory is the **source**, not the
-resolution path. Your instance publishes these files to a delivery repo (e.g.
-`<your-org>/ci-templates`), and callers reference them by tag:
+resolution path. Your instance publishes these files to a delivery repo, and
+callers reference them by tag:
 
 ```yaml
 jobs:
   ci:
-    uses: <your-org>/ci-templates/.github/workflows/shopify-theme.yml@v1.0.0
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/shopify-theme.yml@v1.0.0
     secrets: inherit
     with:
       lint-asset-js: true
@@ -72,7 +72,7 @@ file to `.github/workflows/ci.yml` in your repo and tune the `with:` inputs.
 ### Adopting in a new repo (≈ 5 minutes)
 
 1. Copy the matching `examples/*.yml` → `.github/workflows/ci.yml`.
-2. Replace `<your-org>/ci-templates` with your delivery repo and `<tag>` with
+2. Replace `<your-org>/<ci-delivery-repo>` with your delivery repo and `<tag>` with
    the current pinned tag.
 3. Copy `configs/coderabbit.yaml` → `.coderabbit.yaml` at repo root.
 4. (Optional) Copy `configs/lefthook/<lang>.yml` → `lefthook.yml` and run
@@ -104,7 +104,7 @@ Delivery flow:
 ```
 framework/standards/ci/workflows/*.yml
        ↓ instance sync (copy to .github/workflows/)
-<your-org>/ci-templates (delivery repo)
+<your-org>/<ci-delivery-repo> (delivery repo)
        ↓ tag + version pin
 caller repos
 ```

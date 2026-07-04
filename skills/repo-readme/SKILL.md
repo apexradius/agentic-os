@@ -44,14 +44,47 @@ Avoid `C4Context`/`mindmap`/`timeline` as load-bearing diagrams — render suppo
 
 ---
 
+## Repository home presentation rules
+
+Treat the README as the repository home page, not just a text file. The first viewport must answer:
+
+| Question | README answer |
+|---|---|
+| What is this? | H1 plus a one-sentence promise that names the real repo category. |
+| Why trust it? | Truthful badges and a proof table tied to real files or checks. |
+| Where do I start? | Persona-routed table and a 3-command quick check or first run. |
+| How is it wired? | Architecture diagram near the top and deeper docs linked from it. |
+
+Badge rules:
+
+- Use badges only for facts the repo can prove now: version file, license file, included CI workflow, current package name, or a live status badge from the hosting platform.
+- Do not hand-write "passing", "production", "secure", "enterprise", adoption counts, download counts, or performance claims unless a linked system of record proves them.
+- If a workflow status badge requires a public org/repo URL that would violate a portable source boundary, use a static "workflow included" badge linked to the workflow file instead.
+
+Social preview rules:
+
+- Keep the source asset in `docs/assets/` with provenance in the file or a neighboring README.
+- Prefer editable SVG or Mermaid source. Export PNG/JPG only for repository settings or social cards that require a bitmap upload.
+- The image should communicate the actual product shape in one glance: name, category, core components, and proof/validation loop.
+- Never make the social card a dark, abstract, stock-like banner. It must teach something about the repo.
+
+Release posture:
+
+- The README must tell readers whether the repo is experimental, pre-1.0, stable, or production-supported.
+- Tie that posture to `VERSION`, `CHANGELOG`, releases, or another durable file. Do not rely on vibes.
+- If the public repo is a mirror of a source tree, name the source-of-truth rule and the validation command that prevents drift.
+
+---
+
 ## Procedure
 
 1. **Map reality first (read-only).** `find`/`Glob` the tree, read entry points, `package.json`/`pyproject`, existing README, env-sample, CI config. Write a one-paragraph "what this repo actually is" before drawing anything. Never diagram from assumptions — diagram from the code.
 2. **Draft the 4 diagrams** in Mermaid from the real component/flow map. Label nodes with real module/service names from the repo.
 3. **Assemble the README** from `TEMPLATE.md` — persona table, architecture diagram near the top, quick-start, then link out.
 4. **Move depth to `docs/`** — architecture deep-dive, per-flow sequence diagrams, data model, FAQ, reference. README links to them; it does not inline them.
-5. **Validate** (see Verify). Fix anything that fails before declaring done.
-6. **Apply per-repo** — this skill is the standard; run it once per repo. Don't bulk-rewrite many repos in one pass without per-repo reality mapping.
+5. **Set repo-home proof** — badges, social preview, release posture, and any homepage-specific claims must point at a real file, workflow, release, or live source.
+6. **Validate** (see Verify). Fix anything that fails before declaring done.
+7. **Apply per-repo** — this skill is the standard; run it once per repo. Don't bulk-rewrite many repos in one pass without per-repo reality mapping.
 
 ---
 
@@ -93,9 +126,12 @@ grep -oE '\]\(([^)]+\.md)\)' README.md | sed -E 's/.*\(([^)]+)\)/\1/' | while re
 
 # 4. Secret scan (docs must never carry live secrets):
 grep -nEi '(api[_-]?key|secret|password|token)\s*[=:]\s*["'"'"'][A-Za-z0-9_\-]{12,}' README.md docs/ -r && echo "REVIEW above" || echo "OK no secrets"
+
+# 5. Badge and proof truth check:
+grep -nEi '(passing|production|secure|enterprise|downloads|stars|users|customers)' README.md docs/ -r || true
 ```
 
-All four must pass. A diagram that doesn't render is worse than no diagram — it signals broken docs.
+All checks must pass. A diagram that doesn't render is worse than no diagram — it signals broken docs.
 
 ---
 
@@ -107,9 +143,10 @@ All four must pass. A diagram that doesn't render is worse than no diagram — i
 - Don't add diagrams that just restate a 3-item list. A diagram earns its place by showing **relationships**, not enumerating items.
 - Don't bulk-apply across repos blind. One repo, mapped from its own reality, at a time.
 - Don't leave a Mermaid block unvalidated. Run the parse check.
+- Don't invent repo-home proof. If a badge, claim, or social-preview line cannot be traced to a file, workflow, release, or dated source, remove it.
 
 ---
 
 ## Output
 
-A repo with: a persona-routed `README.md` (≤250 lines) carrying ≥2 rendered Mermaid diagrams, a `docs/` tree holding the deep-dive diagrams + reference, and all four verify checks green. See `TEMPLATE.md` for the drop-in skeleton and `CHECKLIST.md` for the pre-merge gate.
+A repo with: a persona-routed `README.md` (≤250 lines) carrying ≥2 rendered Mermaid diagrams, truthful repo-home badges/proof, a source social-preview asset under `docs/assets/`, a `docs/` tree holding the deep-dive diagrams + reference, and all verify checks green. See `TEMPLATE.md` for the drop-in skeleton and `CHECKLIST.md` for the pre-merge gate.

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: <your-org>/ci-templates/.github/workflows/shopify-theme.yml@<tag>
+    uses: <your-org>/<ci-delivery-repo>/.github/workflows/shopify-theme.yml@<tag>
     secrets: inherit
     with:
       lint-asset-js: true

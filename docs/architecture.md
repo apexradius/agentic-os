@@ -57,7 +57,7 @@ sequenceDiagram
 
 | Framework zone | Instance zone |
 |---|---|
-| Agent/skill/command schemas | Private hosts and account IDs |
+| Agent, skill, and command schemas | Private hosts and account IDs |
 | Generic doctrine and standards | Client names and business context |
 | Validation machinery | Secrets and credential paths |
 | Role and skill templates | Local operator preferences |
@@ -67,9 +67,9 @@ sequenceDiagram
 
 | Need | Start |
 |---|---|
-| First install | `QUICKSTART.md` |
-| Contribution rules | `CONTRIBUTING.md` |
-| Building blocks | `primitives/README.md` |
-| Agent loop | `loop/README.md` |
-| Coordination model | `coordination/README.md` |
-| Validation | `primitives/_lib/validate.mjs` and `runtime/verify-zone-purity.sh` |
+| First install | [`QUICKSTART.md`](../QUICKSTART.md) |
+| Contribution rules | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| Building blocks | [`primitives/README.md`](../primitives/README.md) |
+| Agent loop | [`loop/README.md`](../loop/README.md) |
+| Coordination model | [`coordination/README.md`](../coordination/README.md) |
+| Validation | [`primitives/_lib/validate.mjs`](../primitives/_lib/validate.mjs) and [`runtime/verify-zone-purity.sh`](../runtime/verify-zone-purity.sh) |

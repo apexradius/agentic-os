@@ -3,7 +3,9 @@
 // eval definitions. This proves the contract shape only; executing solvers,
 // model-backed judges, and result sinks remain instance-owned.
 
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -118,8 +120,69 @@ function runSelftest() {
     if (good) pass++;
     console.log(`  ${good ? "ok  " : "FAIL"} ${name}`);
   }
-  console.log(`\neval selftest: ${pass}/${cases.length} passed`);
-  return pass === cases.length;
+
+  const runnerChecks = runRunnerSelftest();
+  for (const [name, good, detail] of runnerChecks) {
+    if (good) pass++;
+    console.log(`  ${good ? "ok  " : "FAIL"} ${name}${!good && detail ? `  [${detail}]` : ""}`);
+  }
+  const total = cases.length + runnerChecks.length;
+  console.log(`\neval selftest: ${pass}/${total} passed`);
+  return pass === total;
+}
+
+function runRunnerSelftest() {
+  const checks = [];
+  const dir = mkdtempSync(join(tmpdir(), "eval-runner-selftest-"));
+  const ok = (name, cond, detail = "") => checks.push([name, !!cond, detail]);
+  try {
+    writeFileSync(join(dir, "cases.jsonl"), [
+      JSON.stringify({ id: "green-1", output: "ROOT CAUSE found; grep showed no repeats." }),
+      JSON.stringify({ id: "green-2", output: "ROOT CAUSE found; regression test passed." }),
+    ].join("\n"));
+    writeFileSync(join(dir, "green.eval.json"), JSON.stringify({
+      id: "runner-green",
+      grading_mode: "deterministic",
+      task: { id: "runner-green", source: "cases.jsonl" },
+      solver: { type: "custom", ref: "fixture-output" },
+      scorer: {
+        type: "deterministic",
+        threshold: 1,
+        assertions: ["contains:ROOT CAUSE", "not_contains:TODO", "regex:/passed|repeats/"],
+      },
+    }));
+    writeFileSync(join(dir, "red.eval.json"), JSON.stringify({
+      id: "runner-red",
+      grading_mode: "deterministic",
+      task: { id: "runner-red", source: "cases.jsonl" },
+      solver: { type: "custom", ref: "fixture-output" },
+      scorer: {
+        type: "deterministic",
+        threshold: 1,
+        assertions: ["contains:ROOT CAUSE", "contains:NEVER PRESENT"],
+      },
+    }));
+    writeFileSync(join(dir, "judge.eval.json"), JSON.stringify({
+      id: "runner-judge",
+      grading_mode: "judge",
+      task: { id: "runner-judge", source: "cases.jsonl" },
+      solver: { type: "agent", ref: "reviewer" },
+      scorer: { type: "judge", threshold: 0.8, judge_gate: "standards/eval-harness/judge-gate.json" },
+    }));
+
+    const run = (name) => JSON.parse(execFileSync("node", [join(__dirname, "run.mjs"), join(dir, name)], { encoding: "utf8" }));
+    const green = run("green.eval.json");
+    ok("runner: deterministic fixture passes", green.gradeable === true && green.pass === true && green.run_record.verify.result === "pass");
+    const red = run("red.eval.json");
+    ok("runner: deterministic fixture fails predictably", red.gradeable === true && red.pass === false && red.run_record.verify.result === "fail");
+    const judge = run("judge.eval.json");
+    ok("runner: judge eval validates but is ungradeable without instance runner", judge.gradeable === false && judge.pass === null && judge.run_record === null);
+  } catch (err) {
+    ok("runner: selftest did not throw", false, err.message);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  return checks;
 }
 
 if (process.argv[1] && process.argv[1].endsWith("validate.mjs")) {

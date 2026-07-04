@@ -7,7 +7,7 @@
 # neutralized; any irreducible residual is enumerated in .zone-residual.allow as a
 # content snapshot, with each line justified by a SEAM row. SEAM.md documents the
 # generic mechanism (placeholders); the adopter's instance zone holds the real-value
-# record (the Apex instance: apex/config/aorg/EXTERNALIZATION-RECORD.md).
+# record (the Apex instance: apex/config/agent-ops/EXTERNALIZATION-RECORD.md).
 #
 # This gate greps the WHOLE framework/ tree (not just runtime/ — earlier the narrow
 # scope let real coupling hide in mcp-servers/, router/, primitives/ validators, and

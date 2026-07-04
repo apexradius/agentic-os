@@ -8,6 +8,12 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+### Added
+- **Service adoption gate** (`standards/service-adoption-gate/`) — a zero-dependency scanner for
+  unsafe self-host defaults before third-party services enter an instance runtime: floating
+  `latest` images, Docker socket mounts, privileged containers, `SYS_ADMIN`, unconfined seccomp,
+  browser `--no-sandbox`, weak default secrets, and cookies missing explicit `secure`/`sameSite`.
+
 ## [0.9.0] - 2026-06-25
 
 ### Added

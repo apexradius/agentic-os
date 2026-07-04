@@ -79,6 +79,11 @@ continues. A host may still inject the full original result; the portable requir
 the framework provides a bounded pointer artifact the agent can cite, re-open, or carry
 through compaction.
 
+Each successful offload should append a session-local `tool-results/index.jsonl` row with
+the timestamp, tool name, source key, payload size, sha256 digest, path, and preview. The
+index makes offloaded evidence discoverable after compaction; like the payload write, it
+must fail open.
+
 ## Instance configuration
 
 Instances copy the hook from this standard's `hooks/` directory to `~/.claude/hooks/`
