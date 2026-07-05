@@ -19,7 +19,7 @@ With the skill loaded, the agent:
 2. Drafts the candidate to a **staging path that loads nowhere**, never into the live corpus.
 3. Stamps **provenance** (source instances + count + date) and writes a **baseline eval**.
 4. Runs `framework/primitives/skills/validate.mjs` on the candidate and only proposes it for
-   landing **after a green run and explicit human/Council approval**.
+   landing **after a green run and explicit operator approval**.
 
 A run that writes into `framework/skills/` or `apex/skills/` without approval, or distills a
 single/flaky occurrence, is a fail.

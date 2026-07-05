@@ -52,8 +52,12 @@ export class PgClient {
     }
   }
 
-  async query(queryStr: string, params: unknown[] = []): Promise<QueryResult> {
-    if (this.config.readOnly && !isReadOnlyQuery(queryStr)) {
+  async query(queryStr: string, params: unknown[] = [], readOnly?: boolean): Promise<QueryResult> {
+    // Enforce read-only when the server is globally locked (config.readOnly) OR the
+    // caller requested it for this query. A per-call `readOnly: false` can relax the
+    // per-call default but can never override a globally locked server.
+    const enforceReadOnly = this.config.readOnly || readOnly === true;
+    if (enforceReadOnly && !isReadOnlyQuery(queryStr)) {
       throw new Error(
         "Read-only mode: only SELECT, EXPLAIN, SHOW, WITH, and VALUES queries are allowed.",
       );

@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 # verify-zone-purity.sh — the zone-purity tripwire (risk R3) for the whole framework/ tree.
 #
-# framework/ must carry ZERO Apex coupling. The one sanctioned exception is the
-# aorg/council ledger engine: a *faithful copy* of an Apex-coupled stdlib monolith
-# that cannot be cleanly bisected (see ledger/SEAM.md). Its env-mediated defaults are
-# neutralized; any irreducible residual is enumerated in .zone-residual.allow as a
-# content snapshot, with each line justified by a SEAM row. SEAM.md documents the
-# generic mechanism (placeholders); the adopter's instance zone holds the real-value
-# record (the Apex instance: apex/config/agent-ops/EXTERNALIZATION-RECORD.md).
+# framework/ must carry ZERO Apex coupling. Any irreducible residual is enumerated in
+# .zone-residual.allow as a content snapshot — each line is declared debt, not hidden
+# coupling. (The original sanctioned exception — a ledger engine copied from a coupled
+# monolith — is retired; its SEAM provenance doc and the instance-side externalization
+# record are preserved in the repo's archive/* git tags.)
 #
 # This gate greps the WHOLE framework/ tree (not just runtime/ — earlier the narrow
 # scope let real coupling hide in mcp-servers/, router/, primitives/ validators, and
@@ -42,7 +40,7 @@ PAT='ayokunle|\bayo\b|apexradius|apex-radius-platform|apex radius|02_Ecosystem|t
 ALLOW=".zone-residual.allow"
 
 if [ ! -f "$ALLOW" ]; then
-  echo "FAIL: missing whitelist $ALLOW (regenerate from ledger/SEAM.md procedure)" >&2
+  echo "FAIL: missing whitelist $ALLOW (regenerate per the header procedure)" >&2
   exit 2
 fi
 
@@ -72,7 +70,7 @@ new="$(comm -23 <(printf '%s\n' "$current") <(sort -u "$ALLOW") | sed '/^$/d')"
 if [ -n "$new" ]; then
   echo "FAIL: undocumented Apex coupling in framework/ (not in $ALLOW):" >&2
   printf '  %s\n' "$new" >&2
-  echo "If this is intentional residual, neutralize it or add it to $ALLOW + SEAM.md." >&2
+  echo "If this is intentional residual, neutralize it or add it to $ALLOW with a justifying comment." >&2
   exit 1
 fi
 

@@ -15,7 +15,7 @@ An agent is one Markdown file: YAML **frontmatter** (what it is) + an `<Agent_Pr
 ---
 name: architect            # kebab-case; == filename stem == emitted .toml name
 description: …              # load signal: what it does + when to use it
-model: claude-opus-4-6      # Claude model id (Claude-only)
+model: claude-opus-4-8      # Claude model id (Claude-only)
 disallowedTools: Write, Edit
 ---
 

@@ -41,7 +41,7 @@ clone, stop — something is wrong with the copy, not your wiring.
 | Build a block (agent, skill, hook, command, MCP tool, plugin) | [`primitives/`](primitives/) — each has a spec + schema + creator + validator |
 | Understand the work loop | [`loop/`](loop/) — Plan → Implement → Verify, with artifact gates |
 | See how work is gated deterministically | [`standards/`](standards/) — executable enforcement |
-| Run the control plane | [`runtime/`](runtime/) — ledger + council engines, scheduler, observability |
+| Run the control plane | [`runtime/`](runtime/) — the scheduler, MCP servers + router, observability |
 | Coordinate multiple agents | [`coordination/`](coordination/) — ownership, shared plans, hand-offs |
 
 ## 4. Wire one thing

@@ -4,6 +4,11 @@ Verification in a multi-agent system is done by a **different** agent than the o
 the work. The burden of proof is on the implementer; the reviewer is a skeptical lead engineer
 looking for the failure, not confirming the success.
 
+This discipline applies whenever a reviewer is a different agent than the builder. For a high-stakes
+or irreversible decision, the operator may raise a heavier **second-frontier cross-review**
+on-demand ([council.md](council.md)); the same evidence floor, lens, and round cap below govern it,
+and the operator is the final arbiter.
+
 ## What a reviewer fixes — and what it doesn't
 
 A cross-review repairs **plan-deviation, correctness, security, and failing acceptance
@@ -51,9 +56,9 @@ not lower the bar.
 
 Review is bounded so it can't ping-pong forever:
 
-- Completion routes the task to `review-pending`; a different member reviews.
-- Defects found → back to the owner; `review_round` increments.
-- **Exceeding the cap (2 rounds) escalates to the human tiebreaker** instead of continuing.
+- Completion routes the work to review; a different agent reviews.
+- Defects found → back to the owner; the round count increments.
+- **Exceeding the cap (2 rounds) escalates to the operator** instead of continuing.
   Two honest rounds that don't converge mean the disagreement is real, not mechanical.
 
 ## Read-only lanes

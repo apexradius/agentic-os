@@ -161,6 +161,37 @@ describe('scoreRoutes', () => {
     expect(gtmReady?.score ?? 0).toBe(0);
   });
 
+  it('deploy verification wording routes to production deploy verify', () => {
+    const scores = scoreRoutes(
+      ROUTES,
+      'deploy target=web-api with verification_contract against production',
+      '',
+      makeScan(),
+    );
+    expect(scores[0]!.trigger).toBe('PRODUCTION_DEPLOY_VERIFY');
+    expect(scores[0]!.matched_signals).toEqual(
+      expect.arrayContaining(['deploy target=', 'verification_contract']),
+    );
+  });
+
+  it('focused GTM blocker wording routes to the focused slice prompt', () => {
+    const scores = scoreRoutes(
+      ROUTES,
+      'take this app repo to gtm ready with one focused goal: fix the public funnel blocker',
+      '',
+      makeScan(),
+    );
+    expect(scores[0]!.trigger).toBe('FOCUSED_GTM_SLICE');
+    expect(scores[0]!.matched_signals).toContain('gtm ready with one focused goal');
+  });
+
+  it('plain GTM readiness wording still routes to readiness', () => {
+    const scores = scoreRoutes(ROUTES, 'run gtm readiness for this app', '', makeScan());
+    expect(scores[0]!.trigger).toBe('GTM_READY');
+    const focused = scores.find((s) => s.trigger === 'FOCUSED_GTM_SLICE');
+    expect(focused?.score ?? 0).toBe(0);
+  });
+
   it('public brand site intent routes to Web Design & Development', () => {
     const scores = scoreRoutes(
       ROUTES,

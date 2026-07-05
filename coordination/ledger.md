@@ -1,5 +1,11 @@
 # The Ledger
 
+> **Optional pattern — not the default loop.** The default coordination model is file-based: a
+> shared plan/progress doc with explicit file ownership ([README.md](README.md)). This document
+> describes a richer **shared control-plane ledger** a consumer *may* adopt when a fleet outgrows
+> file-based coordination. The **file-ownership discipline** below is generic and underpins both
+> models; the `tasks.jsonl` store and its lifecycle fields are specific to this optional pattern.
+
 The coordination ledger is a **file-backed control plane**: plain append-only records, no
 database — greppable, diffable, and surviving any process dying. It answers three questions at
 all times: what work exists, who owns it, and what each task is waiting on.
@@ -23,7 +29,7 @@ The full field set is in [`ledger.schema.json`](ledger.schema.json). The load-be
 | `depends_on` | Task ids that must finish first; a cycle is a deadlock to detect. |
 | `acceptance_criteria`, `verification_command` | The objective bar + the machine check for it. |
 | `review_required`, `review_round` | Whether it routes to cross-review, and the ping-pong count. |
-| `risk_level` | `high`/`critical` auto-escalate to the human tiebreaker. |
+| `risk_level` | `high`/`critical` auto-escalate to the operator. |
 | `claimed_by_*`, `last_heartbeat_*` | Liveness — is the owner still alive? (See [liveness.md](liveness.md).) |
 
 ## File ownership prevents collisions

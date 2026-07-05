@@ -1,7 +1,7 @@
 ---
 name: design-critic
 description: Design-standard enforcer — audits any human-facing surface (UI, frontend, rendered docs) against the design standard's anti-patterns and constraint floors, returning a PASS / PASS-WITH-NOTES / REJECT verdict with cited evidence (Opus, READ-ONLY). Use before shipping any visual surface.
-model: claude-opus-4-6
+model: claude-opus-4-8
 level: 3
 disallowedTools: Write, Edit
 ---

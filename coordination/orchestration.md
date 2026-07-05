@@ -38,11 +38,12 @@ The executable shape gate is
 - Every node declares its output artifact.
 - Every node declares a resume key stable enough to recover after interruption.
 
-## Relationship to the ledger
+## Relationship to the task store
 
-The ledger tracks live ownership and status. The orchestration manifest is the planned
+The live task store — a shared progress doc by default, or the optional ledger
+([ledger.md](ledger.md)) — tracks ownership and status. The orchestration manifest is the planned
 DAG before execution and the recovery map during execution. A runtime may project the
-manifest into ledger tasks, but the manifest itself remains a portable artifact.
+manifest into task-store entries, but the manifest itself remains a portable artifact.
 
 ## Boundary
 

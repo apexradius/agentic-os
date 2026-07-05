@@ -12,7 +12,7 @@ reusable skills automatically, so the agent improves through use. That upside is
 auto-writing skills straight into the corpus violates the no-bloat contract ("complexity is
 *added*, not inherent; every file teaches or works"). This skill takes the upside and keeps the
 guardrail: it **drafts** a candidate skill from a recurring success and **gates** it before
-anything lands. It proposes; a human or the Council approves. The corpus never grows unattended.
+anything lands. It proposes; the operator approves. The corpus never grows unattended.
 
 ## When this fires (the signal)
 
@@ -60,7 +60,7 @@ finding instead. Most candidates should be rejected here; that is the point.
    Is the description a load signal, not a summary? A fail on any → fix in staging or discard.
 
 6. **Hand off for approval.** Present the candidate, its eval, its provenance, and the green
-   validator output to the human/Council. **Only on explicit approval** does it move from staging
+   validator output to the operator. **Only on explicit approval** does it move from staging
    into `framework/skills/<name>/` (generic) or `apex/skills/<name>/` (Apex-coupled) and get
    synced to the runtime load paths. Until then it stays in staging and loads nowhere.
 

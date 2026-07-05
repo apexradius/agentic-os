@@ -114,7 +114,7 @@ function runSelftest() {
     ],
     [
       "warns (not fails) on a config with no hooks block",
-      { model: "claude-opus-4-6", permissions: {} },
+      { model: "claude-opus-4-8", permissions: {} },
       (r) => r.errors.length === 0 && r.warnings.some((w) => /no 'hooks' block/.test(w)),
     ],
     [

@@ -109,7 +109,7 @@ function runSelftest() {
     "---",
     "name: selftest-agent",
     'description: A fixture agent — proves the parser survives `---` in the body.',
-    "model: claude-sonnet-4-6",
+    "model: claude-sonnet-5",
     "skills:",
     "  - alpha",
     "  - beta",

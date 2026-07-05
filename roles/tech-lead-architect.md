@@ -1,7 +1,7 @@
 ---
 name: tech-lead-architect
 description: Delivery-focused technical lead — decomposes a feature into sequenced, independently-shippable slices, defines the interfaces between components, arbitrates trade-offs, and sets and enforces engineering standards (Opus). Use to break down a large feature, define contracts between parts, or resolve a cross-cutting design decision.
-model: claude-opus-4-6
+model: claude-fable-5
 level: 4
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---

@@ -34,15 +34,16 @@ misbehaves — the lint is necessary, not sufficient.
 - Don't skip `system_health` in a first-party server — observability is the convention.
 - Don't use camelCase/PascalCase tool names — the linter warns; downstream addressing assumes
   snake_case.
-- Don't put instance business specifics in a server meant to be generic; first-party servers
-  live in `framework/runtime/mcp-servers/` (extracted in Stage 4), with install-specific values
-  in `apex/config/mcp`.
+- Don't put instance business specifics in a server meant to be generic; the generic reference
+  server lives in `framework/runtime/mcp-servers/` (data-mcp), while an instance's own servers live
+  in its instance zone (e.g. `apex/runtime/mcp-servers/`), with install-specific values in
+  `apex/config/mcp`.
 
 ## Reference implementation
 
 Prior art worth reading: the shared factory now lives in-repo at
 [`framework/runtime/mcp-shared/src/server.ts`](../../runtime/mcp-shared/src/server.ts)
-(`createApexServer`); a first-party server under `framework/runtime/mcp-servers/` shows the
-canonical layout (`src/index.ts` + `src/tools/*.ts` + `registerHealthTool`). Vendored servers
+(`createApexServer`); the reference server under `framework/runtime/mcp-servers/` (data-mcp) shows
+the canonical layout (`src/index.ts` + `src/tools/*.ts` + `registerHealthTool`). Vendored servers
 (`shopify-mcp`, `mcp-gsc`) show the legitimately-non-conventional shape the linter warns
 (not fails) on.

@@ -279,6 +279,21 @@ export const ROUTES: RouteDefinition[] = [
     fileHints: ['docs/release/release-plan.md'],
   },
   {
+    promptName: 'Production Deploy & Verify',
+    trigger: 'PRODUCTION_DEPLOY_VERIFY',
+    reason: 'Use when deploying one target to production and verifying it with a real request.',
+    keywords: [
+      'deploy and verify',
+      'deploy verify',
+      'production deploy verify',
+      'verify production deploy',
+      'verified working in production',
+      'real request to production',
+      'deploy target=',
+      'verification_contract',
+    ],
+  },
+  {
     promptName: 'Security Review Prompt',
     trigger: 'SECURITY_REVIEW',
     reason: 'Use for threat modeling, auth, permissions, secrets, or secure-code review.',
@@ -422,6 +437,24 @@ export const ROUTES: RouteDefinition[] = [
       'session handoff',
     ],
     fileHints: ['docs/handoff/current.md'],
+  },
+  {
+    promptName: 'Focused GTM Slice Prompt',
+    trigger: 'FOCUSED_GTM_SLICE',
+    reason: 'Use when repairing or classifying one GTM blocker for one app repo before rerunning readiness.',
+    keywords: [
+      'focused gtm',
+      'focused go to market',
+      'gtm blocker',
+      'gtm closer',
+      'single gtm blocker',
+      'one gtm blocker',
+      'one blocker to gtm ready',
+      'gtm ready with one focused goal',
+      'focused gtm slice',
+      'one app repo one gtm blocker',
+    ],
+    fileHints: ['docs/gtm/focused-slice.md'],
   },
   {
     promptName: 'Go To Market Readiness Prompt',
@@ -786,6 +819,14 @@ export function packageLibraryDir(): string {
 }
 
 export function structuredLibraryPath(): string {
+  const configuredLibraryPath = process.env['APEX_PROMPT_LIBRARY_PATH'];
+  if (
+    configuredLibraryPath &&
+    path.isAbsolute(configuredLibraryPath) &&
+    configuredLibraryPath.endsWith('index.generated.md')
+  ) {
+    return configuredLibraryPath;
+  }
   return path.join(packageLibraryDir(), 'index.generated.md');
 }
 

@@ -9,6 +9,8 @@ argument-hint: "[what-to-create] [optional: format]"
 
 One command for all creative output. Detects what's needed and routes to the right tool.
 
+> **Absorbed alias:** `imagen` → use `/create` (image generation; `imagen` was the low-level Imagen API call).
+
 ## Auto-Detection
 
 | User Says | Routes To | Output |

@@ -21,6 +21,7 @@ import { openTunnel } from "./tunnel.js";
 
 const MCP_NAME = "apex-data-mcp";
 const MCP_VERSION = "3.0.0";
+const SSH_OPTIONAL = process.env["OMNIBUS_DATA_SSH"] === "0";
 
 interface CliConfig {
   pgUrl?: string;
@@ -286,6 +287,7 @@ async function main(): Promise<void> {
         }
       },
       ssh: async () => {
+        if (SSH_OPTIONAL) return null;
         if (!sshModule) return "SSH not configured";
         try {
           const result = await sshModule.client.exec("echo ok", {

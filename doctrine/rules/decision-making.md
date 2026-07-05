@@ -35,11 +35,14 @@ Reversible decisions are made fast and alone; irreversible or high-stakes ones g
 and ask the user **only** when:
 
 - the next decision is a genuine architectural fork that needs their preference,
+- the *request itself* has two or more reasonable readings that lead to **materially** different
+  work — surface the interpretations; never silently pick one,
 - you've tried 3+ distinct approaches and are genuinely stuck, or
 - the action would materially expand scope beyond what was requested.
 
 Do **not** halt to confirm an obvious next step, to ask permission to continue work already
-in flight, or to negotiate cadence.
+in flight, or to negotiate cadence — and do not manufacture optionality where the request is
+clear (that is the analysis-paralysis anti-pattern, not diligence).
 
 ## Verify before you assert
 
@@ -61,4 +64,4 @@ a release. Verify against current official docs, or mark the claim "unverified �
 When a decision gets made in conversation, capture it immediately — not at session end, where
 it's lost. A decision that has to be re-asked was never really recorded.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-06-29

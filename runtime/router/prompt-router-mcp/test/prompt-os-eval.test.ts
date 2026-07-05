@@ -1,6 +1,6 @@
 /**
  * Tests for Phase 2 eval harness:
- *   1. runTier1 passes on the current library (5 golden sets present, published
+ *   1. runTier1 passes on the current library (golden sets present, published
  *      record's publish gate satisfied).
  *   2. Negative: a published record whose golden file is missing/empty/unstratified
  *      → runTier1 fails with a clear reason.
@@ -19,7 +19,12 @@ import { runTier1, GoldenCaseSchema } from '../src/prompt-os/eval/tier1.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
-const LIBRARY_DIR = path.join(PACKAGE_ROOT, 'library');
+const REPO_ROOT = path.resolve(PACKAGE_ROOT, '../../../..');
+const ENV_LIBRARY_PATH = process.env['APEX_PROMPT_LIBRARY_PATH'];
+const LIBRARY_DIR =
+  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+    ? path.dirname(ENV_LIBRARY_PATH)
+    : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
 const RUN_TIER2_PY = path.join(PACKAGE_ROOT, 'scripts/prompt-os/eval/run_tier2.py');
 
 // ---------------------------------------------------------------------------
@@ -59,15 +64,18 @@ function scoreCase(goldenCase: GoldenCaseInput, modelOutput: string): ScoreResul
 // ---------------------------------------------------------------------------
 
 describe('runTier1 — real library', () => {
-  it('passes with 5 golden sets and published record gate satisfied', async () => {
+  it('passes with all golden sets and published record gate satisfied', async () => {
     const result = await runTier1(LIBRARY_DIR);
+    const expectedGoldenCount = (await fs.readdir(path.join(LIBRARY_DIR, 'golden'))).filter((e) =>
+      e.endsWith('.jsonl'),
+    ).length;
 
     if (!result.ok) {
       console.error('Tier-1 failure summary:\n', result.summary);
     }
 
     expect(result.ok, 'runTier1 must pass on the current library').toBe(true);
-    expect(result.goldenResults.length, 'Must have 5 golden sets').toBe(5);
+    expect(result.goldenResults.length, 'Must cover every golden set').toBe(expectedGoldenCount);
     expect(
       result.goldenResults.every((r) => r.ok),
       'All golden sets must validate',
@@ -90,7 +98,7 @@ describe('runTier1 — real library', () => {
     const entries = await fs.readdir(goldenDir);
     const jsonlFiles = entries.filter((e) => e.endsWith('.jsonl'));
 
-    expect(jsonlFiles.length, 'Must have 5 golden files').toBe(5);
+    expect(jsonlFiles.length, 'Must have golden files').toBeGreaterThanOrEqual(5);
 
     for (const file of jsonlFiles) {
       const raw = await fs.readFile(path.join(goldenDir, file), 'utf8');

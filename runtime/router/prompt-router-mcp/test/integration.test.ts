@@ -121,9 +121,9 @@ describe.runIf(hasLibrary)('real library reconciliation', () => {
   });
 
   it('health reports ok', async () => {
-    const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir(), 28);
+    const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir(), 30);
     expect(report.ok).toBe(true);
-    expect(report.library.prompt_count).toBeGreaterThanOrEqual(29);
+    expect(report.library.prompt_count).toBeGreaterThanOrEqual(30);
   });
 });
 
@@ -141,6 +141,22 @@ describe.runIf(hasLibrary)('review-probe regressions (end to end)', () => {
     const dir = await makeWorkspace({ 'notes.txt': 'meeting notes' });
     const res = await route(dir, 'prepare gtm tracking setup');
     expect(res.selected_prompt.name).toBe('Analytics & Reporting');
+  });
+
+  it('P2b: focused GTM blocker language routes to Focused GTM Slice', async () => {
+    const dir = await makeWorkspace({ 'notes.txt': 'app repo with a public funnel blocker' });
+    const res = await route(
+      dir,
+      'take this app repo to gtm ready with one focused goal: resolve the public funnel blocker',
+    );
+    expect(res.selected_prompt.name).toBe('Focused GTM Slice Prompt');
+    expect(res.selected_prompt.next_trigger).toBe('FOCUSED_GTM_SLICE');
+  });
+
+  it('P2c: readiness-only GTM language still routes to GTM readiness', async () => {
+    const dir = await makeWorkspace({ 'notes.txt': 'launch packet and scorecard' });
+    const res = await route(dir, 'run gtm readiness for this app');
+    expect(res.selected_prompt.name).toBe('Go To Market Readiness Prompt');
   });
 
   it('P3: explicit service goal in an empty folder beats the bootstrap prior', async () => {
@@ -214,9 +230,9 @@ describe.runIf(hasLibrary)('review-probe regressions (end to end)', () => {
     );
     expect(res.selected_prompt.name).toBe('Prompt 3 Ultimate Design Research Mockup Brief');
     expect(res.selected_prompt.confidence).toBe('high');
-    expect(res.prompt_text).toContain('GPT Image 2 / Image Gen 2');
-    expect(res.prompt_text).toContain('Nano Banana Pro');
-    expect(res.prompt_text).toContain('Higgsfield');
+    expect(res.prompt_text).toContain('GENERATION_PROMPT_PACK');
+    expect(res.prompt_text).toContain('generation prompt pack');
+    expect(res.prompt_text).toContain('paid image/video generation');
     expect(res.selected_prompts).toHaveLength(1);
     expect(res.execution_contract.multi_prompt_required).toBe(false);
   });

@@ -28,8 +28,11 @@ enforcement of a doctrine standard, so it earns its own zone.
 | Versioning | [`doctrine/standards/versioning.md`](../doctrine/standards/versioning.md) | [`versioning/`](versioning/) — proves `VERSION` is valid SemVer and the `CHANGELOG`'s latest released entry matches it | human review of the bump decision (MAJOR/MINOR/PATCH) |
 | Threat model (build-time) | [`doctrine/standards/threat-model.md`](../doctrine/standards/threat-model.md) | [`threat-model/`](threat-model/) — proves every shipped `THREAT-MODEL.md` answers the four questions (trust boundary / privilege / blast radius / mitigation) | [`roles/security-reviewer.md`](../roles/security-reviewer.md) — judges whether the reasoning is right |
 | Reference integrity | [`doctrine/standards/reference-integrity.md`](../doctrine/standards/reference-integrity.md) | [`reference-integrity/`](reference-integrity/) — every internal link in the architectural docs resolves + every standard and rule is on its index | human review of doc structure |
+| Skill reference integrity | [`doctrine/standards/reference-integrity.md`](../doctrine/standards/reference-integrity.md) — the same law on the agent→skill edge: a declared reference must resolve | [`skill-ref-integrity/`](skill-ref-integrity/) — proves every skill an agent names in its `skills:` frontmatter resolves to a live skill directory or an alias-registry key (no silent dead capability) | human review of the alias-vs-rename policy |
 | Primitive integrity | [`doctrine/standards/primitive-integrity.md`](../doctrine/standards/primitive-integrity.md) | [`primitive-integrity/`](primitive-integrity/) — every primitive definition ships spec + schema + creator + validator (no folder the harness silently skips) | human review of new primitive design |
+| Knowledge freshness | [`doctrine/standards/knowledge-freshness.md`](../doctrine/standards/knowledge-freshness.md) | [`knowledge-freshness/`](knowledge-freshness/) — every scanned file is classified, startup authority stays current-facing, and historical records self-identify before they can read as live truth | human review of the chosen authority surface and exception expiry |
 | Standard shape | [`doctrine/standards/standard-shape.md`](../doctrine/standards/standard-shape.md) | [`standard-shape/`](standard-shape/) — every gate obeys the shared contract: node shebang, zero npm deps, parseable selftest tail + sibling README | human review of whether the checks are the *right* checks |
+| Capability index | [`doctrine/standards/capability-index.md`](../doctrine/standards/capability-index.md) | [`capability-index/`](capability-index/) — proves the root `CAPABILITIES.md` catalog is a drift-free render of every skill, agent, and MCP server/tool | human review of catalog usefulness |
 
 Each checker is **zone-pure generic** (zero Apex coupling — it ships with the framework on
 extraction) and wired into the one-command harness: `validate.mjs --all` discovers every
@@ -38,4 +41,4 @@ extraction) and wired into the one-command harness: `validate.mjs --all` discove
 **Adding a gate?** [`_creator.md`](_creator.md) is the authoring SOP — it produces a checker that
 conforms to the [`standard-shape`](standard-shape/) contract in one pass.
 
-> Last reviewed: 2026-06-25
+> Last reviewed: 2026-07-04

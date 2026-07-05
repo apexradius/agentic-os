@@ -8,9 +8,15 @@ import { lintRecord } from '../src/prompt-os/lint.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
+const REPO_ROOT = path.resolve(PACKAGE_ROOT, '../../../..');
+const ENV_LIBRARY_PATH = process.env['APEX_PROMPT_LIBRARY_PATH'];
+const LIBRARY_DIR =
+  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+    ? path.dirname(ENV_LIBRARY_PATH)
+    : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
 const REFERENCE_FILE = path.join(
-  PACKAGE_ROOT,
-  'library/prompts/lifecycle/production-deploy-verify.prompt.md',
+  LIBRARY_DIR,
+  'prompts/lifecycle/production-deploy-verify.prompt.md',
 );
 
 // ---------------------------------------------------------------------------

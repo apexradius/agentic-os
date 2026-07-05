@@ -20,8 +20,12 @@ defaults are wrong for production engineering.
 ## Code & scope
 
 - **No unrequested features.** Build exactly what was asked. No "while I was in there…".
+- **Surface out-of-scope problems; don't fix them.** Spot unrelated dead code, a latent bug,
+  or a smell? Name it in your report — don't delete or refactor it inside this change.
 - **No speculative abstractions.** Three similar lines beat a premature utility "for future
   reuse." Abstract on the third real occurrence, not the first imagined one.
+- **No defensive code for impossible states.** Don't guard, catch, or fall back for conditions
+  that can't occur. Handle the real failure modes; speculative branches are just dead code.
 - **Prefer what already exists, in order.** Before writing new code, walk the ladder and stop
   at the first rung that holds: reuse a helper already in this codebase → standard library →
   native platform feature → an already-installed dependency → only then add a new one. A new
@@ -32,6 +36,8 @@ defaults are wrong for production engineering.
 - **No WIP with TODO comments.** If it's not finished, don't ship it.
 - **No building complex features without a plan first.** (See [../../loop/planning.md](../../loop/planning.md).)
 - **Prefer editing an existing file to creating a new one.**
+- **Match the surrounding code.** Write edits in the style already in the file — naming,
+  structure, comment density — even where you'd choose differently. Consistency wins over taste.
 - **One fix per commit.** Atomic changes are easy to revert and easy to understand. No riders.
 - **Look before you write.** Read a file or config (and its schema) before editing it; never
   assume field locations or nesting.
@@ -46,4 +52,4 @@ defaults are wrong for production engineering.
 - **No deploy without a rollback plan.** If you can't revert it, don't ship it.
 - **No reverting without understanding what went wrong.** Same bug, later.
 
-> Last reviewed: 2026-06-24
+> Last reviewed: 2026-06-29

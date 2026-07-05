@@ -9,6 +9,8 @@ argument-hint: "[topic-or-question]"
 
 One command for any research need. Auto-detects type and launches appropriate agents.
 
+> **Absorbed aliases:** `docs-search`, `tech-compare` → use `/research` (the Documentation and Technical types below).
+
 ## Type Detection
 
 | User Says | Research Type | Agents |

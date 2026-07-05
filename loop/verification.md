@@ -94,7 +94,7 @@ things keep reiteration from running away:
 - **A stop.** When the ceiling is hit, the loop **stops and escalates** instead of burning the rest
   of the window. Escalation is one mechanism at two scales: a solo runtime halts and asks
   ([../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md)); a multi-agent
-  runtime hands to the Council tiebreaker or a human
+  runtime hands to the operator, the final arbiter
   ([../coordination/council.md](../coordination/council.md)). Stopping with a clear "tried *N* times,
   here is the wall — and the failure stopped shrinking after pass two" beats a silent infinite grind.
 

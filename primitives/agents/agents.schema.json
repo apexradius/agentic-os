@@ -24,7 +24,7 @@
     },
     "model": {
       "type": "string",
-      "description": "Claude model id (e.g. claude-opus-4-6). Claude-only; not emitted to Codex. Optional so a role may inherit the default."
+      "description": "Claude model id (e.g. claude-opus-4-8). Claude-only; not emitted to Codex. Optional so a role may inherit the default."
     },
     "memory": {
       "type": "string",

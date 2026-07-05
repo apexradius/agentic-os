@@ -7,7 +7,9 @@ import { formatTable } from "../utils.js";
 export function registerQueryTools(server: McpServer, client: PgClient, maxRows: number): void {
   server.tool(
     "pg_query",
-    "Execute a SQL query and return results as a formatted table.",
+    "Execute a SQL query and return results as a formatted table. Read-only by default: " +
+      "only SELECT/EXPLAIN/SHOW/WITH/VALUES are permitted unless readOnly is explicitly set to " +
+      "false, which allows write statements (INSERT/UPDATE/DELETE/DDL).",
     {
       sql: z.string().min(1).describe("SQL query to execute"),
       params: z
@@ -21,8 +23,16 @@ export function registerQueryTools(server: McpServer, client: PgClient, maxRows:
         .max(5000)
         .optional()
         .describe(`Maximum rows to return (default ${maxRows})`),
+      readOnly: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe(
+          "Restrict this query to read-only statements. Defaults to true; set false to " +
+            "deliberately permit writes. A server started with --read-only stays locked regardless.",
+        ),
     },
-    async ({ sql, params, max_rows }) => {
+    async ({ sql, params, max_rows, readOnly }) => {
       try {
         let parsedParams: unknown[] = [];
         if (params) {
@@ -32,7 +42,7 @@ export function registerQueryTools(server: McpServer, client: PgClient, maxRows:
         }
 
         const limit = max_rows ?? maxRows;
-        const result = await client.query(sql, parsedParams);
+        const result = await client.query(sql, parsedParams, readOnly);
         const columns = result.fields.map((f) => f.name);
         const text = formatTable(columns, result.rows, limit);
         return toolResult(text);

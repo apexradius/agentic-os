@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-echo "framework/runtime/ledger/aorg-broker-watchdog is retired as of 2026-07-04; no aorg broker is active." >&2
-exit 2

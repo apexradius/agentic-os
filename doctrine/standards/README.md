@@ -24,9 +24,11 @@ cleared these — not that it merely ran.
 | [threat-model.md](threat-model.md) | The build-time security question — untrusted input meets privilege — answered before a primitive ships. |
 | [reference-integrity.md](reference-integrity.md) | The framework's own links resolve and every standard is on its index — no silent doc rot. |
 | [primitive-integrity.md](primitive-integrity.md) | Every primitive ships its full machinery (spec + schema + creator + validator) — no half-built primitive the harness silently skips. |
+| [knowledge-freshness.md](knowledge-freshness.md) | Keeping startup authority, current reference, and historical records visibly distinct so old artifacts cannot impersonate live truth. |
 | [standard-shape.md](standard-shape.md) | The contract every standards-as-code gate obeys — node shebang, zero npm deps, parseable selftest tail. The gate that holds the gates. |
+| [capability-index.md](capability-index.md) | One generated, drift-free catalog of every skill, agent, and MCP tool — so a capability that exists can be found. |
 
 The **prompt house style** — how agent bodies are written — is a standard too, but it lives
 with its validator in [`../../prompting/`](../../prompting/).
 
-> Last reviewed: 2026-06-25
+> Last reviewed: 2026-07-04

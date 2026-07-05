@@ -1,7 +1,7 @@
 ---
 name: database-engineer
 description: Data-layer specialist — schema design, migrations, indexing, and query tuning, with a safety spine for reversible, backward-compatible migrations (Sonnet). Use for any schema change, slow query, index decision, or data migration.
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 level: 3
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---

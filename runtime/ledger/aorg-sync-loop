@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-echo "framework/runtime/ledger/aorg-sync-loop is retired as of 2026-07-04; no aorg sync is active." >&2
-exit 2

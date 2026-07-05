@@ -9,6 +9,8 @@ argument-hint: "[session|daily|weekly]"
 
 One command, any scope. Pulls from all data sources available.
 
+> **Absorbed aliases:** `daily-ops`, `morning-brief`, `weekly-report` → use `/briefing [daily|weekly]`.
+
 ## Scope Detection
 - "what did we do" / "session summary" → **Session**
 - "morning" / "today" / "daily" → **Daily**

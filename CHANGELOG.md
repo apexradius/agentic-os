@@ -8,13 +8,54 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-05
+
+This release slims the framework to its portable core. The tree is smaller, every remaining
+file is generic, and new deterministic gates guard the surfaces the restructure touched.
+
+### BREAKING — Removed
+- **The instance MCP fleet no longer ships here.** `runtime/mcp-servers/` previously carried
+  13 production servers wired to one instance's infrastructure — a standing violation of the
+  framework's own zero-coupling doctrine. They have moved to their instance repo. What remains
+  public is the portable machinery: `runtime/mcp-shared` (the server factory), `runtime/router`,
+  and `runtime/mcp-servers/data-mcp` — a reference server demonstrating the factory pattern
+  end-to-end. If you consumed a removed server, vendor it from the `v0.9.0` tag or build from
+  the factory.
+- **Skills catalog restructured.** Twelve skills are gone: nine collapsed into router skills
+  that front their domains (`web-audit`→`audit`; `tech-compare`→`research`; `quick-plan`→`plan`;
+  `imagen`→`create`; `morning-brief`/`weekly-report`→`briefing`; `ship`/`dev-ship`/
+  `release-notes`→ a release router that is instance-owned, since shipping is inherently
+  instance-specific), and `gemma-eval`/`gemma-serve`/`local-rag` retired with their
+  local-model era. Migrating instances should register old names as aliases at the
+  instance layer; the router `SKILL.md`s document the mapping.
+
+### Added
+- **Skill-ref integrity gate** (`standards/skill-ref-integrity/`) — every `skills:` entry in
+  an agent definition must resolve to a live skill directory or a registered alias. Catches
+  the silent failure a catalog restructure creates: agents pointing at skills that no longer
+  exist, degrading dispatch without an error. Its self-test seeds a stale ref and must fail.
+- **Capability index gate** (`standards/capability-index/`) — deterministic `CAPABILITIES.md`
+  render of the live capability tree with a `--check` drift mode, so the index can never
+  quietly diverge from what is on disk.
+- **Knowledge freshness gate** (`doctrine/standards/knowledge-freshness.md` +
+  `standards/knowledge-freshness/`) — a zero-dependency manifest-driven classifier that keeps
+  startup authority, current reference, and historical artifacts visibly distinct. An instance
+  manifest declares the live startup surfaces and dated artifacts; the gate requires explicit
+  historical-status banners, catches authority-language drift in historical docs, and proves the
+  standing-facts file carries a freshness contract while the task ledger keeps the live `Active`
+  queue above the historical delivery record.
+- **`distill-memory` skill** — compresses session context into durable memory artifacts
+  following the memory-tier doctrine.
+
+## [0.9.0] - 2026-06-25
+*(tag cut 2026-07-05 on the final pre-restructure tree; the tag additionally carries the
+service-adoption gate listed below)*
+
 ### Added
 - **Service adoption gate** (`standards/service-adoption-gate/`) — a zero-dependency scanner for
   unsafe self-host defaults before third-party services enter an instance runtime: floating
   `latest` images, Docker socket mounts, privileged containers, `SYS_ADMIN`, unconfined seccomp,
   browser `--no-sandbox`, weak default secrets, and cookies missing explicit `secure`/`sameSite`.
-
-## [0.9.0] - 2026-06-25
 
 ### Added
 - **Eval primitive** (`primitives/eval/`) — a portable Task/Solver/Scorer contract with

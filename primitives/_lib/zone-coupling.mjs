@@ -7,7 +7,8 @@
 //   apex/config/zone-coupling.json   (per-profile arrays, e.g. {"skills": ["acme-corp", ...]})
 // or the ZONE_COUPLING_PATTERN env var (a raw regex source, applied to all profiles). The adopter's
 // real list lives OUTSIDE framework/ — so framework/ stays publishable while the live arbiter is
-// unchanged for the adopter. See ledger/SEAM.md (CLEANUP C3) for the rationale.
+// unchanged for the adopter. Rationale recorded in the retired ledger engine's SEAM doc,
+// archived to a git tag with the rest of that engine (CLEANUP C3).
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";

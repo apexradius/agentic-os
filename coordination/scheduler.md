@@ -1,9 +1,13 @@
 # The Scheduler
 
+> **Optional pattern — not the default loop.** The scheduler drives a proactive loop over the
+> optional shared control-plane ledger ([ledger.md](ledger.md)); it presupposes that store.
+> File-based coordination does not require it.
+
 Reactive agents wait to be asked. The agents Hermes Agent and OpenClaw popularized are
 **proactive**: a built-in heartbeat wakes them on a cadence (OpenClaw ~every 30 min), they
 check for pending work, and they run what is due — no human prompt required. This is the model
-for making the Council proactive **over the ledger it already keeps**, not a second store.
+for making the loop proactive **over the ledger it already keeps**, not a second store.
 
 ## The tick
 
@@ -18,7 +22,7 @@ append-only [`tasks.jsonl`](ledger.md), then selects the tasks that are all thre
 
 The selected tasks are returned **ordered by priority then id** — a deterministic dispatch plan.
 The tick **dispatches nothing itself**: emitting the plan is the portable, side-effect-free
-core. Handing the plan to the executor/Council, claiming the task, and stamping `last_run_at`
+core. Handing the plan to the executor, claiming the task, and stamping `last_run_at`
 are instance actions, because they mutate live state and must flow through the ledger engine's
 claim path (file-ownership, liveness) — see [`ledger.md`](ledger.md) and [`liveness.md`](liveness.md).
 
@@ -33,8 +37,8 @@ framework, so the loop is wiring, not new machinery:
 2. **Tick.** Run the read-only tick → the ordered dispatch plan.
 3. **Bound the batch.** Take as many tasks as the instance allows per tick (one is the safe
    default — it bounds a crash's blast radius to a single task).
-4. **Risk floor.** Skip any task whose `risk_level` is `high`/`critical` — those route to the human
-   tiebreaker, never to autonomous dispatch ([review.md](review.md)).
+4. **Risk floor.** Skip any task whose `risk_level` is `high`/`critical` — those route to the
+   operator, never to autonomous dispatch ([review.md](review.md)).
 5. **Claim.** Move the task to `claimed` with the owner stamp, through the ledger engine's claim
    path so file-ownership and liveness hold ([ledger.md](ledger.md)).
 6. **Replay check.** Before any side-effecting step, ask the durability journal whether this exact
@@ -74,7 +78,7 @@ it chooses. The framework supplies the selection logic; the instance supplies th
 
 The selection logic is **machinery**, so it lives in
 [`framework/runtime/scheduler/`](../runtime/scheduler/) (`tick.mjs` + a pure `lib/select.mjs`),
-zone-pure and dependency-free, beside the `ledger/` and `council/` engines. This file is the
+zone-pure and dependency-free, beside the runtime's `durability/` and `observability/` engines. This file is the
 **model** (doctrine); the cadence and wiring are **instance state**. Doctrine is law, knowledge
 is state, code is machinery — never mixed.
 

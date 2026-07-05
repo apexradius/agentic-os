@@ -28,11 +28,20 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
-const LIBRARY_DIR = path.join(PACKAGE_ROOT, 'library');
+const REPO_ROOT = path.resolve(PACKAGE_ROOT, '../../../..');
+const ENV_LIBRARY_PATH = process.env['APEX_PROMPT_LIBRARY_PATH'];
+const LIBRARY_DIR =
+  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+    ? path.dirname(ENV_LIBRARY_PATH)
+    : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
+const GENERATED_PATH =
+  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+    ? ENV_LIBRARY_PATH
+    : path.join(LIBRARY_DIR, 'index.generated.md');
 const LOOPS_DIR = path.join(LIBRARY_DIR, 'loops');
 const REFERENCE_FILE = path.join(
-  PACKAGE_ROOT,
-  'library/prompts/lifecycle/production-deploy-verify.prompt.md',
+  LIBRARY_DIR,
+  'prompts/lifecycle/production-deploy-verify.prompt.md',
 );
 
 // ---------------------------------------------------------------------------
@@ -100,10 +109,7 @@ describe('loadLoopBlocks', () => {
 describe('composePromptText: DECLARATIVE mode', () => {
   it('reference record: composed text contains intake + loop-contract + plan-implement-verify + body, in order', async () => {
     // Load all prompts including loop blocks (simulate structured mode)
-    const generatedText = await fs.readFile(
-      path.join(LIBRARY_DIR, 'index.generated.md'),
-      'utf8',
-    );
+    const generatedText = await fs.readFile(GENERATED_PATH, 'utf8');
     const { prompts: basePrompts } = parsePromptLibrary(generatedText);
     const loopBlocks = await loadLoopBlocks(LIBRARY_DIR);
     const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks];
@@ -134,9 +140,8 @@ describe('composePromptText: DECLARATIVE mode', () => {
     expect(sections).toHaveLength(4);
 
     // Section 0: intake contract text (filled with prompt name)
-    // Universal Intake Contract does not contain "Intake Gate" literally;
-    // it contains the intake instructions themselves.
-    expect(sections[0]).toContain('operator specializing in');
+    expect(sections[0]).toContain('most capable Production Deploy & Verify operator');
+    expect(sections[0]).toContain('shared intake + grounding gate');
     // Section 1: loop-contract block
     expect(sections[1]).toContain('TRIGGER');
     expect(sections[1]).toContain('STOP');
@@ -150,10 +155,7 @@ describe('composePromptText: DECLARATIVE mode', () => {
   });
 
   it('each include appears exactly once', async () => {
-    const generatedText = await fs.readFile(
-      path.join(LIBRARY_DIR, 'index.generated.md'),
-      'utf8',
-    );
+    const generatedText = await fs.readFile(GENERATED_PATH, 'utf8');
     const { prompts: basePrompts } = parsePromptLibrary(generatedText);
     const loopBlocks = await loadLoopBlocks(LIBRARY_DIR);
     const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks];
@@ -307,18 +309,15 @@ describe('routing: loop blocks do not change resolved route count', () => {
     }
   });
 
-  it('resolveRoutes with loop blocks added: 28 resolved, 0 missing', async () => {
-    const generatedText = await fs.readFile(
-      path.join(LIBRARY_DIR, 'index.generated.md'),
-      'utf8',
-    );
+  it('resolveRoutes with loop blocks added: 30 resolved, 0 missing', async () => {
+    const generatedText = await fs.readFile(GENERATED_PATH, 'utf8');
     const { prompts: basePrompts } = parsePromptLibrary(generatedText);
     const loopBlocks = await loadLoopBlocks(LIBRARY_DIR);
     const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks];
 
     const result = resolveRoutes(allPrompts);
     expect(result.missing_route_prompts, 'no missing routes').toEqual([]);
-    expect(result.resolved).toHaveLength(28);
+    expect(result.resolved).toHaveLength(30);
     // Loop blocks must NOT appear in unrouted_prompts
     for (const block of loopBlocks) {
       expect(

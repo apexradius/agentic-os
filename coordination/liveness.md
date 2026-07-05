@@ -1,5 +1,9 @@
 # Liveness
 
+> **Optional pattern — not the default loop.** Liveness detection is part of the optional
+> shared control-plane ledger ([ledger.md](ledger.md)); it governs claimed tasks in that store.
+> File-based coordination does not require it.
+
 A claimed task whose owner has died is worse than an unclaimed one: it looks like progress
 while nothing happens. Liveness detection finds and recovers stalled work.
 
@@ -25,7 +29,7 @@ A periodic sweep flags tasks that are stuck, by state:
 
 A detected stall is **released, not silently dropped**: a dead claim returns the task to
 `pending` (freeing its `files_owned` lock) so another agent can take it; a deadlock or a
-repeatedly-stale task escalates to the human tiebreaker. The thresholds and the alert channel
+repeatedly-stale task escalates to the operator. The thresholds and the alert channel
 are instance-specific; the *model* — heartbeat, sweep, release-or-escalate — is the generic
 contract here.
 

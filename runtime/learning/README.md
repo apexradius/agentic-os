@@ -2,7 +2,7 @@
 
 The reading half of the [learning standard](../../doctrine/standards/learning.md): a zero-dependency
 analyzer over the [observability](../observability/) run-record log that turns a window of "how each run
-went" into a short list of **review candidates** for a human/Council retro.
+went" into a short list of **review candidates** for a human-run retro.
 
 It is the deliberately non-autonomous end of the loop. The lesson it encodes: an unstructured loop that
 reads its own output and rewrites the framework produces junk, because nothing outside it defines "better."

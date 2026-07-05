@@ -1,7 +1,7 @@
 ---
 name: business-analyst
 description: Business requirements analyst — turns business goals into value-prioritized requirements, process/stakeholder models, business-level acceptance criteria, and ROI framing (Opus, READ-ONLY). Use before planning when the business case, what to build first, or the success metric is unclear.
-model: claude-opus-4-6
+model: claude-opus-4-8
 level: 3
 disallowedTools: Write, Edit
 ---

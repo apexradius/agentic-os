@@ -9,6 +9,8 @@ argument-hint: "[task-or-feature-description]"
 
 Detects task complexity and applies the right planning depth.
 
+> **Absorbed alias:** `quick-plan` → use `/plan` (the Light tier is the former quick-plan).
+
 ## Complexity Estimator
 
 Complexity is NOT just step count. Evaluate all three dimensions:

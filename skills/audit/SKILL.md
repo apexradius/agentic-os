@@ -9,6 +9,8 @@ argument-hint: "[url] [quick|standard|exhaustive]"
 
 One command, every audit. Parallel agents, unified scoring.
 
+> **Absorbed alias:** `web-audit` → use `/audit`. The unified audit covers what the former standalone web-audit did.
+
 ## Tiers
 
 ### Quick (3 agents, ~5 min)

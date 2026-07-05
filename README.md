@@ -1,6 +1,6 @@
 # Agentic OS — a portable framework for AI agents
 
-[![Version: 0.9.0](https://img.shields.io/badge/version-0.9.0-1f6feb)](VERSION)
+[![Version: 0.10.0](https://img.shields.io/badge/version-0.10.0-1f6feb)](VERSION)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea043)](LICENSE)
 [![CI: framework-validate](https://img.shields.io/badge/ci-framework--validate-6f42c1)](.github/workflows/framework-validate.yml)
 

@@ -29,7 +29,7 @@ The factory is `createApexServer(opts)` from `@framework/mcp-shared`; tools regi
 
 As of **Stage 4**, the shared factory lives in this repo at
 [`framework/runtime/mcp-shared`](../../runtime/mcp-shared) (published as `@framework/mcp-shared`),
-with the first-party servers under `framework/runtime/mcp-servers/`. This primitive has **no emit**
+with the generic reference server under `framework/runtime/mcp-servers/` (data-mcp). This primitive has **no emit**
 of its own — it lints a server directory by path (in-repo or live).
 
 ## Validation: a convention linter (honest scope)

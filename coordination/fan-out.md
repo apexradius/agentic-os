@@ -1,10 +1,10 @@
 # Fan-out / fan-in
 
-The [Council](council.md) sets direction and the [delegation contract](../doctrine/rules/delegation.md)
+The planning lane ([council.md](council.md)) sets direction and the [delegation contract](../doctrine/rules/delegation.md)
 keeps a single cold dispatch safe. This file adds the coordination shape that sits on top of
 both: one **orchestrator** fanning work out to many **workers** at once, then folding their
 results back in. It is the execution pattern behind any "spawn N sub-agents" task. Its contract
-is its own — distinct from the Council's plan→build handoff and from the delegation safety checklist.
+is its own — distinct from the plan→build handoff and from the delegation safety checklist.
 
 ## The contract
 
