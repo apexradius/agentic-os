@@ -104,7 +104,9 @@ function jsonSchemaPropertyToZod(prop: Record<string, unknown>): ZodTypeAny {
       schema = z.array(z.any());
       break;
     case 'object':
-      schema = z.record(z.any());
+      // zod 4 requires an explicit key schema; z.record(z.string(), z.any())
+      // preserves the zod 3 z.record(z.any()) meaning (string keys, any values).
+      schema = z.record(z.string(), z.any());
       break;
     default:
       schema = z.any();
