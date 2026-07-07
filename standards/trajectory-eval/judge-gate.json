@@ -1,0 +1,9 @@
+{
+  "id": "trajectory-eval-judge-path",
+  "applies_to": "trajectory-eval judge dimensions (plan_adherence, synthesis_fidelity, finding_class_coverage, question_discoverability, verification_adequacy, artifact_set) — reached only after the deterministic floor",
+  "deterministic_first": true,
+  "order_swap": { "enabled": true, "require_consistent_verdict": true },
+  "agreement": { "required": true, "on_disagreement": "escalate" },
+  "judge_separation": { "policy": "different-model-preferred", "fallback": "record-reason" },
+  "rubric_controls": ["verbosity-neutral", "self-preference-neutral"]
+}

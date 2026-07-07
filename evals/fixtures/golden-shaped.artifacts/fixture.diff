@@ -1,0 +1,15 @@
+diff --git a/config/rollout.json b/config/rollout.json
+index 1111111..2222222 100644
+--- a/config/rollout.json
++++ b/config/rollout.json
+@@ -1,9 +1,9 @@
+ {
+   "service": "example-service",
+   "feature_flags": {
+     "rollout": {
+-      "controlled_launch": false,
++      "controlled_launch": true,
+       "stable_path": true
+     }
+   }
+ }

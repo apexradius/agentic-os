@@ -1,0 +1,21 @@
+{
+  "kind": "orchestration-closeout",
+  "status": "passed",
+  "decision_gate": {
+    "status": "operator_ratified",
+    "rationale": "The exposure posture was answered by the operator before the closeout."
+  },
+  "claims": [
+    {
+      "claim": "The manifest change was applied and verified.",
+      "claim_kind": "artifact-created",
+      "evidence": {
+        "type": "command",
+        "command": "node scripts/verify.js",
+        "exit_code": 0,
+        "observed": "exit 0",
+        "timestamp": "2026-07-07T00:00:00.000Z"
+      }
+    }
+  ]
+}

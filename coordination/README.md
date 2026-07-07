@@ -26,7 +26,7 @@ progress doc — with **explicit file ownership**. The rules are deliberately si
 | [council.md](council.md) | Who plans, who verifies, who builds — and how cross-review is raised. |
 | [fan-out.md](fan-out.md) | How one orchestrator dispatches many workers and folds the results back. |
 | [review.md](review.md) | How agents check each other's work without deadlocking. |
-| [orchestration.md](orchestration.md) | How multi-agent DAGs declare owners, dependencies, validation, outputs, and resume keys. |
+| [orchestration.md](orchestration.md) | The executable loop an orchestrator runs — decompose, fan out, synthesize, gate, sequence, dispatch, verify — and the portable manifest that serializes the DAG. |
 
 ## Optional pattern — a shared control-plane ledger
 

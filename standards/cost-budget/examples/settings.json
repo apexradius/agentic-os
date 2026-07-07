@@ -1,0 +1,27 @@
+{
+  "_comment": "Wiring for cost-budget-guard.py. Two events: PreToolUse is the HARD tier (denies sub-agent dispatch once over budget; finish-and-verify stays open), UserPromptSubmit is the WARN advisory. The ceiling is declared via env on the command (COSTGUARD_SESSION_TOKENS). With no ceiling declared the guard is inert (fail-open). COSTGUARD_PRICE_MAP is optional and only feeds the $-estimate in the advisory. A per-session sidecar cost-budget.json 'budget_tokens' overrides the env ceiling (the seam an orchestrator writes a per-node budget into).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env COSTGUARD_SESSION_TOKENS=300000000 COSTGUARD_WARN_PCT=70 ${CLAUDE_PROJECT_DIR}/.claude/hooks/cost-budget-guard.py"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "env COSTGUARD_SESSION_TOKENS=300000000 COSTGUARD_WARN_PCT=70 ${CLAUDE_PROJECT_DIR}/.claude/hooks/cost-budget-guard.py"
+          }
+        ]
+      }
+    ]
+  }
+}

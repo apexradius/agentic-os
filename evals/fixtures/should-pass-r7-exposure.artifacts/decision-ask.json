@@ -1,0 +1,16 @@
+{
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Launch the controlled exposure now?",
+      "options": ["launch now", "keep disabled"],
+      "recommendation": "launch now",
+      "rationale": "The diff changes an exposure flag, so the posture needs an operator-ratified answer."
+    }
+  ],
+  "resolution": {
+    "D1": "launch now",
+    "basis": "operator-turn"
+  }
+}

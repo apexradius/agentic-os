@@ -37,6 +37,10 @@ function hasText(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function hasPersistedRef(value) {
+  return hasText(value) && !/\s/.test(value.trim()) && /[./#]/.test(value.trim());
+}
+
 function hasTimestamp(value) {
   return hasText(value) && Number.isFinite(Date.parse(value));
 }
@@ -47,11 +51,59 @@ function hintedClaimKind(claim) {
 }
 
 function evidencePointer(evidence) {
-  return hasText(evidence.ref) || hasText(evidence.command) || hasText(evidence.tool);
+  return hasPersistedRef(evidence.ref) || (hasText(evidence.command) && hasExitCode(evidence)) || hasText(evidence.tool);
+}
+
+function hasExitCode(evidence) {
+  return Number.isInteger(evidence.exit_code) || Number.isInteger(evidence.exitCode);
 }
 
 function hasZeroExit(evidence) {
   return evidence.exit_code === 0 || evidence.exitCode === 0;
+}
+
+// F40: a probe is an executed artifact, not a citation — a `source.js:NN` line reference
+// into code under analysis is the argument restated with a line number, not probe output.
+function isSourceCitation(value) {
+  return hasText(value) && /\.(m?[jt]sx?|py|rb|go|rs|java|c|h|cpp|php|sh|bash|zsh)(:\d+(-\d+)?)?$/.test(value.trim());
+}
+
+function hasProbeRef(value) {
+  return hasPersistedRef(value) && !isSourceCitation(value);
+}
+
+function hasProbeEvidence(defect) {
+  return (
+    hasProbeRef(defect.probe) ||
+    hasProbeRef(defect.probe_path) ||
+    (isObject(defect.evidence) && hasProbeRef(defect.evidence.ref))
+  );
+}
+
+function defectLists(trace) {
+  const lists = [];
+  if (Array.isArray(trace.found_defects)) lists.push(["found_defects", trace.found_defects]);
+  if (Array.isArray(trace.defects)) lists.push(["defects", trace.defects]);
+  return lists;
+}
+
+function validateDefectDismissals(trace) {
+  const errors = [];
+  for (const [key, defects] of defectLists(trace)) {
+    defects.forEach((defect, index) => {
+      const where = `${key}[${index}]`;
+      if (!isObject(defect)) return;
+      const disposition = [defect.outcome, defect.disposition, defect.state].find((v) => hasText(v));
+      if (hasText(disposition) && disposition.trim().toLowerCase() === "ruled-non-defect" && !hasProbeEvidence(defect)) {
+        const cited = [defect.probe, defect.probe_path, isObject(defect.evidence) ? defect.evidence.ref : defect.evidence]
+          .some((v) => hasText(v) && (isSourceCitation(v) || /\.(m?[jt]sx?|py|rb|go|rs|java|c|h|cpp|php|sh|bash|zsh):\d+/.test(v)));
+        errors.push(cited
+          ? `${where}: probe ref is a source citation, not an executed artifact (F40: a probe is run output, not a line number into the code under analysis)`
+          : `${where}: ruled-non-defect dismissal requires persisted probe evidence (F35: dismissal carries the same evidence grade as fixed)`);
+      }
+    });
+  }
+  return errors;
 }
 
 function validateKindEvidence(kind, evidence, where) {
@@ -91,6 +143,7 @@ function validateKindEvidence(kind, evidence, where) {
 export function validateTrace(trace) {
   const errors = [];
   if (!isObject(trace)) return ["trace is not an object"];
+  errors.push(...validateDefectDismissals(trace));
   if (!Array.isArray(trace.claims) || trace.claims.length === 0) {
     errors.push("claims must be a non-empty array");
     return errors;
@@ -115,8 +168,11 @@ export function validateTrace(trace) {
       return;
     }
     if (!TYPES.has(evidence.type)) errors.push(`${where}.evidence.type is invalid`);
+    if (["artifact", "observed-output"].includes(evidence.type) && !hasPersistedRef(evidence.ref)) {
+      errors.push(`${where}.evidence.ref must be a path-shaped persisted artifact pointer for ${evidence.type} evidence (F34 persisted proofs)`);
+    }
     if (!evidencePointer(evidence)) {
-      errors.push(`${where}.evidence requires ref, command, or tool`);
+      errors.push(`${where}.evidence requires persisted ref, command+exit_code, or tool (F34 persisted proofs)`);
     }
     if (!hasText(evidence.observed)) errors.push(`${where}.evidence.observed is required`);
     if (!hasTimestamp(evidence.timestamp)) errors.push(`${where}.evidence.timestamp is invalid`);
@@ -176,6 +232,7 @@ const pushed = {
       evidence: {
         type: "command",
         command: "git push",
+        exit_code: 0,
         git_ref: "abc1234",
         remote: "origin/main",
         observed: "origin/main updated to abc1234",
@@ -197,6 +254,76 @@ const badType = {
     },
   ],
 };
+const persistedArtifactRef = {
+  claims: [
+    {
+      claim: "Created the trace artifact",
+      claim_kind: "artifact-created",
+      evidence: {
+        type: "artifact",
+        ref: "reports/trace.md",
+        observed: "Trace artifact is referenced by path",
+        timestamp: "2026-06-25T18:00:00Z",
+      },
+    },
+  ],
+};
+const proseOnlyObservedOutput = {
+  claims: [
+    {
+      claim: "Observed the runtime output",
+      claim_kind: "runtime-observed",
+      evidence: {
+        type: "observed-output",
+        observed: "It looked fine in the terminal",
+        timestamp: "2026-06-25T18:00:00Z",
+      },
+    },
+  ],
+};
+const ruledNonDefectWithProbe = {
+  claims: valid.claims,
+  found_defects: [
+    {
+      summary: "The entry TTL exceeds the session TTL.",
+      outcome: "ruled-non-defect",
+      reason: "Probe demonstrates the branch is safe.",
+      probe_path: "orchestration/verify/probe.md",
+    },
+  ],
+};
+const argumentOnlyDismissal = {
+  claims: valid.claims,
+  found_defects: [
+    {
+      summary: "The entry TTL exceeds the session TTL.",
+      outcome: "ruled-non-defect",
+      reason: "Both knobs are declared config and the branch is reachable.",
+    },
+  ],
+};
+const sourceCitationDismissal = {
+  claims: valid.claims,
+  found_defects: [
+    {
+      summary: "touch() read-modify-write races under concurrency.",
+      outcome: "ruled-non-defect",
+      reason: "The redis stand-in is stateless by design, so the race cannot manifest.",
+      probe_path: "fixture/lib/clients.js:11",
+    },
+  ],
+};
+const probeScriptNotOutput = {
+  claims: valid.claims,
+  found_defects: [
+    {
+      summary: "touch() read-modify-write races under concurrency.",
+      outcome: "ruled-non-defect",
+      reason: "Live-fire script covers it.",
+      probe: "orchestration/verify/live-fire.mjs",
+    },
+  ],
+};
 
 ok("validateTrace: evidence-backed claim passes", validateTrace(valid).length === 0);
 ok("validateTrace: legacy claim/evidence shape remains readable", validateTrace(legacyReadable).length === 0);
@@ -204,6 +331,12 @@ ok("validateTrace: claim without evidence fails", validateTrace(missingEvidence)
 ok("validateTrace: deployed claim with generic evidence fails", validateTrace(genericDeploy).some((e) => /service|endpoint|runtime_ref/.test(e)));
 ok("validateTrace: pushed claim with git evidence passes", validateTrace(pushed).length === 0);
 ok("validateTrace: invalid evidence type fails", validateTrace(badType).some((e) => /type/.test(e)));
+ok("validateTrace: F34 persisted artifact ref passes", validateTrace(persistedArtifactRef).length === 0);
+ok("validateTrace: F34 prose-only observed output fails", validateTrace(proseOnlyObservedOutput).some((e) => /F34 persisted proofs/.test(e)));
+ok("validateTrace: F35 ruled-non-defect with probe passes", validateTrace(ruledNonDefectWithProbe).length === 0);
+ok("validateTrace: F35 argument-only dismissal fails", validateTrace(argumentOnlyDismissal).some((e) => /F35: dismissal carries the same evidence grade as fixed/.test(e)));
+ok("validateTrace: F40 source-citation probe fails", validateTrace(sourceCitationDismissal).some((e) => /F40: a probe is run output/.test(e)));
+ok("validateTrace: F40 probe script (not its output) fails", validateTrace(probeScriptNotOutput).some((e) => /F40: a probe is run output/.test(e)));
 ok("file present: validate.mjs", existsSync(join(__dirname, "validate.mjs")));
 ok("file present: README.md", existsSync(join(__dirname, "README.md")));
 

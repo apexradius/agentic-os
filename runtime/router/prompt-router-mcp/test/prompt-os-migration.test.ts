@@ -10,7 +10,7 @@ import {
   resolveRoutes,
   type PromptEntry,
 } from '../src/lib.js';
-import { readIndex } from '../src/prompt-os/build.js';
+import { readCapabilityIndex, readIndex } from '../src/prompt-os/build.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
@@ -153,6 +153,20 @@ describe('Prompt OS sidecar artifacts', () => {
     expect(published).toContain('production-deploy-verify');
     const drafts = index!.filter((r) => r.status === 'draft');
     expect(drafts.length).toBe(index!.length - published.length);
+  });
+
+  it('capabilities.json mirrors index.json and exposes metadata lookups', async () => {
+    const index = await readIndex(LIBRARY_DIR);
+    const capabilities = await readCapabilityIndex(LIBRARY_DIR);
+    expect(index, 'index.json must exist').not.toBeNull();
+    expect(capabilities, 'capabilities.json must exist').not.toBeNull();
+    expect(capabilities!.summary.records).toBe(index!.length);
+    expect(capabilities!.capabilities.map((entry) => entry.slug).sort()).toEqual(
+      index!.map((entry) => entry.slug).sort(),
+    );
+    expect(capabilities!.lookups.by_strategy.proof).toContain('production-deploy-verify');
+    expect(capabilities!.lookups.by_proof.live_endpoint).toContain('production-deploy-verify');
+    expect(capabilities!.lookups.by_risk.critical).toContain('production-deploy-verify');
   });
 });
 

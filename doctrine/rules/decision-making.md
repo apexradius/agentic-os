@@ -15,6 +15,22 @@ Run at least one non-mutating exploration pass before any clarifying question. C
 memory and prior decisions is part of this: if it's already been decided, act on the
 decision — don't re-ask.
 
+## Batch preferences into one structured ask
+
+When more than one preference is genuinely unresolved, gather them into a **single** structured
+ask and put it to the user once — don't drip questions out one at a time. The discipline:
+
+- **At most four** preferences per ask. Needing more is a sign the work isn't understood well
+  enough yet — go resolve the discoverable unknowns first.
+- **Two to four concrete options** per preference — never a single forced choice, never
+  open-ended.
+- **Mark your recommendation** on each, with a one-line why. You did the work; handing the
+  decision back unweighted wastes the exchange.
+
+This is the shape the [decision-gate standard](../../standards/decision-gate/) checks; whether a
+question belonged in the ask at all — a discoverable fact must never appear — is judged
+behaviorally, not by the shape gate.
+
 ## Declare your unknowns before you act
 
 Before any solution, architectural decision, or assertion about an external system:

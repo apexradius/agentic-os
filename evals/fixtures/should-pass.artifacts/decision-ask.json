@@ -1,0 +1,26 @@
+{
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Which store backs the widget-api session cache?",
+      "options": ["Redis", "in-memory", "Postgres"],
+      "recommendation": "Redis",
+      "rationale": "A Redis client is already wired (lib/clients.js) and gives shared state with native TTL; in-memory loses state on restart, Postgres adds hot-path latency."
+    },
+    {
+      "id": "D2",
+      "question": "When the cache backend is unreachable, fail open or fail closed?",
+      "options": ["fail open", "fail closed"],
+      "recommendation": "fail open",
+      "rationale": "A cache outage should degrade latency, not availability."
+    },
+    {
+      "id": "D3",
+      "question": "Ship the migration now or behind the session_cache_v2 flag?",
+      "options": ["now", "behind the flag"],
+      "recommendation": "behind the flag",
+      "rationale": "The flag mechanism already exists (deploy/manifest.json); a gated rollout is reversible after a clean canary."
+    }
+  ]
+}

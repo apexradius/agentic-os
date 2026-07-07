@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/worker-brief/worker-brief.schema.json",
+  "title": "Worker brief + return contract",
+  "description": "The self-contained task an orchestrator hands a cold worker (kind=brief) and the summary-only result the worker hands back (kind=return). One document is one or the other, discriminated by `kind`. The return shape enforces 'summary only, never the trajectory' by omission — additionalProperties:false and no field for a tool log — so a conforming return literally cannot carry the reasoning trace. See framework/coordination/fan-out.md.",
+  "type": "object",
+  "required": ["kind"],
+  "oneOf": [
+    { "$ref": "#/$defs/brief" },
+    { "$ref": "#/$defs/return" }
+  ],
+  "$defs": {
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "objective", "inputs", "constraints", "stance", "verify_bar", "return_contract"],
+      "properties": {
+        "kind": { "const": "brief" },
+        "objective": {
+          "type": "string",
+          "minLength": 10,
+          "description": "What to accomplish, stated as the outcome — not the steps."
+        },
+        "inputs": {
+          "description": "The self-contained context a cold worker needs. A worker starts with zero conversation history; everything load-bearing lives here.",
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          ]
+        },
+        "constraints": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "The boundaries: what NOT to touch, scope fence, invariants to hold. At least one — an unbounded worker broadens scope."
+        },
+        "stance": {
+          "type": "string",
+          "minLength": 10,
+          "description": "The skeptical posture the worker takes — e.g. verify before reporting, burden of proof on the implementer, flag deviations rather than absorb them."
+        },
+        "verify_bar": {
+          "type": "string",
+          "minLength": 10,
+          "description": "The definition of done. For a build brief: an executable check. For a recon brief: the deliverable bar (e.g. 'a WIRING covering X, Y, Z'). Required — a brief without a definition of done is the artifact this primitive exists to reject."
+        },
+        "return_contract": { "$ref": "#/$defs/return_contract" },
+        "tool_guidance": {
+          "description": "Optional: which tools/sources to prefer or avoid.",
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          ]
+        },
+        "hold_point": {
+          "type": "string",
+          "description": "Optional: where the worker must stop and hand back (e.g. 'HOLD at WIRING')."
+        },
+        "plan_anchor": {
+          "type": "string",
+          "description": "Optional: the plan slice / task id this brief serves."
+        },
+        "questions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional: specific recon/build questions the return must answer."
+        },
+        "deviation_policy": {
+          "type": "string",
+          "description": "Optional: how the worker should handle a needed deviation from the brief (default: flag it, don't silently absorb)."
+        }
+      }
+    },
+    "return_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_fields", "summary_max_chars"],
+      "description": "The declared output shape — fan-out.md's non-negotiable. A worker without a declared return shape duplicates effort and leaves gaps.",
+      "properties": {
+        "required_fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "contains": { "const": "summary" },
+          "description": "The fields the return must carry. Must include 'summary' — the condensed result is the whole point of fanning out."
+        },
+        "summary_max_chars": {
+          "type": "integer",
+          "minimum": 200,
+          "maximum": 12000,
+          "description": "The cap the brief hands the worker. A character proxy for the ~1–2K token summary target — chars are not tokens, so this is a ceiling, not an exact token count."
+        }
+      }
+    },
+    "return": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "status", "summary", "evidence"],
+      "properties": {
+        "kind": { "const": "return" },
+        "status": {
+          "type": "string",
+          "enum": ["done", "blocked", "needs-input"],
+          "description": "done = objective met; blocked = partial, hit an obstacle; needs-input = waiting on a decision only the orchestrator can make."
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000,
+          "description": "The condensed, schema-shaped result — never the reasoning trace or tool log. The static maxLength is a hard ceiling; the brief's summary_max_chars is the tighter per-task cap, enforced by the validator when a contract is supplied."
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "description": "What proves the verify bar was met — commands run + observed output, file paths, verdicts. At least one item."
+        },
+        "deviations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional: anything done differently from the brief, flagged for the orchestrator to ratify."
+        },
+        "fence_respected": {
+          "type": "boolean",
+          "description": "Optional: confirmation the scope fence / constraints were honored."
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional: file paths produced or changed."
+        },
+        "follow_ups": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Optional: open items or recommended next steps."
+        }
+      }
+    }
+  }
+}

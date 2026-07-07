@@ -1,0 +1,12 @@
+{
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Ship the controlled launch flag now?",
+      "options": ["ship now", "keep disabled"],
+      "recommendation": "ship now",
+      "rationale": "The diff changes a rollout flag, so the launch posture needs an operator-ratified answer."
+    }
+  ]
+}

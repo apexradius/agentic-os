@@ -1,0 +1,16 @@
+{
+  "schema": "trajectory/1",
+  "trace_id": "bench-should-reject-fingerprint",
+  "_note": "SYNTHETIC self-verify candidate for R7 (fingerprint enforcement). A structurally valid trajectory whose provenance.task_fingerprint names a DIFFERENT task than the baseline (task:parity-bench:WRONG-TASK). The 6.3 harness pairs on identical task_fingerprint; score.mjs hard-rejects the mismatch before scoring and names both fingerprints. Proves a candidate from another task cannot be scored against this golden.",
+  "provenance": {
+    "model": "claude-sonnet-5",
+    "task_fingerprint": "task:parity-bench:WRONG-TASK",
+    "prompt_version": null
+  },
+  "spans": [
+    { "span_id": "a0", "operation": "invoke_agent", "parent_span_id": "bench-should-reject-fingerprint", "agent_type": "agent-orchestrator", "self_report": "orchestrated", "start_ts": "2026-07-05T15:00:00.000Z", "duration_ms": 800000 },
+    { "span_id": "t01", "operation": "execute_tool", "tool_name": "Read", "start_ts": "2026-07-05T15:01:00.000Z", "attributes": { "file_path": "config/defaults.json" } },
+    { "span_id": "t02", "operation": "execute_tool", "tool_name": "Write", "start_ts": "2026-07-05T15:01:10.000Z", "attributes": { "file_path": "artifacts/manifest.json" } },
+    { "span_id": "t03", "operation": "execute_tool", "tool_name": "Bash", "start_ts": "2026-07-05T15:01:20.000Z", "attributes": { "command": "node --check fixture/api/handler.js" } }
+  ]
+}

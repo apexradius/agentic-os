@@ -5,9 +5,9 @@ what order. This file is the *craft*: how to write the prose inside those tags (
 instruction a model follows) so it actually changes behavior. Structure passes a validator;
 craft is what makes the agent work.
 
-Six of the techniques below change what the model does; the seventh changes only what the
-prompt costs to run. All seven are decisions you make while writing the prompt, so they belong
-together here.
+Most of the techniques below change what the model does; two — stable-prefix ordering and
+tool-result pruning — change only what the prompt costs to run. All ten are decisions you make
+while writing the prompt, so they belong together here.
 
 ## 1. Decision-complete instructions
 
@@ -76,4 +76,56 @@ per-task detail into the system block busts the cache on every call. Where the h
 declare an explicit cache breakpoint after the static block. This is a *cost-and-latency*
 technique, not a quality one — it changes what you pay, not what you get.
 
-> Last reviewed: 2026-06-24
+## 8. Match the reasoning budget to the task
+
+How much a model deliberates before it answers is a decision you make in the request, not a
+fixed property of the model. The current mechanism is *adaptive thinking* — set
+`thinking: {type: "adaptive"}` and steer depth with a separate `effort` dial (`low` through
+`max`), and the model spends more reasoning on a hard request and skips it on a trivial one.
+Prefer this over a fixed token budget wherever the model exposes it: a hand-set budget is either
+wasteful on easy calls or starving on hard ones, and the gap is worst in the mixed-difficulty,
+long-horizon workloads agents actually run. Reach for an explicit `budget_tokens` only when you
+need deterministic per-call cost or latency *and* you are on a model that still accepts it — on
+the current Claude family (e.g. `claude-opus-4-8`, `claude-fable-5`) manual budgets are rejected
+outright, so treat the explicit budget as an older-model fallback, not the default. One invariant
+survives every mode: you are billed for the full reasoning the model generates whether or not it
+is returned to you, so `effort` and `max_tokens` — not the display setting — are the cost
+controls. (Per-model support moves every release; verify against
+[extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking) and
+[adaptive thinking](https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking),
+as of 2026-07-05.)
+
+## 9. Let the model think between tool calls
+
+In a tool-using agent, the reasoning that matters most happens *between* the calls — reading a
+tool result, deciding whether it answered the question, and choosing the next action instead of
+blindly chaining to it. *Interleaved thinking* is what enables that: the model produces a thinking
+block after each tool result, not only once at the start. On the current Claude family it turns on
+with adaptive thinking and needs no special header; older models gated it behind a beta header
+(`interleaved-thinking-2025-05-14`) that current models ignore — so the craft is to rely on
+adaptive mode and verify the behavior, not to copy a header out of a stale example. The one rule
+that breaks agents when ignored: pass each returned thinking block back unmodified on the next
+turn. The blocks carry the model's own chain across tool calls; strip or edit them and you sever
+the reasoning the technique exists to preserve. (Behavior and the header's status are per-model and
+move each release; verify against
+[extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking) and
+[adaptive thinking](https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking),
+as of 2026-07-05.)
+
+## 10. Prune tool results the model no longer needs
+
+A long, tool-heavy run accumulates tool results the model has already used and will never consult
+again; left in context they cost tokens on every subsequent turn and eventually crowd out the
+window. *Context editing* clears them for you: past a token or tool-use threshold the host drops
+the oldest tool results while keeping the most recent few, and reports back how much it cleared.
+Declare it for any agent that makes many calls over a long horizon — set the trigger, keep a
+handful of recent results, and exclude the tools whose output stays load-bearing (a reference you
+re-read, not a one-shot fetch). The cost is paid in what the model can still see: a cleared result
+is gone from context, so this is safe exactly to the degree that what you prune is genuinely spent
+— never clear a result a later step depends on. Like stable-prefix ordering (technique 7) above,
+this changes what the prompt costs to carry, not the quality of the answer, provided you prune only
+the truly stale. (Strategy identifiers and config fields are versioned and move; verify against
+[context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing),
+as of 2026-07-05.)
+
+> Last reviewed: 2026-07-05

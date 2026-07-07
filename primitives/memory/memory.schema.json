@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://apex-core/framework/primitives/memory/memory.schema.json",
+  "title": "Agentic OS memory record frontmatter",
+  "description": "Validates the YAML frontmatter of a single memory RECORD — one durable fact, stored one file per fact. OPEN (additionalProperties: true) exactly like skills: the live record corpus predates this schema (records carry keys such as originSessionId we won't reject) and the ecosystem evolves, so known keys are type-checked strictly and novel keys pass. The `tier` enum is the canonical layer taxonomy from framework/loop/context.md's persistence stack (minus skills, which is its own primitive). Cross-field and semantic rules — verified-required-for-long-lived tiers, the no-secrets scan, name==filename slug, the legacy `metadata.type` nudge — live in validate.mjs, mirroring how the skills primitive splits schema (shape) from validator (semantics).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["name", "description", "tier"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "maxLength": 64,
+      "description": "kebab-case identifier; should equal the record's filename slug (basename without .memory.md / .md)."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^<>]*$",
+      "description": "The recall signal: a one-line summary used to decide the record's relevance at recall time. No angle brackets. Not a body recap."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["standing", "lesson", "user-model", "session", "reference"],
+      "description": "The persistence layer this fact belongs to (framework/loop/context.md). standing = a fact about the world (topology, contracts, models, versions); lesson = a distilled operating correction learned the hard way; user-model = how the operator wants work done (preferences, standing corrections); session = in-flight / handoff state (short-lived); reference = a pointer to an external resource (URL, dashboard, ticket). Exactly one — a fact lives in a single layer, never several."
+    },
+    "verified": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO date (YYYY-MM-DD) the fact was last confirmed against reality. Required by validate.mjs for the long-lived tiers (standing / lesson / user-model / reference); omitted for session (transient). Encodes freshness-over-faith: a stale date means re-verify before acting, not distrust. Quote it so YAML keeps it a string."
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["central", "local"],
+      "description": "Optional placement hint. central = the shared knowledge zone (standing / lesson / user-model tiers); local = the per-instance or per-project store (project-specific facts, references). Instance config maps tier -> zone; this field only records intent."
+    },
+    "links": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Slugs of related records (the [[name]] graph) for recall traversal. A missing target is a forward reference, not an error."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form key/value bag (validated structurally only). The pre-primitive auto-memory corpus stored its category under metadata.type and a constant metadata.node_type; validate.mjs nudges metadata.type toward the canonical top-level `tier`."
+    }
+  }
+}

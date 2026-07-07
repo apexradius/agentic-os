@@ -1,0 +1,26 @@
+{
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Which store backs the example-corp session cache?",
+      "options": ["Redis", "in-memory", "Postgres"],
+      "recommendation": "Redis",
+      "rationale": "Shared across nodes with native TTL; in-memory loses state on restart and Postgres adds latency on the hot path."
+    },
+    {
+      "id": "D2",
+      "question": "When the cache is unreachable, fail open or fail closed?",
+      "options": ["fail open", "fail closed"],
+      "recommendation": "fail open",
+      "rationale": "A cache outage should degrade latency, not availability."
+    },
+    {
+      "id": "D3",
+      "question": "Ship the schema migration now or behind a feature flag?",
+      "options": ["now", "behind a flag"],
+      "recommendation": "behind a flag",
+      "rationale": "Reversible rollout; flip on after a canary bakes clean."
+    }
+  ]
+}

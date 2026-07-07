@@ -5,7 +5,7 @@ Portable skills with **zero Apex coupling** — extraction-ready. Authored to th
 workflow recap) + a procedure body kept under 500 lines, with detail pushed one level deep into
 `references/`. Instance-coupled skills live in the adopter's instance zone.
 
-**91 skills** (86 from the Stage 3·skills migration, plus later framework additions). The zone is enforced: `skills/validate.mjs` runs a
+The full mirrored skill set is counted by `node framework/primitives/_lib/validate.mjs --all`; the zone is enforced: `skills/validate.mjs` runs a
 `checkZone` guard that fails any skill here whose `SKILL.md` or a reference file names an Apex host,
 product, person, path, or `mcp__apex-*` tool. Validate with:
 

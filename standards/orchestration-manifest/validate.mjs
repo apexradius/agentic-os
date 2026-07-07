@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const checks = [];
@@ -145,6 +145,10 @@ export function dryRunManifest(manifest) {
   };
 }
 
+// Selftest + CLI run only when this file is the entrypoint, so importing the exported
+// checkers (validateManifest, dryRunManifest) fires no side effects and never exits.
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+
 const valid = {
   id: "release-hardening",
   nodes: [
@@ -233,3 +237,5 @@ const failed = checks.filter((c) => !c.pass);
 for (const c of failed) console.log(`  FAIL ${c.name}${c.detail ? `  [${c.detail}]` : ""}`);
 console.log(`orchestration-manifest: ${checks.length - failed.length}/${checks.length} selftest checks passed`);
 process.exit(failed.length || fileFailures ? 1 : 0);
+
+}

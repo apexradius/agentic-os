@@ -12,7 +12,8 @@
 //   1. FRONTMATTER -> ajv against skills.schema.json (OPEN schema; see spec.md)
 //   2. BODY        -> code: non-empty; progressive-disclosure size guard (<500 lines)
 
-import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, statSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, dirname, basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,6 +31,8 @@ const REPO = existsSync(join(NESTED_REPO, "framework")) ? NESTED_REPO : EXTRACTE
 const FRAMEWORK_SKILL_DIRS = [join(REPO, "framework", "skills"), join(REPO, "skills")];
 const SOURCE_DIRS = [...FRAMEWORK_SKILL_DIRS, join(REPO, "apex", "skills")];
 const BODY_LINE_BUDGET = 500; // progressive-disclosure: SKILL.md stays small, refs load on demand
+const CERTIFICATION_GRADES = new Set(["pass", "substance", "fail"]);
+const CERTIFICATION_FIELDS = new Set(["model", "grade", "eval", "evidence", "date"]);
 
 // ZONE guard. A framework/skills/ skill must carry ZERO Apex coupling — generic & portable.
 // The ARBITER is couplingMatch() (imported + re-exported above from ../_lib/zone-coupling.mjs): the
@@ -79,6 +82,14 @@ function checkZone(path, raw, errors) {
   if (hit) {
     errors.push(`framework/skills must be Apex-free, but contains '${hit}' (SKILL.md or a reference file) — route to apex/skills`);
   }
+}
+
+function hasText(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasPersistedRef(value) {
+  return hasText(value) && !/\s/.test(value.trim()) && /[./#]/.test(value.trim());
 }
 
 const schema = JSON.parse(readFileSync(join(__dirname, "skills.schema.json"), "utf8"));
@@ -141,6 +152,64 @@ function checkEval(evalRaw, errors, warnings) {
   }
 }
 
+function isObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function skillLabel(data, dirName) {
+  if (hasText(data?.name)) return data.name.trim();
+  if (hasText(dirName)) return dirName.trim();
+  return "<unknown>";
+}
+
+function certificationError(skill, index, field, detail) {
+  const suffix = field ? `.${field}` : "";
+  return `skill '${skill}' certification[${index}]${suffix}: ${detail}`;
+}
+
+function checkCertification(data, dirName, errors) {
+  if (!Object.hasOwn(data, "certification")) return;
+
+  const skill = skillLabel(data, dirName);
+  if (!Array.isArray(data.certification)) {
+    errors.push(`skill '${skill}' certification: expected array`);
+    return;
+  }
+
+  data.certification.forEach((entry, index) => {
+    if (!isObject(entry)) {
+      errors.push(certificationError(skill, index, "", "expected object"));
+      return;
+    }
+
+    for (const field of Object.keys(entry)) {
+      if (!CERTIFICATION_FIELDS.has(field)) {
+        errors.push(certificationError(skill, index, field, "unknown field"));
+      }
+    }
+
+    if (!hasText(entry.model)) {
+      errors.push(certificationError(skill, index, "model", "required non-empty string"));
+    }
+    if (!CERTIFICATION_GRADES.has(entry.grade)) {
+      errors.push(certificationError(skill, index, "grade", "expected one of pass, substance, fail"));
+    }
+    if (!hasText(entry.eval)) {
+      errors.push(certificationError(skill, index, "eval", "required non-empty string"));
+    }
+    if (!hasPersistedRef(entry.evidence)) {
+      errors.push(certificationError(skill, index, "evidence", "expected path-shaped ref with no whitespace and one of '.', '/', '#'"));
+    }
+    if (!hasText(entry.date) || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date.trim())) {
+      errors.push(certificationError(skill, index, "date", "expected YYYY-MM-DD"));
+    }
+  });
+}
+
+function isCertificationSchemaError(error) {
+  return typeof error?.instancePath === "string" && error.instancePath.startsWith("/certification");
+}
+
 // Core check on raw text — used by both file validation and the inline selftest.
 // `dirName` is the skill's containing directory (for the name==dir convention check).
 // `evalRaw` is the sibling eval.md contents (string), null if absent, or undefined to skip.
@@ -159,7 +228,8 @@ export function checkSkill(raw, dirName = null, evalRaw = undefined) {
   if (!hasFrontmatter) errors.push("no frontmatter block");
 
   if (!validateFrontmatter(data)) {
-    for (const line of formatErrors(validateFrontmatter.errors)) errors.push(`frontmatter ${line}`);
+    const schemaErrors = validateFrontmatter.errors.filter((e) => !isCertificationSchemaError(e));
+    for (const line of formatErrors(schemaErrors)) errors.push(`frontmatter ${line}`);
   }
 
   if (body.trim() === "") errors.push("empty body — a skill must contain a procedure");
@@ -176,6 +246,7 @@ export function checkSkill(raw, dirName = null, evalRaw = undefined) {
   }
 
   checkEval(evalRaw, errors, warnings); // measured eval coverage: warn if absent, error if malformed
+  checkCertification(data, dirName, errors); // optional certification records: absent is valid, present is strict
 
   return { errors, warnings };
 }
@@ -306,6 +377,99 @@ function runSelftest() {
     console.log(`  ${good ? "ok  " : "FAIL"} ${name}`);
   }
 
+  const certEval = "---\nskill: cert-fixture\n---\n## Baseline\nNo certification proof exists.\n## Pass\nCertification proof is evidence-linked.\n";
+  const certCases = [
+    [
+      "certification: accepts a valid entry",
+      [
+        "certification:",
+        "  - model: claude-sonnet-5",
+        "    grade: pass",
+        "    eval: eval.md",
+        "    evidence: traces/claude-sonnet-5.json",
+        "    date: 2026-07-07",
+      ],
+      (r) => r.errors.length === 0,
+    ],
+    [
+      "certification: rejects missing model",
+      [
+        "certification:",
+        "  - grade: pass",
+        "    eval: eval.md",
+        "    evidence: traces/claude-sonnet-5.json",
+        "    date: 2026-07-07",
+      ],
+      (r) => r.errors.some((e) => /certification\[0\]\.model/.test(e)),
+    ],
+    [
+      "certification: rejects bad grade",
+      [
+        "certification:",
+        "  - model: claude-sonnet-5",
+        "    grade: maybe",
+        "    eval: eval.md",
+        "    evidence: traces/claude-sonnet-5.json",
+        "    date: 2026-07-07",
+      ],
+      (r) => r.errors.some((e) => /certification\[0\]\.grade/.test(e)),
+    ],
+    [
+      "certification: rejects prose evidence",
+      [
+        "certification:",
+        "  - model: claude-sonnet-5",
+        "    grade: pass",
+        "    eval: eval.md",
+        "    evidence: judge said pass",
+        "    date: 2026-07-07",
+      ],
+      (r) => r.errors.some((e) => /certification\[0\]\.evidence/.test(e)),
+    ],
+    [
+      "certification: rejects bad date",
+      [
+        "certification:",
+        "  - model: claude-sonnet-5",
+        "    grade: pass",
+        "    eval: eval.md",
+        "    evidence: traces/claude-sonnet-5.json",
+        "    date: 07-07-2026",
+      ],
+      (r) => r.errors.some((e) => /certification\[0\]\.date/.test(e)),
+    ],
+    [
+      "certification: accepts absence",
+      [],
+      (r) => r.errors.length === 0,
+    ],
+  ];
+  const fixtureRoot = mkdtempSync(join(tmpdir(), "skills-cert-"));
+  try {
+    certCases.forEach(([name, certLines, ok], index) => {
+      const skillName = `cert-fixture-${index}`;
+      const skillDir = join(fixtureRoot, skillName);
+      mkdirSync(skillDir);
+      writeFileSync(join(skillDir, "SKILL.md"), [
+        "---",
+        `name: ${skillName}`,
+        "description: tests certification validation; use when proving certification shape.",
+        ...certLines,
+        "---",
+        "## Procedure",
+        "Validate certification records.",
+        "",
+      ].join("\n"));
+      writeFileSync(join(skillDir, "eval.md"), certEval);
+      const res = validateSkillFile(join(skillDir, "SKILL.md"));
+      const good = ok(res);
+      if (good) pass++;
+      console.log(`  ${good ? "ok  " : "FAIL"} ${name}`);
+    });
+  } finally {
+    rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+
   // Zone guard: the coupling discriminator (the classifier's shared arbiter) must FIRE on coupling
   // tokens and PASS clean generic text. A reject-coupled fixture proves the guard isn't vacuous.
   // Generic fixtures (no real org tokens) tested against GENERIC_COUPLING.skills, so the selftest
@@ -325,7 +489,7 @@ function runSelftest() {
     console.log(`  ${good ? "ok  " : "FAIL"} ${name}`);
   }
 
-  const total = cases.length + zoneCases.length;
+  const total = cases.length + certCases.length + zoneCases.length;
   console.log(`\nskills selftest: ${pass}/${total} passed`);
   return pass === total;
 }

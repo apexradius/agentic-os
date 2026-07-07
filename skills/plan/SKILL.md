@@ -30,20 +30,20 @@ Legacy heuristic (still valid as tiebreaker): <5 steps = Light, 5-15 = Medium, 1
 
 ## Per-step model + effort (all levels)
 
-Every step the plan hands off carries a **recommended model tier + effort** (e.g. `Sonnet · high`,
-`Opus · xhigh`, `Haiku · low`) — cite the `model-router` skill for the tier→effort mapping. The
-session runs `opusplan` (Opus plans, Sonnet executes), so a step that needs Opus *for the build*
-must be tagged Opus or it won't get it. Level 1 tags it inline per step; Levels 2–3 carry a
-`Model · Effort` field per task. A step with no tag is not ready to hand off.
+Every step the plan hands off carries a **recommended model tier + effort** (e.g. `mid · high`,
+`strongest · xhigh`, `fast · low`) — cite the `model-router` skill for the tier→effort mapping. The
+default posture plans on the strongest tier and executes on the mid tier, so a step that needs the
+strongest tier *for the build* must be tagged or it won't get it. Level 1 tags it inline per step;
+Levels 2–3 carry a `Tier · Effort` field per task. A step with no tag is not ready to hand off.
 
 ## Level 1: Quick Outline (Light)
 Output directly in conversation:
 ```
 ## Plan: [Task]
 Complexity: [score] (files: [N], APIs: [N], state: [N])
-1. [step] — `Sonnet · medium`
-2. [step] — `Opus · xhigh`
-3. [step] — `Haiku · low`
+1. [step] — `mid · medium`
+2. [step] — `strongest · xhigh`
+3. [step] — `fast · low`
 Ready to start? (y/n)
 ```
 

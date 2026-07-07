@@ -8,6 +8,26 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+### Added
+
+- **Content-injection standard** — `standards/content-injection/`: the results-side twin of
+  `tool-gate`. A zero-dependency reference detector (`lib/detect.mjs`, a faithful port of an
+  injection scanner's L1 hidden-character + L2 heuristic layers) plus a four-category RED/GREEN
+  corpus (`instruction-override`, `exfil-request`, `tool-invocation-lure`, `canary-probe`) proving
+  injected tool-result content is caught, the FLAG-vs-BLOCK tier split is real, and benign
+  (including trigger-adjacent) content never hard-blocks. Canary fixtures use synthetic
+  `CANARY-FAKE…` tokens only, guarded by a self-check. A discovered instance manifest
+  (`content-injection.manifest.json`) drives three additional checks — detector-parity (the live
+  detector meets or beats the floor), surface-scoping (local reads are exempt), and one-code-path
+  (the deployed hook imports the tested detector) — that pass vacuously on a bare clone. Validator
+  ships 14 checks; paired law doc `doctrine/standards/content-injection.md`.
+- **Memory primitive** (8th) — `primitives/memory/`: spec, JSON schema, creator SOP, and validator
+  for the atomic memory record (one durable fact, frontmatter + body). Canonical tier taxonomy
+  (`standing` / `lesson` / `user-model` / `session` / `reference`) with a required `verified` date on
+  long-lived tiers — the freshness-over-faith rule made schema-enforceable. Validator ships 11 checks
+  (secrets ban, zone-purity, legacy-taxonomy migration nudges that name the fix) with an 18-case
+  RED/GREEN selftest; governs per-file records only, aggregates stay under knowledge-freshness.
+
 ## [0.10.0] - 2026-07-05
 
 This release slims the framework to its portable core. The tree is smaller, every remaining

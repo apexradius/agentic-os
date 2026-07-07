@@ -1,0 +1,41 @@
+{
+  "id": "r7-exposure-fixture",
+  "nodes": [
+    {
+      "id": "recon",
+      "class": "recon",
+      "owner": "role/explore",
+      "model_tier": "fast",
+      "effort": "low",
+      "depends_on": [],
+      "files_owned": [],
+      "validation_command": "true",
+      "output_artifact": "artifacts/recon.md",
+      "resume_key": "recon"
+    },
+    {
+      "id": "apply-change",
+      "class": "edit",
+      "owner": "role/executor",
+      "model_tier": "mid",
+      "effort": "high",
+      "depends_on": ["recon"],
+      "files_owned": ["deploy/manifest.json"],
+      "validation_command": "node --check scripts/verify.js",
+      "output_artifact": "artifacts/change.diff",
+      "resume_key": "apply-change"
+    },
+    {
+      "id": "verify",
+      "class": "verify",
+      "owner": "role/verifier",
+      "model_tier": "fast",
+      "effort": "low",
+      "depends_on": ["apply-change"],
+      "files_owned": [],
+      "validation_command": "node scripts/verify.js",
+      "output_artifact": "artifacts/verify.md",
+      "resume_key": "verify"
+    }
+  ]
+}

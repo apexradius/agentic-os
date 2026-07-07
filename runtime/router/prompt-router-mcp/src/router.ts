@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { dirname, extname } from 'node:path';
 
 import {
   buildStackRecommendation,
@@ -21,6 +22,7 @@ import {
   type StackRecommendation,
   type WorkspaceScan,
 } from './lib.js';
+import { buildProofReport, readCapabilityIndex, type PromptProofReport } from './prompt-os/build.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { name: string; version: string };
@@ -504,9 +506,19 @@ export type HealthReport = {
     missing_route_prompts: string[];
     unrouted_prompts: string[];
   };
+  prompt_os: {
+    library_dir: string;
+    capability_index_readable: boolean;
+    proof_summary: PromptProofReport['summary'] | null;
+    proof_missing: string[];
+  };
   default_workspace_path: string;
   error?: string;
 };
+
+function promptOsLibraryDir(libraryPath: string): string {
+  return extname(libraryPath) ? dirname(libraryPath) : libraryPath;
+}
 
 export async function buildHealthReport(
   serverName: string,
@@ -518,6 +530,9 @@ export async function buildHealthReport(
   try {
     const { prompts, warnings } = await readPromptLibrary(libraryPath);
     const resolution = resolveRoutes(prompts);
+    const promptOsDir = promptOsLibraryDir(libraryPath);
+    const capabilityIndex = await readCapabilityIndex(promptOsDir);
+    const proofReport = capabilityIndex ? buildProofReport(capabilityIndex) : null;
     return {
       ok: resolution.missing_route_prompts.length === 0 && warnings.length === 0,
       server: { name: serverName, version: serverVersion },
@@ -533,9 +548,16 @@ export async function buildHealthReport(
         missing_route_prompts: resolution.missing_route_prompts,
         unrouted_prompts: resolution.unrouted_prompts,
       },
+      prompt_os: {
+        library_dir: promptOsDir,
+        capability_index_readable: capabilityIndex !== null,
+        proof_summary: proofReport?.summary ?? null,
+        proof_missing: proofReport?.missing.map((record) => record.slug) ?? [],
+      },
       default_workspace_path: defaultWorkspacePath,
     };
   } catch (error) {
+    const promptOsDir = promptOsLibraryDir(libraryPath);
     return {
       ok: false,
       server: { name: serverName, version: serverVersion },
@@ -545,6 +567,12 @@ export async function buildHealthReport(
         routes_resolved: 0,
         missing_route_prompts: [],
         unrouted_prompts: [],
+      },
+      prompt_os: {
+        library_dir: promptOsDir,
+        capability_index_readable: false,
+        proof_summary: null,
+        proof_missing: [],
       },
       default_workspace_path: defaultWorkspacePath,
       error: error instanceof Error ? error.message : String(error),

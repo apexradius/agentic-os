@@ -1,0 +1,115 @@
+{
+  "id": "example-corp-release-hardening",
+  "nodes": [
+    {
+      "id": "sync-main",
+      "owner": "role/executor",
+      "class": "sync",
+      "depends_on": [],
+      "files_owned": ["work/sync-main.txt"],
+      "validation_command": "git fetch --all && git status --porcelain",
+      "output_artifact": "state/synced-base",
+      "resume_key": "sync-main"
+    },
+    {
+      "id": "edit-service",
+      "owner": "role/executor",
+      "class": "edit",
+      "depends_on": ["sync-main"],
+      "files_owned": ["work/edit-service.txt"],
+      "validation_command": "true",
+      "output_artifact": "src/service",
+      "resume_key": "edit-service"
+    },
+    {
+      "id": "cascade-rename",
+      "owner": "role/executor",
+      "class": "cascade",
+      "depends_on": ["edit-service"],
+      "files_owned": ["work/cascade-rename.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/rename-cascaded",
+      "resume_key": "cascade-rename"
+    },
+    {
+      "id": "add-lint-gate",
+      "owner": "role/executor",
+      "class": "gate-add",
+      "depends_on": ["cascade-rename"],
+      "files_owned": ["work/add-lint-gate.txt"],
+      "validation_command": "true",
+      "output_artifact": "ci/lint-gate",
+      "resume_key": "add-lint-gate"
+    },
+    {
+      "id": "pin-runtime",
+      "owner": "role/executor",
+      "class": "pin",
+      "depends_on": ["edit-service"],
+      "files_owned": ["work/pin-runtime.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/runtime-pinned",
+      "resume_key": "pin-runtime"
+    },
+    {
+      "id": "record-baseline",
+      "owner": "role/executor",
+      "class": "baseline",
+      "depends_on": ["pin-runtime"],
+      "files_owned": ["work/record-baseline.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/baseline",
+      "resume_key": "record-baseline"
+    },
+    {
+      "id": "write-lockfile",
+      "owner": "role/executor",
+      "class": "lockfile",
+      "depends_on": ["edit-service"],
+      "files_owned": ["work/write-lockfile.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/lockfile",
+      "resume_key": "write-lockfile"
+    },
+    {
+      "id": "wire-tests",
+      "owner": "role/executor",
+      "class": "test-signal",
+      "depends_on": ["write-lockfile"],
+      "files_owned": ["work/wire-tests.txt"],
+      "validation_command": "true",
+      "output_artifact": "ci/test-suite",
+      "resume_key": "wire-tests"
+    },
+    {
+      "id": "upgrade-deps",
+      "owner": "role/executor",
+      "class": "dep-upgrade",
+      "depends_on": ["write-lockfile", "wire-tests"],
+      "files_owned": ["work/upgrade-deps.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/deps-upgraded",
+      "resume_key": "upgrade-deps"
+    },
+    {
+      "id": "prune-dead-code",
+      "owner": "role/executor",
+      "class": "de-bloat",
+      "depends_on": ["edit-service"],
+      "files_owned": ["work/prune-dead-code.txt"],
+      "validation_command": "true",
+      "output_artifact": "src/pruned",
+      "resume_key": "prune-dead-code"
+    },
+    {
+      "id": "publish-release",
+      "owner": "role/executor",
+      "class": "publish",
+      "depends_on": ["cascade-rename", "add-lint-gate", "record-baseline", "prune-dead-code", "upgrade-deps"],
+      "files_owned": ["work/publish-release.txt"],
+      "validation_command": "true",
+      "output_artifact": "release/tag",
+      "resume_key": "publish-release"
+    }
+  ]
+}

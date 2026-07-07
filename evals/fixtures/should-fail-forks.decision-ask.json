@@ -1,0 +1,26 @@
+{
+  "_note": "SYNTHETIC self-verify artifact for R6 (decision-ask shape). It clears the framework decision-gate, but one decision omits id; the benchmark-local R6 shape gate requires every entry to carry non-empty id/question/options/recommendation. Scored against a should-pass trajectory it clears (a) and the band, but (b) fails decision-ask shape.",
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Which store backs the widget-api session cache?",
+      "options": ["Redis", "in-memory", "Postgres"],
+      "recommendation": "Redis",
+      "rationale": "A Redis client is already wired (lib/clients.js)."
+    },
+    {
+      "question": "When the cache backend is unreachable, fail open or fail closed?",
+      "options": ["fail open", "fail closed"],
+      "recommendation": "fail open",
+      "rationale": "A cache outage should degrade latency, not availability."
+    },
+    {
+      "id": "DX",
+      "question": "What eviction policy should the cache use?",
+      "options": ["LRU", "LFU", "TTL-only"],
+      "recommendation": "LRU",
+      "rationale": "Invented fork — not one of the ratified preference forks in the answer key."
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "add-timeout-param",
+  "nodes": [
+    {
+      "id": "recon-surface",
+      "owner": "recon",
+      "depends_on": [],
+      "files_owned": [],
+      "validation_command": "test -f reports/recon-surface.md",
+      "output_artifact": "reports/recon-surface.md",
+      "resume_key": "recon-surface"
+    },
+    {
+      "id": "impl-client",
+      "owner": "builder",
+      "depends_on": ["recon-surface"],
+      "files_owned": ["src/client.js"],
+      "validation_command": "npm test -- client",
+      "output_artifact": "src/client.js",
+      "resume_key": "impl-client"
+    },
+    {
+      "id": "impl-tests",
+      "owner": "builder",
+      "depends_on": ["recon-surface"],
+      "files_owned": ["test/client.test.js"],
+      "validation_command": "npm test -- client",
+      "output_artifact": "test/client.test.js",
+      "resume_key": "impl-tests"
+    },
+    {
+      "id": "verify",
+      "owner": "verifier",
+      "depends_on": ["impl-client", "impl-tests"],
+      "files_owned": [],
+      "validation_command": "npm test",
+      "output_artifact": "reports/verify.md",
+      "resume_key": "verify"
+    }
+  ]
+}

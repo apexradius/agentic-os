@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+import { buildCapabilityIndex, buildProofReport, type IndexRecord } from '../src/prompt-os/build.js';
 import { parseFrontmatter } from '../src/prompt-os/frontmatter.js';
 import { lintRecord } from '../src/prompt-os/lint.js';
 
@@ -407,6 +408,135 @@ updated: 2026-01-01
     const result = lintRecord(text, { filePath: '/fake/my-test-prompt.prompt.md' });
     const warnCodes = result.warnings.map((w) => w.code);
     expect(warnCodes).toContain('R12');
+  });
+
+  it('(k) Prompt OS 1.1 optional metadata fields lint cleanly', () => {
+    const text = makeValidPrompt({
+      fmExtra: [
+        'tags: [deploy, proof]',
+        'trigger_phrases: ["ship to prod", "verify release"]',
+        'risk_level: high',
+        'allowed_tools: [shell, http]',
+        'proof_required: [test, live_endpoint, log]',
+        'strategy_overlays: [proof, ship]',
+      ].join('\n'),
+    });
+    const result = lintRecord(text, { filePath: '/fake/my-test-prompt.prompt.md' });
+    expect(result.errors).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Capability index builder
+// ---------------------------------------------------------------------------
+
+describe('buildCapabilityIndex', () => {
+  it('groups Prompt OS metadata into deterministic lookup maps', () => {
+    const records: IndexRecord[] = [
+      {
+        id: 'alpha',
+        name: 'Alpha',
+        slug: 'alpha',
+        domain: 'services',
+        status: 'published',
+        version: '1.0.0',
+        file: 'prompts/services/alpha.prompt.md',
+        sections: ['role', 'verify'],
+        eval_refs: ['golden/alpha.jsonl'],
+        includes: ['universal-intake-contract'],
+        tags: ['revenue', 'proof'],
+        trigger_phrases: ['ship alpha'],
+        risk_level: 'critical',
+        allowed_tools: ['record_store'],
+        proof_required: ['live_endpoint', 'log'],
+        strategy_overlays: ['proof', 'ship'],
+      },
+      {
+        id: 'beta',
+        name: 'Beta',
+        slug: 'beta',
+        domain: 'operations',
+        status: 'draft',
+        version: '1.0.0',
+        file: 'prompts/operations/beta.prompt.md',
+        sections: ['role'],
+        eval_refs: [],
+        includes: [],
+        tags: ['proof'],
+        trigger_phrases: [],
+        risk_level: null,
+        allowed_tools: ['filesystem'],
+        proof_required: ['log'],
+        strategy_overlays: ['proof'],
+      },
+    ];
+
+    const index = buildCapabilityIndex(records);
+    expect(index.schema_version).toBe('prompt-capability-index.v1');
+    expect(index.summary.records).toBe(2);
+    expect(index.summary.published).toBe(1);
+    expect(index.summary.by_risk).toEqual({ critical: 1, unrated: 1 });
+    expect(index.summary.proof_required).toEqual({ live_endpoint: 1, log: 2 });
+    expect(index.lookups.by_proof.log).toEqual(['alpha', 'beta']);
+    expect(index.lookups.by_strategy.proof).toEqual(['alpha', 'beta']);
+    expect(index.lookups.by_tag.proof).toEqual(['alpha', 'beta']);
+    expect(index.lookups.by_tool.record_store).toEqual(['alpha']);
+  });
+
+  it('builds a deterministic proof coverage report from capability metadata', () => {
+    const index = buildCapabilityIndex([
+      {
+        id: 'alpha',
+        name: 'Alpha',
+        slug: 'alpha',
+        domain: 'services',
+        status: 'published',
+        version: '1.0.0',
+        file: 'prompts/services/alpha.prompt.md',
+        sections: ['role', 'verify'],
+        eval_refs: ['golden/alpha.jsonl'],
+        includes: ['universal-intake-contract'],
+        tags: [],
+        trigger_phrases: [],
+        risk_level: 'critical',
+        allowed_tools: [],
+        proof_required: ['live_endpoint', 'log'],
+        strategy_overlays: ['proof'],
+      },
+      {
+        id: 'beta',
+        name: 'Beta',
+        slug: 'beta',
+        domain: 'operations',
+        status: 'published',
+        version: '1.0.0',
+        file: 'prompts/operations/beta.prompt.md',
+        sections: ['role'],
+        eval_refs: ['golden/beta.jsonl'],
+        includes: [],
+        tags: [],
+        trigger_phrases: [],
+        risk_level: 'high',
+        allowed_tools: [],
+        proof_required: [],
+        strategy_overlays: [],
+      },
+    ]);
+
+    const report = buildProofReport(index);
+    expect(report.schema_version).toBe('prompt-proof-report.v1');
+    expect(report.summary).toEqual({
+      records: 2,
+      proof_required: 1,
+      proof_missing: 1,
+      high_risk_missing: 1,
+      by_proof: { live_endpoint: 1, log: 1 },
+    });
+    expect(report.missing.map((record) => record.slug)).toEqual(['beta']);
+    expect(report.records.map((record) => [record.slug, record.proof_status])).toEqual([
+      ['alpha', 'required'],
+      ['beta', 'missing'],
+    ]);
   });
 });
 

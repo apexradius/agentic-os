@@ -1,0 +1,26 @@
+{
+  "kind": "orchestration-closeout",
+  "status": "passed",
+  "decisions": {
+    "asked_and_ratified": [
+      {
+        "id": "D1",
+        "question": "Ship the controlled launch flag now?",
+        "ratified": "ship controlled launch flag now"
+      }
+    ]
+  },
+  "claims": [
+    {
+      "claim": "The rollout flag change was applied and verified.",
+      "claim_kind": "artifact-created",
+      "evidence": {
+        "type": "command",
+        "command": "node scripts/verify.js",
+        "exit_code": 0,
+        "observed": "exit 0",
+        "timestamp": "2026-07-07T00:00:00.000Z"
+      }
+    }
+  ]
+}

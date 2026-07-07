@@ -25,8 +25,9 @@ effort** to execute each slice — the executor should never have to guess which
 deserves (see [artifacts.md](artifacts.md)).
 
 Resolve unknowns the right way *before* writing the plan: discoverable facts get found,
-preferences get one round of questions. (See
-[../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md).)
+preferences get one batched round of questions, each with a marked recommendation. (See
+[../doctrine/rules/decision-making.md](../doctrine/rules/decision-making.md); the batched-ask
+shape is checked by [../standards/decision-gate/](../standards/decision-gate/).)
 
 ## Define success up front
 
@@ -39,6 +40,18 @@ output no rule can score. Writing the check next to the criterion is what makes
 [Verify](verification.md) a gate rather than an opinion — the criteria are the contract Verify holds
 the work to, and the [coordination ledger](../coordination/ledger.md) carries the same
 `acceptance_criteria` + `verification_command` pair when the task is shared.
+
+## Falsifiable plans
+
+Every load-bearing plan assertion is tagged by the kind of unknown it contains.
+`discoverable` means the plan names the probe that could falsify it — a command, artifact
+path, or other check found before asking anyone. `preference` means the plan queues the fork
+to the decision gate by id and never self-resolves it.
+
+For standard and complex tiers, a plan may serialize this contract as a JSON plan envelope
+validated by [../standards/falsifiable-plan/](../standards/falsifiable-plan/): assertions
+declare `discoverable` or `preference`, and acceptance criteria still carry the machine
+checks that decide them.
 
 ## Evidence-driven hypothesis ranking
 

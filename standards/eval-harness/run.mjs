@@ -41,7 +41,9 @@ async function loadEndpoint() {
   return fn;
 }
 
-if (process.argv[1] && process.argv[1].endsWith("run.mjs")) {
+// Robust main-module check: an `endsWith("run.mjs")` test false-fires when this file is
+// imported by ANOTHER *run.mjs entrypoint (the trajectory-eval standard hit exactly that).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const roots = process.argv.slice(2).filter((a) => !a.startsWith("--"));
   if (!roots.length) { console.error("usage: run.mjs <skills-root> [<skills-root> ...]"); process.exit(2); }
 

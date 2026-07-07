@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "trajectory/1",
+  "title": "Recorded agent trajectory",
+  "description": "One agent run as a set of OTel-GenAI spans under a single trace_id, exported from a spans-shaped store. A baseline (golden) trajectory additionally carries thresholds and annotations. The framework's zero-dep selftest checks the fixtures structurally against these same rules by hand; an instance may validate with any JSON-Schema tool.",
+  "type": "object",
+  "required": ["schema", "trace_id", "provenance", "spans"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "trajectory/1" },
+    "trace_id": { "type": "string", "minLength": 1 },
+    "recorded_at": { "type": "string" },
+    "provenance": {
+      "type": "object",
+      "required": ["model", "prompt_version", "task_fingerprint"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "agent_type": { "type": ["string", "null"] },
+        "prompt_version": { "type": ["string", "null"], "description": "prompt fingerprint; null until a prompt-pin source exists" },
+        "task_fingerprint": { "type": "string", "minLength": 1, "description": "stable id of the task the run performed — the join key between a candidate and its baseline" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "baseline-only: the bar the reference run sets for candidates scored against it",
+      "properties": {
+        "tool_path": { "type": "number", "description": "min tool-path similarity vs baseline; 0 = fully ungated (dimension reported informationally, excluded from both floor and regression)" },
+        "verification_discipline": { "type": "number", "description": "min share of mutations followed by a verify; 0 = fully ungated (same as tool_path)" },
+        "question_economy_max": { "type": "integer", "description": "max operator-ask spans (execute_tool calls named in annotations.tool_classes.operator_ask) — NOT end_turn/turn boundaries. This is an absolute cap, not a score threshold: 0 means zero asks allowed (strictest), NOT ungated" },
+        "regression_tolerance": { "type": "number" }
+      }
+    },
+    "annotations": {
+      "type": "object",
+      "description": "baseline-only: what the golden run exemplifies, for the judge layer",
+      "properties": {
+        "phases": { "type": "array", "items": { "type": "string" } },
+        "exemplifies": { "type": "array", "items": { "type": "string" } },
+        "expected_finding_classes": { "type": "array", "items": { "type": "string" } },
+        "tool_classes": {
+          "type": "object",
+          "description": "baseline-only: the instance's tool vocabulary the deterministic floor reads. operator_ask names the execute_tool calls that count toward question-economy; plan_approval names plan-approval tools that pause to the user but are NOT counted (informational). Absent operator_ask ⇒ question-economy is ask-vocabulary-required (ungateable), never a vacuous pass. The vocabulary must cover the candidate runtime's ask tools — an uncovered ask tool silently undercounts.",
+          "properties": {
+            "operator_ask": { "type": "array", "items": { "type": "string" } },
+            "plan_approval": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "spans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["span_id", "operation"],
+        "properties": {
+          "span_id": { "type": "string", "minLength": 1 },
+          "parent_span_id": { "type": ["string", "null"] },
+          "operation": { "type": "string", "enum": ["invoke_agent", "chat", "execute_tool"] },
+          "name": { "type": ["string", "null"] },
+          "start_ts": { "type": ["string", "null"] },
+          "end_ts": { "type": ["string", "null"] },
+          "duration_ms": { "type": ["integer", "null"] },
+          "agent_id": { "type": ["string", "null"] },
+          "agent_type": { "type": ["string", "null"] },
+          "model": { "type": ["string", "null"] },
+          "tool_name": { "type": ["string", "null"] },
+          "tokens_in": { "type": ["integer", "null"] },
+          "tokens_out": { "type": ["integer", "null"] },
+          "finish_reason": { "type": ["string", "null"] },
+          "self_report": { "type": ["string", "null"] },
+          "attributes": { "type": "object" }
+        }
+      }
+    }
+  }
+}

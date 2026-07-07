@@ -46,6 +46,13 @@ export function parseSkillsList(raw) {
 export function resolves(ref, liveSet, aliasSet) {
   return liveSet.has(ref) || aliasSet.has(ref);
 }
+/** Alias keys that collide with a live skill dir. A name that is BOTH an alias (redirect) and a real
+ *  skill dir is the repo-side precondition for a runtime shadow: the sync stages a stub AND the real
+ *  skill under one name, so the collapsed name resolves to a live body instead of the router redirect.
+ *  Keeping this set empty is what makes the F4 shadow class impossible to reintroduce from the repo. */
+export function aliasCollisions(aliasSet, liveSet) {
+  return [...aliasSet].filter((k) => liveSet.has(k));
+}
 
 // ── live sources ─────────────────────────────────────────────────────────────────
 function skillDirNames(absDir) {
@@ -80,6 +87,11 @@ const ok = (name, cond, detail = "") => { checks.push({ name, pass: !!cond, deta
   ok("resolves: an unknown ref fails (RED)", !resolves("does-not-exist", live, alias));
   ok("selftest RED fixture surfaces its unresolved ref", rList.some((s) => !resolves(s.name, live, alias)));
   ok("selftest GREEN fixture fully resolves", gList.length > 0 && gList.every((s) => resolves(s.name, live, alias)));
+  // F5b: an alias key that is also a live skill dir is a shadow-in-waiting; disjoint sets are clean.
+  ok("F5b: alias key shadowing a live skill dir is caught (RED)",
+    aliasCollisions(new Set(["ship"]), new Set(["audit", "ship"])).length === 1);
+  ok("F5b: disjoint alias/skill sets report no collision (GREEN)",
+    aliasCollisions(new Set(["ship"]), new Set(["audit", "release"])).length === 0);
 }
 
 // ── live scan: every canonical agent skills: ref must resolve ─────────────────────
@@ -103,10 +115,19 @@ for (const file of files) {
 ok(`live scan: every agent skills: ref resolves (${liveSet.size} skill dirs, ${aliasSet.size} aliases, ${files.length} agents)`,
   unresolved.length === 0, unresolved.length ? `${unresolved.length} dead ref(s)` : "");
 
+// F5b live scan: no alias key may shadow a live skill dir (repo-side guard against the F4 shadow class).
+const collisions = aliasCollisions(aliasSet, liveSet);
+ok(`no alias key shadows a live skill dir (${aliasSet.size} aliases vs ${liveSet.size} skill dirs)`,
+  collisions.length === 0, collisions.length ? `collisions: ${collisions.join(", ")}` : "");
+
 // ── report ───────────────────────────────────────────────────────────────────────
 if (unresolved.length) {
   console.log("skill-ref-integrity — dead agent skill refs (repoint to a live skill or add an alias):");
   for (const u of unresolved) console.log("  " + u);
+}
+if (collisions.length) {
+  console.log("skill-ref-integrity — alias keys shadowing a live skill dir (a runtime shadow waiting to happen):");
+  for (const c of collisions) console.log(`  '${c}' is both an alias key and a live skill dir — rename the skill or retire the alias`);
 }
 const failed = checks.filter((c) => !c.pass);
 for (const c of failed) if (!/live scan/.test(c.name)) console.log(`  FAIL ${c.name}${c.detail ? `  [${c.detail}]` : ""}`);

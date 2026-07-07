@@ -1,0 +1,7 @@
+{
+  "id": "trajectory-eval-judge-gold",
+  "labels": ["pass", "fail"],
+  "ratings_a": ["pass", "pass", "fail", "fail", "pass", "fail"],
+  "ratings_b": ["pass", "pass", "fail", "fail", "pass", "fail"],
+  "min_kappa": 0.6
+}

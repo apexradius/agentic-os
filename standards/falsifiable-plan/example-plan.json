@@ -1,0 +1,37 @@
+{
+  "kind": "plan",
+  "id": "portable-cache-manifest",
+  "objective": "Add a portable cache manifest check before enabling the runtime path.",
+  "assertions": [
+    {
+      "claim": "The manifest checker runs without package installation.",
+      "class": "discoverable",
+      "probe": "node framework/standards/cache-manifest/validate.mjs",
+      "status": "verified",
+      "evidence": {
+        "ref": "reports/cache-manifest-selftest.txt"
+      }
+    },
+    {
+      "claim": "The runtime path has no pending migration note.",
+      "class": "discoverable",
+      "probe": "rg -n \"TODO|MIGRATION\" framework/runtime/cache",
+      "status": "pending"
+    },
+    {
+      "claim": "The rollout posture must be chosen by the operator.",
+      "class": "preference",
+      "decision_id": "D1-rollout-posture"
+    }
+  ],
+  "acceptance": [
+    {
+      "criterion": "Validator accepts the serialized plan envelope.",
+      "check": "node framework/standards/falsifiable-plan/validate.mjs framework/standards/falsifiable-plan/example-plan.json"
+    },
+    {
+      "criterion": "The full primitive harness discovers the standard.",
+      "check": "node framework/primitives/_lib/validate.mjs --all"
+    }
+  ]
+}

@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "apex-prompt-router-mcp": "dist/index.js"
+    "apex-prompt-router-mcp": "dist/index.js",
+    "apex-prompt": "dist/prompt-os/operator-cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -16,7 +17,8 @@
     "lint:prompts": "tsc && node dist/prompt-os/cli.js library/prompts",
     "prompt-os:migrate": "tsc && node scripts/prompt-os/migrate.mjs",
     "prompt-os:build": "tsc && node scripts/prompt-os/build.mjs",
-    "eval:tier1": "tsc && node dist/prompt-os/eval/tier1-cli.js library"
+    "eval:tier1": "tsc && node dist/prompt-os/eval/tier1-cli.js library",
+    "prompt": "tsc && node dist/prompt-os/operator-cli.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

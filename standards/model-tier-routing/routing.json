@@ -1,0 +1,10 @@
+{
+  "tiers": ["strongest", "mid", "fast"],
+  "effort_ladder": ["low", "medium", "high", "xhigh", "max"],
+  "guidance": [
+    { "work": "architecture, cross-system coordination, high-stakes or irreversible judgment, hardest debugging, deep review, client-facing deliverables", "tier": "strongest", "effort": "high-max" },
+    { "work": "standard implementation, single-area change, bug fix, integration", "tier": "mid", "effort": "medium-high" },
+    { "work": "lookups, formatting, boilerplate, parallel read-only research, summarization, mechanical transforms", "tier": "fast", "effort": "low" }
+  ],
+  "_note": "Tiers and effort levels are generic and vendor-neutral. The concrete tier->model-ID resolution, and which model accepts which effort level, are the instance's data (its tier->model map), never framework doctrine. The gate checks only that a node's declared model_tier is one of `tiers` and its effort is one of `effort_ladder`; it does not judge whether the tier fits the work (that is behavioral, scored by trajectory-eval). The orchestrator runs on the strongest tier (coordination law), which this gate cannot see because the orchestrator is not a dispatched node."
+}

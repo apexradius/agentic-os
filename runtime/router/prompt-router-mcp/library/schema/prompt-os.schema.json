@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://example.com/schemas/prompt-os/1.0.json",
+  "$id": "https://example.com/schemas/prompt-os/1.1.json",
   "title": "Apex Prompt OS — Prompt Record front-matter",
   "description": "Contract schema (L1) for the YAML front-matter of a .prompt.md record. The router's parser ignores this front-matter entirely (it reads only '## heading' + ```text fences), so this block is additive and non-breaking. Body typed-section rules and anti-pattern rules are enforced by the linter, not by this JSON Schema.",
   "type": "object",
@@ -63,7 +63,43 @@
     "includes": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
-      "description": "Composition DSL — declarative assembly the router resolves at compose time instead of copy-paste. Phase 0 known blocks: universal-intake-contract, loops/loop-contract, loops/plan-implement-verify, loops/planner-generator-evaluator, loops/reflexion, loops/ralph-pattern (unknown values WARN, not error, until those blocks exist)."
+      "description": "Composition DSL — declarative assembly the router resolves at compose time instead of copy-paste. Known blocks: universal-intake-contract, loops/*, strategies/* (unknown values WARN, not error, until those blocks exist)."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Operator-facing discovery labels. Optional and never used as hidden routing authority."
+    },
+    "trigger_phrases": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Human-readable trigger examples for search and dry-run inspection. The route table remains authoritative for activation."
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Operator risk label for this prompt record."
+    },
+    "allowed_tools": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Declared tool classes this prompt may require. Enforcement belongs to runtime bindings and tool gates."
+    },
+    "proof_required": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["test", "live_endpoint", "diff", "log", "artifact", "blocked_reason", "none"]
+      },
+      "description": "Proof types required before a completion claim is acceptable."
+    },
+    "strategy_overlays": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["extract", "critique", "proof", "redteam", "ship"]
+      },
+      "description": "Static strategy overlays to compose after includes. Rendered as strategies/<name> blocks."
     },
     "created": {
       "type": "string",

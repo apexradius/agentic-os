@@ -1,0 +1,6 @@
+{"type":"user","uuid":"u0","timestamp":"2026-07-05T10:00:00Z","message":{"role":"user","content":"noise line — not an assistant usage, must be skipped"}}
+{"type":"assistant","uuid":"u1","timestamp":"2026-07-05T10:00:01Z","message":{"id":"msg-aaa","role":"assistant","model":"claude-fable-5","usage":{"input_tokens":100,"cache_read_input_tokens":50,"cache_creation_input_tokens":10,"output_tokens":5},"stop_reason":null}}
+{"type":"assistant","uuid":"u2","timestamp":"2026-07-05T10:00:02Z","message":{"id":"msg-aaa","role":"assistant","model":"claude-fable-5","usage":{"input_tokens":100,"cache_read_input_tokens":50,"cache_creation_input_tokens":10,"output_tokens":20},"stop_reason":null}}
+{"type":"tool_result","uuid":"u3","timestamp":"2026-07-05T10:00:03Z","sourceToolAssistantUUID":"u2"}
+{"type":"assistant","uuid":"u4","timestamp":"2026-07-05T10:00:04Z","message":{"id":"msg-aaa","role":"assistant","model":"claude-fable-5","usage":{"input_tokens":100,"cache_read_input_tokens":50,"cache_creation_input_tokens":10,"output_tokens":40},"stop_reason":"tool_use"}}
+{"type":"assistant","uuid":"u5","timestamp":"2026-07-05T10:00:05Z","message":{"id":"msg-bbb","role":"assistant","model":"claude-fable-5","usage":{"input_tokens":200,"cache_read_input_tokens":100,"cache_creation_input_tokens":0,"output_tokens":10},"stop_reason":"end_turn"}}

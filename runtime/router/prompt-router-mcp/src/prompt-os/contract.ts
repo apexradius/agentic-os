@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Contract constants
 // ---------------------------------------------------------------------------
 
-export const CONTRACT_VERSION = '1.0';
+export const CONTRACT_VERSION = '1.1';
 
 export const DOMAINS = ['services', 'operations', 'platforms', 'lifecycle', 'templates', 'loops'] as const;
 
@@ -15,7 +15,32 @@ export const ALLOWED_INCLUDES = new Set([
   'loops/planner-generator-evaluator',
   'loops/reflexion',
   'loops/ralph-pattern',
+  'strategies/extract',
+  'strategies/critique',
+  'strategies/proof',
+  'strategies/redteam',
+  'strategies/ship',
 ]);
+
+export const STRATEGY_OVERLAYS = [
+  'extract',
+  'critique',
+  'proof',
+  'redteam',
+  'ship',
+] as const;
+
+export const PROOF_TYPES = [
+  'test',
+  'live_endpoint',
+  'diff',
+  'log',
+  'artifact',
+  'blocked_reason',
+  'none',
+] as const;
+
+export const RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 
 // Required sections for ALL prompt records (XML-style tags in body)
 export const REQUIRED_ALL = ['role', 'output_contract', 'constraints', 'exit_criteria'] as const;
@@ -80,6 +105,12 @@ export const FrontmatterSchema = z
       .regex(contractVersionPattern, 'contract_version must match \\d+.\\d+'),
     eval_refs: z.array(z.string().min(1)),
     includes: z.array(z.string().min(1)),
+    tags: z.array(z.string().min(1)).optional(),
+    trigger_phrases: z.array(z.string().min(1)).optional(),
+    risk_level: z.enum(RISK_LEVELS).optional(),
+    allowed_tools: z.array(z.string().min(1)).optional(),
+    proof_required: z.array(z.enum(PROOF_TYPES)).optional(),
+    strategy_overlays: z.array(z.enum(STRATEGY_OVERLAYS)).optional(),
     created: z.string().regex(datePattern, 'created must match YYYY-MM-DD'),
     updated: z.string().regex(datePattern, 'updated must match YYYY-MM-DD'),
     deprecated: z.string().regex(datePattern, 'deprecated must match YYYY-MM-DD').optional(),

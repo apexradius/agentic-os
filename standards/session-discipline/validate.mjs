@@ -53,6 +53,23 @@ if (!hasPython) {
   skip("read-only-gate.sh with discovery flag: Bash rm -rf → exit 2");
   skip("read-only-gate.sh without discovery flag: Edit → exit 0");
   skip("session-close.sh: archives populated session, removes pointer");
+  skip("secret-guard.py: denies bare op read with stderr contract");
+  skip("secret-guard.py: denies op item get --reveal");
+  skip("secret-guard.py: denies non-assignment command substitution");
+  skip("secret-guard.py: denies command after &&");
+  skip("secret-guard.py: denies command after wrapper");
+  skip("secret-guard.py: denies unbalanced quoted prose via fallback");
+  skip("secret-guard.py: denies double-quoted command substitution");
+  skip("secret-guard.py: denies double-quoted backtick substitution via fallback");
+  skip("secret-guard.py: denies command substitution inside commit message");
+  skip("secret-guard.py: allows assignment capture before curl");
+  skip("secret-guard.py: allows double-quoted assignment capture");
+  skip("secret-guard.py: allows commit-message prose");
+  skip("secret-guard.py: allows multiline quoted commit-message prose");
+  skip("secret-guard.py: allows git grep prose");
+  skip("secret-guard.py: allows non-Bash payload");
+  skip("secret-guard.py: allows captured first line plus clean second line");
+  skip("secret-guard.py: allows single-quoted literal command substitution prose");
   console.log("session-discipline: python3 not found — python-dependent checks skipped");
   const f0 = checks.filter((c) => !c.pass);
   for (const c of f0) console.log(`  FAIL ${c.name}${c.detail ? `  [${c.detail}]` : ""}`);
@@ -73,6 +90,19 @@ function runHook(hookName, opts = {}) {
     env: { ...process.env, ...env },
   });
   return result;
+}
+
+function runPythonHook(hookName, opts = {}) {
+  const {
+    env = {},
+    stdin = null,
+  } = opts;
+  const hookPath = join(HOOKS_DIR, hookName);
+  return spawnSync("python3", [hookPath], {
+    encoding: "utf8",
+    input: stdin !== null ? stdin : undefined,
+    env: { ...process.env, ...env },
+  });
 }
 
 // ── set up an isolated tmp HOME ───────────────────────────────────────────────
@@ -97,6 +127,101 @@ const baseEnv = {
 };
 
 try {
+
+  // ── secret-guard.py ─────────────────────────────────────────────────────────
+  const bashPayload = (command) => JSON.stringify({ tool_name: "Bash", tool_input: { command } });
+  const runSecretGuard = (payload) => runPythonHook("secret-guard.py", {
+    env: { ...baseEnv },
+    stdin: typeof payload === "string" ? payload : JSON.stringify(payload),
+  });
+
+  const bareOpRead = runSecretGuard(bashPayload("op read op://vault/item/field"));
+  ok("secret-guard.py: denies bare op read with stderr contract",
+    bareOpRead.status === 2 && bareOpRead.stderr.includes("BLOCKED") && bareOpRead.stdout === "",
+    `exit ${bareOpRead.status}\nstdout: ${JSON.stringify(bareOpRead.stdout)}\nstderr: ${bareOpRead.stderr.slice(0, 160)}`);
+
+  const reveal = runSecretGuard(bashPayload("op item get abc123 --reveal"));
+  ok("secret-guard.py: denies op item get --reveal",
+    reveal.status === 2,
+    `exit ${reveal.status}\nstderr: ${reveal.stderr.slice(0, 160)}`);
+
+  const substitution = runSecretGuard(bashPayload("echo $(op read op://v/i/f)"));
+  ok("secret-guard.py: denies non-assignment command substitution",
+    substitution.status === 2,
+    `exit ${substitution.status}\nstderr: ${substitution.stderr.slice(0, 160)}`);
+
+  const afterAnd = runSecretGuard(bashPayload("true && op read op://v/i/f"));
+  ok("secret-guard.py: denies command after &&",
+    afterAnd.status === 2,
+    `exit ${afterAnd.status}\nstderr: ${afterAnd.stderr.slice(0, 160)}`);
+
+  const wrapper = runSecretGuard(bashPayload("sudo op read op://v/i/f"));
+  ok("secret-guard.py: denies command after wrapper",
+    wrapper.status === 2,
+    `exit ${wrapper.status}\nstderr: ${wrapper.stderr.slice(0, 160)}`);
+
+  const unbalanced = runSecretGuard(bashPayload('git commit -m "op read op://x'));
+  ok("secret-guard.py: denies unbalanced quoted prose via fallback",
+    unbalanced.status === 2,
+    `exit ${unbalanced.status}\nstderr: ${unbalanced.stderr.slice(0, 160)}`);
+
+  const doubleQuotedSubstitution = runSecretGuard(bashPayload('echo "$(op read op://v/i/f)"'));
+  ok("secret-guard.py: denies double-quoted command substitution",
+    doubleQuotedSubstitution.status === 2,
+    `exit ${doubleQuotedSubstitution.status}\nstderr: ${doubleQuotedSubstitution.stderr.slice(0, 160)}`);
+
+  const doubleQuotedBacktick = runSecretGuard(bashPayload('echo "`op read op://v/i/f`"'));
+  ok("secret-guard.py: denies double-quoted backtick substitution via fallback",
+    doubleQuotedBacktick.status === 2,
+    `exit ${doubleQuotedBacktick.status}\nstderr: ${doubleQuotedBacktick.stderr.slice(0, 160)}`);
+
+  const commitExpansion = runSecretGuard(bashPayload('git commit -m "see $(op read op://v/i/f)"'));
+  ok("secret-guard.py: denies command substitution inside commit message",
+    commitExpansion.status === 2,
+    `exit ${commitExpansion.status}\nstderr: ${commitExpansion.stderr.slice(0, 160)}`);
+
+  const capturedCurl = runSecretGuard(bashPayload('PASS=$(op read op://v/i/f) && curl -u "u:$PASS" https://x'));
+  ok("secret-guard.py: allows assignment capture before curl",
+    capturedCurl.status === 0,
+    `exit ${capturedCurl.status}\nstderr: ${capturedCurl.stderr.slice(0, 160)}`);
+
+  const doubleQuotedCapture = runSecretGuard(bashPayload('VAR="$(op read op://v/i/f)"'));
+  ok("secret-guard.py: allows double-quoted assignment capture",
+    doubleQuotedCapture.status === 0,
+    `exit ${doubleQuotedCapture.status}\nstderr: ${doubleQuotedCapture.stderr.slice(0, 160)}`);
+
+  const commitProse = runSecretGuard(bashPayload('git commit -m "docs: mention op read op://example in prose"'));
+  ok("secret-guard.py: allows commit-message prose",
+    commitProse.status === 0,
+    `exit ${commitProse.status}\nstderr: ${commitProse.stderr.slice(0, 160)}`);
+
+  const multilineCommit = runSecretGuard(bashPayload('git commit -m "line one\nprose about op read op://x\nline three"'));
+  ok("secret-guard.py: allows multiline quoted commit-message prose",
+    multilineCommit.status === 0,
+    `exit ${multilineCommit.status}\nstderr: ${multilineCommit.stderr.slice(0, 160)}`);
+
+  const grepProse = runSecretGuard(bashPayload('git log --grep "op read"'));
+  ok("secret-guard.py: allows git grep prose",
+    grepProse.status === 0,
+    `exit ${grepProse.status}\nstderr: ${grepProse.stderr.slice(0, 160)}`);
+
+  const nonBash = runSecretGuard({
+    tool_name: "Write",
+    tool_input: { file_path: "/tmp/secret-guard-selftest.txt", content: "op read op://v/i/f" },
+  });
+  ok("secret-guard.py: allows non-Bash payload",
+    nonBash.status === 0,
+    `exit ${nonBash.status}\nstderr: ${nonBash.stderr.slice(0, 160)}`);
+
+  const capturedFirstLine = runSecretGuard(bashPayload("FOO=$(op read op://v/i/f)\necho done"));
+  ok("secret-guard.py: allows captured first line plus clean second line",
+    capturedFirstLine.status === 0,
+    `exit ${capturedFirstLine.status}\nstderr: ${capturedFirstLine.stderr.slice(0, 160)}`);
+
+  const singleQuotedLiteral = runSecretGuard(bashPayload("echo 'literal $(op read op://x) prose'"));
+  ok("secret-guard.py: allows single-quoted literal command substitution prose",
+    singleQuotedLiteral.status === 0,
+    `exit ${singleQuotedLiteral.status}\nstderr: ${singleQuotedLiteral.stderr.slice(0, 160)}`);
 
   // ── 1. session-start.sh ────────────────────────────────────────────────────
   // Force a fresh session with a per-run id. The isolated HOME already prevents

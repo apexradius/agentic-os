@@ -156,6 +156,12 @@ export const UNROUTED_ALLOWED = new Set([
   'Planner-Generator-Evaluator',
   'Reflexion',
   'Ralph Pattern',
+  // Strategy block fragments (library/strategies/*.md) — composition-only, not executable prompts
+  'Extract Strategy',
+  'Critique Strategy',
+  'Proof Strategy',
+  'Redteam Strategy',
+  'Ship Strategy',
 ]);
 
 export const INTAKE_CONTRACT_NAME = 'Universal Intake Contract';
@@ -849,8 +855,9 @@ export function resolveLibraryPath(defaultLibraryPath: string, explicitPath?: st
 /**
  * Load the prompt library in structured mode:
  * 1. Parse index.generated.md for prompt text (byte-identical with monolith mode).
- * 2. Overlay `includes` from index.json onto matching prompt entries (by slug).
- * 3. Append loop block entries from library/loops/*.md so composition can resolve them.
+ * 2. Overlay `includes` and `strategy_overlays` from index.json onto matching
+ *    prompt entries (by slug).
+ * 3. Append loop and strategy block entries so composition can resolve them.
  *
  * Loop blocks are tagged with a sentinel slug prefix matching `loops/<stem>` so
  * composePromptText can find them. They are NOT routable — resolveRoutes will list them
@@ -867,11 +874,18 @@ async function loadLibraryStructured(generatedPath: string): Promise<ParsedLibra
   let indexBySlug = new Map<string, string[]>();
   try {
     const raw = await fs.readFile(indexPath, 'utf8');
-    const records = JSON.parse(raw) as Array<{ slug: string; includes: string[] }>;
+    const records = JSON.parse(raw) as Array<{
+      slug: string;
+      includes: string[];
+      strategy_overlays?: string[];
+    }>;
     if (Array.isArray(records)) {
       for (const rec of records) {
         if (rec.slug && Array.isArray(rec.includes)) {
-          indexBySlug.set(rec.slug, rec.includes);
+          const strategyIncludes = Array.isArray(rec.strategy_overlays)
+            ? rec.strategy_overlays.map((name) => `strategies/${name}`)
+            : [];
+          indexBySlug.set(rec.slug, [...rec.includes, ...strategyIncludes]);
         }
       }
     }
@@ -888,9 +902,10 @@ async function loadLibraryStructured(generatedPath: string): Promise<ParsedLibra
     return entry;
   });
 
-  // Step 3: load loop blocks and append
+  // Step 3: load loop/strategy blocks and append
   const loopBlocks = await loadLoopBlocks(libraryDir);
-  const allPrompts = [...enriched, ...loopBlocks];
+  const strategyBlocks = await loadStrategyBlocks(libraryDir);
+  const allPrompts = [...enriched, ...loopBlocks, ...strategyBlocks];
 
   return { prompts: allPrompts, warnings: parsed.warnings, source_path: generatedPath };
 }
@@ -1821,6 +1836,28 @@ export async function loadLoopBlocks(libraryDir: string): Promise<PromptEntry[]>
   return blocks;
 }
 
+export async function loadStrategyBlocks(libraryDir: string): Promise<PromptEntry[]> {
+  const strategiesDir = path.join(libraryDir, 'strategies');
+  let dirContents: string[];
+  try {
+    dirContents = await fs.readdir(strategiesDir);
+  } catch {
+    return [];
+  }
+  const entries = dirContents.filter((name) => name.endsWith('.md'));
+  const blocks: PromptEntry[] = [];
+  for (const filename of entries) {
+    const absPath = path.join(strategiesDir, filename);
+    const text = await fs.readFile(absPath, 'utf8');
+    const parsed = parsePromptLibrary(text);
+    if (parsed.prompts.length === 0) continue;
+    const block = parsed.prompts[0]!;
+    const stem = filename.replace(/\.md$/, '');
+    blocks.push({ name: block.name, slug: `strategies/${stem}`, text: block.text });
+  }
+  return blocks;
+}
+
 /**
  * Compose a prompt's final text, resolving `includes` if present (DECLARATIVE mode)
  * or applying the legacy auto-intake heuristic (LEGACY mode).
@@ -1829,6 +1866,7 @@ export async function loadLoopBlocks(libraryDir: string): Promise<PromptEntry[]>
  *   Resolves each include ID in order:
  *   - `universal-intake-contract` → the Universal Intake Contract text (fills [SERVICE])
  *   - `loops/<slug>`              → the loop block with matching slug
+ *   - `strategies/<slug>`         → the strategy block with matching slug
  *   Unresolvable includes emit an HTML comment marker; they never throw.
  *   Assembles: resolvedBlocks.join('\n\n---\n\n') + '\n\n---\n\n' + prompt.text
  *
@@ -1860,6 +1898,16 @@ export function composePromptText(
       } else if (includeId.startsWith('loops/')) {
         const loopSlug = includeId.slice('loops/'.length);
         const block = prompts.find((entry) => entry.slug === loopSlug);
+        if (block) {
+          resolvedBlocks.push(block.text);
+          compositionNames.push(block.name);
+        } else {
+          resolvedBlocks.push(`<!-- include unresolved: ${includeId} -->`);
+          unresolved.push(includeId);
+          compositionNames.push(`unresolved:${includeId}`);
+        }
+      } else if (includeId.startsWith('strategies/')) {
+        const block = prompts.find((entry) => entry.slug === includeId);
         if (block) {
           resolvedBlocks.push(block.text);
           compositionNames.push(block.name);

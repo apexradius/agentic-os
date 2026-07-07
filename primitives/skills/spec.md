@@ -111,6 +111,23 @@ Evals are not one-and-done. They are re-scored on **session-count windows** (+3/
 skill that quietly stops earning its context surfaces instead of lingering green. That lifecycle
 lives in the `self-evolve` skill (Verdict Windows), not in this validator.
 
+## Certification
+
+`certification` records which model tiers passed a skill's eval, with an evidence-linked
+path-shaped ref to the scoring artifact or golden trace.
+
+Each entry is machine-written and contains `model`, `grade`, `eval`, `evidence`, and `date`
+(`YYYY-MM-DD`). Grades are:
+
+- `pass` — all dimensions green.
+- `substance` — judge dimensions green, route-divergent.
+- `fail` — the eval did not pass.
+
+Absence means **uncertified**: unknown, not bad. The certification process writes this field;
+authors and the creator never fabricate it. Zone rule: a framework skill's evidence ref must
+not point into an instance tree. Instances certify their own copies or record certification
+instance-side.
+
 ## Constraints (what NOT to do)
 
 - **Never write a workflow-summary `description`.** It must be a load signal, or agents skip

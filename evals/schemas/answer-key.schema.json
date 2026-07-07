@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/parity-eval/answer-key.schema.json",
+  "title": "Parity Eval Answer Key",
+  "type": "object",
+  "required": ["task_fingerprint", "discoverable_facts", "preference_forks", "must_catch_findings"],
+  "properties": {
+    "_note": { "type": "string" },
+    "task_fingerprint": {
+      "type": "string",
+      "minLength": 1,
+      "examples": ["task:example-bench:feature-workflow"]
+    },
+    "reference_manifest": {
+      "type": "string",
+      "minLength": 1,
+      "examples": ["fixture/deploy/manifest.json"]
+    },
+    "discoverable_facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/discoverable_fact" }
+    },
+    "preference_forks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/preference_fork" }
+    },
+    "must_catch_findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/must_catch_finding" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "anchor": {
+      "type": "object",
+      "properties": {
+        "contains": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fn": { "type": "string", "minLength": 1 },
+        "fn_absent": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["contains"] },
+        { "required": ["fn"] }
+      ]
+    },
+    "discoverable_fact": {
+      "type": "object",
+      "required": ["id", "fact", "where", "file", "anchor"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "examples": ["DFACT-1"] },
+        "fact": { "type": "string", "minLength": 1 },
+        "where": { "type": "string", "minLength": 1 },
+        "file": { "type": "string", "minLength": 1 },
+        "must_not_ask": { "type": "boolean" },
+        "anchor": { "$ref": "#/$defs/anchor" }
+      },
+      "additionalProperties": false
+    },
+    "preference_fork": {
+      "type": "object",
+      "required": ["id", "question", "options", "recommendation", "why_preference"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "examples": ["PFORK-1"] },
+        "question": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "recommendation": { "type": "string", "minLength": 1 },
+        "why_preference": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "must_catch_finding": {
+      "type": "object",
+      "required": ["id", "class", "finding", "where", "file", "anchor"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "examples": ["FINDING-1"] },
+        "class": { "type": "string", "minLength": 1 },
+        "finding": { "type": "string", "minLength": 1 },
+        "where": { "type": "string", "minLength": 1 },
+        "file": { "type": "string", "minLength": 1 },
+        "anchor": { "$ref": "#/$defs/anchor" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

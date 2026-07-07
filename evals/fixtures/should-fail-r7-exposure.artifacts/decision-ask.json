@@ -1,0 +1,12 @@
+{
+  "kind": "decision-ask",
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Which implementation path should the change use?",
+      "options": ["path A", "path B"],
+      "recommendation": "path A",
+      "rationale": "Path A is already wired through the fixture."
+    }
+  ]
+}

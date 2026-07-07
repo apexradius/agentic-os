@@ -34,6 +34,7 @@
    Coverage is measured on every validate (`eval coverage: N/total`). A missing eval is a
    warning; a present-but-malformed eval (or unknown `eval-type`) is an error, so write a real
    one. The meta-skill below scaffolds rationalization tables and red-flags for discipline skills.
+   The creator never fabricates `certification`; new skills ship uncertified.
 
 ## Verify (the gate)
 

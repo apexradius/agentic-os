@@ -9,6 +9,23 @@ A local **stdio MCP** that routes a workspace or session to the correct canonica
 `route_prompt` · `get_prompt` · `get_prompt_contract` · `list_prompts` ·
 `search_prompts_by_section` · `search_prompts_by_eval_status` · `prompt_router_health`.
 
+## Operator CLI
+
+The package also ships `apex-prompt`, a read-only Prompt OS helper:
+
+```bash
+apex-prompt list --library /path/to/library
+apex-prompt search deploy --library /path/to/library
+apex-prompt show production-deploy-verify --library /path/to/library
+apex-prompt proofs --library /path/to/library --json
+apex-prompt dry-run production-deploy-verify --library /path/to/library --json
+```
+
+`dry-run` composes the final prompt payload from the generated library and static includes,
+then prints it. It never calls a model, tool, shell command, URL, or REST server.
+`proofs` reports which prompt records declare proof requirements and which do not; it is
+metadata-only and does not verify live endpoints, logs, tests, or artifacts.
+
 ## Configuration (env)
 
 | Var | Meaning | Default |
@@ -27,7 +44,8 @@ The library is **instance content** — it is not shipped here. The Apex library
 - **Does not ship (instance):** the prompt content (`prompts/`, `golden/`), `eval-config.json`,
   `CONTRACT.md` → all under `apex/config/prompt-router/library/`.
 - **Generated, never committed:** `library/index.generated.md`, `library/index.json`,
-  `library/labels.json` (emitted by `npm run prompt-os:build` from a library; see `.gitignore`).
+  `library/labels.json`, `library/capabilities.json` (emitted by `npm run prompt-os:build`
+  from a library; see `.gitignore`).
 
 ## Build / run
 

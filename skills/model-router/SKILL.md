@@ -1,49 +1,59 @@
 ---
 name: model-router
-description: "Decision framework for Opus vs Sonnet vs Haiku model selection — task-type mapping, cost/performance tradeoffs. Use when choosing which AI model to use for a task."
+description: "Decision framework for routing a slice to a model tier (strongest/mid/fast) and effort level by task difficulty and cost — vendor-neutral; the concrete tier-to-model map is instance data. Use when choosing which tier a task should run on."
 ---
 
-# Model Router — Task-to-Model Mapping
+# Model Router — Task-to-Tier Mapping
 
-The canonical reference for **which model tier and effort level** a slice of work should run on.
-Plans cite this table when they declare a per-slice recommendation (see the `plan` skill and
-`framework/loop/artifacts.md`). Tiers are aliases that resolve to the current model — today:
-**`opus` → Opus 4.8 · `sonnet` → Sonnet 4.6 · `haiku` → Haiku 4.5**.
+The canonical reference for **which capability tier and effort level** a slice of work should run
+on. Plans cite this when they declare a per-slice recommendation (see the `plan` skill and
+`framework/loop/artifacts.md`). Tiers are generic and vendor-neutral — the concrete tier-to-model
+resolution is the instance's data, never named here (names go stale; the concern is the routing
+rule). The declared vocabulary is enforced by the
+[`model-tier-routing`](../../standards/model-tier-routing/) standard.
 
-## Decision Matrix (tier + effort)
+## The tiers
 
-| Slice nature | Tier | Effort | Why |
-|---|---|---|---|
-| Lookups, formatting, boilerplate, parallel read-only research | **Haiku** | `low` | Fast, cheap, subagent-friendly |
-| Standard implementation, bug fix, single-area change, CLI/git ops | **Sonnet** | `medium` | The `opusplan` execution default |
-| Complex multi-file refactor, cross-module debugging, integration, code review | **Sonnet** | `high` | Strong without Opus cost |
-| Architecture, cross-system coordination, high-stakes / irreversible judgment, hardest debugging, client-facing deliverables | **Opus** | `xhigh` (`max` for frontier) | Deep reasoning earns the cost |
+Three capability tiers, from deepest reasoning to cheapest throughput:
 
-> **Sonnet has no `xhigh`** — it supports `low/medium/high/max`, and `xhigh` silently folds to
-> `high`. Never write "Sonnet · xhigh" in a plan; write "Sonnet · high".
+- **`strongest`** — deepest reasoning, highest cost. The slices that justify it.
+- **`mid`** — the execution default: strong and cost-balanced.
+- **`fast`** — cheapest, subagent-friendly, for bulk and parallel read-only work.
 
-## `opusplan` default (how this pairs with the loop)
+## Decision matrix (tier + effort)
 
-The session default is the `opusplan` alias: **Opus in plan mode, Sonnet on execution.** A plan is
-authored by Opus; execution then runs on Sonnet *unless* a slice's recommendation above says
-otherwise. A slice tagged **Opus** is the signal to switch (`/model opus`, or dispatch an Opus-tier
-subagent) for that slice only, then return to Sonnet. This is why plans must name the tier per
-slice — `opusplan` will not auto-pick Opus for hard *execution* work.
+| Slice nature | Tier | Effort |
+|---|---|---|
+| Lookups, formatting, boilerplate, parallel read-only research, summarization, mechanical transforms | **fast** | `low` |
+| Standard implementation, bug fix, single-area change, integration | **mid** | `medium`–`high` |
+| Complex multi-file refactor, cross-module debugging, code review | **mid** | `high` |
+| Architecture, cross-system coordination, high-stakes / irreversible judgment, hardest debugging, client-facing deliverables | **strongest** | `high`–`max` |
 
-## Cost Awareness
-- Opus: highest cost, use for the slices that justify it (the bottom matrix row)
-- Sonnet: default for execution
-- Haiku: ~10x cheaper than Opus, use for bulk/parallel/read-only operations
+The effort ladder is `low` · `medium` · `high` · `xhigh` · `max`. Which levels a given model
+accepts (some fold `xhigh` down to `high`) is instance-matrix content, carried in the instance's
+tier-to-model map — not here.
 
-## When to Escalate to Opus
-- Task requires reasoning across 10+ files
+## When to escalate to the strongest tier
+- Reasoning across many files at once
 - Architectural decisions with long-term impact
 - Client-facing deliverables (proposals, reports)
-- Debugging complex multi-system issues
-- Creative content that represents the brand
+- Debugging complex, multi-system issues
 
-## When Haiku is Enough
-- Running theme check across repos
+## When the fast tier is enough
+- Batch operations with a clear pattern
 - Simple file reads and searches
 - Generating boilerplate
-- Batch operations with clear patterns
+- Parallel read-only research fan-out
+
+## Cost awareness
+- **strongest**: highest cost — spend it on the bottom matrix row only.
+- **mid**: the default for execution.
+- **fast**: an order of magnitude cheaper — use for bulk/parallel/read-only work.
+
+## Pairing with the loop
+
+A slice's recommendation is part of a decision-complete plan (`framework/loop/planning.md`). The
+default posture plans on the strongest tier and executes on the mid tier; a slice that needs the
+strongest tier *for the build itself* must say so, or it will run mid. That is why plans name the
+tier per slice. The concrete tier-to-model resolution — and any per-agent model pins that outrank
+the tier default — are the instance's, not the framework's.

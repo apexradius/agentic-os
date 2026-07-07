@@ -9,13 +9,14 @@
 #
 # Event: SessionStart
 # Matcher: (none — fires on every session start)
-# Output: JSON with "additionalContext" key
+# Output: JSON with hookSpecificOutput.additionalContext, plus legacy additionalContext
 
 SESSION_DIR="$HOME/.claude/sessions"
 ARCHIVE_DIR="$SESSION_DIR/archive"
 RULES_DIR="$HOME/.claude/rules"
 TIMESTAMP=$(date '+%Y-%m-%dT%H:%M:%S')
 DATE_SLUG=$(date '+%Y%m%d-%H%M%S')
+CURRENT_DAY=$(date '+%Y%m%d')
 
 # --- Determine session ID ---
 # Use CLAUDE_SESSION_ID if available (runtime export), fall back to date-based stable ID
@@ -24,7 +25,7 @@ if [ -n "$CLAUDE_SESSION_ID" ]; then
 else
   # Stable fallback: date-based ID (same value for the entire day)
   # This prevents the PID problem where each hook invocation gets a different ID
-  SID="$(date '+%Y%m%d')"
+  SID="$CURRENT_DAY"
 fi
 
 SESSION_FILENAME="SESSION-${SID}.md"
@@ -45,10 +46,15 @@ if [ -f "$POINTER_FILE" ]; then
     # Same session re-fired — preserve planning blocks, skip creation
     SKIP_CREATION=true
   elif [ -f "$EXISTING_FILE" ] && [ -z "$CLAUDE_SESSION_ID" ]; then
-    # No session ID available — assume re-fire, preserve existing session
-    SESSION_FILE="$EXISTING_FILE"
-    SESSION_FILENAME="$EXISTING_FILENAME"
-    SKIP_CREATION=true
+    # No runtime session ID is available. Preserve same-day re-fires, but
+    # do not let an old pointer pin every future session to a stale file.
+    case "$EXISTING_FILENAME" in
+      "SESSION-${CURRENT_DAY}.md"|"SESSION-${CURRENT_DAY}-"*.md)
+        SESSION_FILE="$EXISTING_FILE"
+        SESSION_FILENAME="$EXISTING_FILENAME"
+        SKIP_CREATION=true
+        ;;
+    esac
   fi
 fi
 
@@ -134,7 +140,13 @@ Status: ${RULES_COUNT} rules loaded, ${HOOKS_COUNT} hooks active.${WARNINGS}"
 python3 -c "
 import json, sys
 ctx = sys.stdin.read()
-print(json.dumps({'additionalContext': ctx}))
+print(json.dumps({
+    'additionalContext': ctx,
+    'hookSpecificOutput': {
+        'hookEventName': 'SessionStart',
+        'additionalContext': ctx,
+    },
+}))
 " <<< "$CONTEXT"
 
 exit 0

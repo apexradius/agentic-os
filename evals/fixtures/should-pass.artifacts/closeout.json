@@ -1,0 +1,36 @@
+{
+  "claims": [
+    {
+      "claim": "Plan manifest clears all three node-vocabulary gates",
+      "claim_kind": "validation-passed",
+      "evidence": {
+        "type": "command",
+        "command": "node framework/primitives/_lib/validate.mjs --all",
+        "exit_code": 0,
+        "observed": "ALL VALID",
+        "timestamp": "2026-07-05T11:06:30.000Z"
+      }
+    },
+    {
+      "claim": "Session cache read-through wired into the request path",
+      "claim_kind": "artifact-created",
+      "evidence": {
+        "type": "artifact",
+        "ref": "fixture/lib/cache.js",
+        "artifact_path": "fixture/lib/cache.js",
+        "observed": "cache.get read-through added to getWidget; write path routed through touch()",
+        "timestamp": "2026-07-05T11:06:40.000Z"
+      }
+    },
+    {
+      "claim": "Touched files parse cleanly",
+      "claim_kind": "runtime-observed",
+      "evidence": {
+        "type": "command",
+        "command": "node --check fixture/api/handler.js",
+        "observed": "exit 0, no syntax errors",
+        "timestamp": "2026-07-05T11:07:10.000Z"
+      }
+    }
+  ]
+}

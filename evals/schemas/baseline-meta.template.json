@@ -1,0 +1,39 @@
+{
+  "_comment": {
+    "tool_path": "Minimum similarity for the deterministic tool-name route. Set nonzero only when the task has a canonical route.",
+    "verification_discipline": "Required fraction of mutations followed by verifier activity. Use 1.0 when every mutation should be verified.",
+    "question_economy_max": "Maximum operator asks allowed by the deterministic floor. The parity scorer may impose a stricter exact band.",
+    "regression_tolerance": "Allowed score movement before cross-version regression is marked red."
+  },
+  "thresholds": {
+    "tool_path": 0.7,
+    "verification_discipline": 1.0,
+    "question_economy_max": 1,
+    "regression_tolerance": 0.05
+  },
+  "annotations": {
+    "task": "<task-fingerprint> — <short task description>",
+    "driver_note": "provenance.model is the driver model; worker models remain visible per span.",
+    "exemplifies": [
+      "<what the golden demonstrates>"
+    ],
+    "expected_finding_classes": [
+      "<finding-class-1>",
+      "<finding-class-2>"
+    ],
+    "discoverable_facts": [
+      "<fixture fact the candidate must read>"
+    ],
+    "tool_classes": {
+      "operator_ask": ["AskUserQuestion"],
+      "plan_approval": ["ExitPlanMode"]
+    },
+    "governed_by": "<instance runbook path>",
+    "scoring_notes": {
+      "question_economy": "<how operator asks are counted>",
+      "tool_path": "<why the threshold is set>",
+      "finding_coverage": "<how expected finding classes are judged>",
+      "parity_predicate": "<instance summary of pass conditions>"
+    }
+  }
+}

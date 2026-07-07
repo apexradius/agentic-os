@@ -87,7 +87,7 @@ the instance zone, not here. That separation is **enforced**, not merely documen
 |---|---|
 | [`doctrine/`](doctrine/) | **The law** — the non-negotiable rules and quality standards every agent obeys on every task. |
 | [`loop/`](loop/) | **The PIV loop** — Plan → Implement → Verify, with the artifact protocol, context discipline, and verification gates. |
-| [`primitives/`](primitives/) | **The building blocks** — agents, skills, hooks, commands, MCP tools, plugins. Each ships a spec, a JSON schema, a creator meta-skill, and a validator. |
+| [`primitives/`](primitives/) | **The building blocks** — agents, skills, hooks, commands, MCP tools, plugins, eval, memory. Each ships a spec, a JSON schema, a creator meta-skill, and a validator. |
 | [`prompting/`](prompting/) | **The house style** for agent prompts. |
 | [`coordination/`](coordination/) | **How agents coordinate** — file ownership, shared plans, hand-offs. |
 | [`roles/`](roles/) | Reusable agent **role** definitions (architect, critic, debugger, …). |

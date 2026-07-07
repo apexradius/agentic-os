@@ -36,6 +36,26 @@
     "version": { "type": "string" },
     "metadata": { "type": "object", "description": "Free-form key/value bag (validated structurally only)." },
     "mcp_dependencies": { "type": ["array", "object", "string"], "description": "MCP servers this skill needs. Observed live as a comma-separated string ('mcp-core, mcp-tools'); arrays/objects also accepted." },
-    "compatibility": { "type": ["object", "string", "array"] }
+    "compatibility": { "type": ["object", "string", "array"] },
+    "certification": {
+      "type": "array",
+      "description": "Machine-written records of model-tier eval outcomes and evidence artifacts.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "grade", "eval", "evidence", "date"],
+        "properties": {
+          "model": { "type": "string", "minLength": 1 },
+          "grade": { "type": "string", "enum": ["pass", "substance", "fail"] },
+          "eval": { "type": "string", "minLength": 1 },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?=\\S+$)(?=.*[./#]).+$"
+          },
+          "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      }
+    }
   }
 }

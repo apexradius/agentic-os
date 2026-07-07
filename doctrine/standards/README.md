@@ -10,11 +10,14 @@ cleared these — not that it merely ran.
 | [design.md](design.md) | Any UI, frontend, or document surface. |
 | [data-handling.md](data-handling.md) | What an agent writes *out* — secrets and PII never reach durable output. |
 | [tool-gate.md](tool-gate.md) | What an agent *runs* — allow / ask / deny on a tool call before it executes. |
+| [content-injection.md](content-injection.md) | What an agent *reads back* — annotating prompt injection carried in untrusted tool results before the agent obeys it. |
 | [ci.md](ci.md) | How every repo handles CI, secret scanning, and pre-commit — without drift. |
 | [service-adoption.md](service-adoption.md) | How third-party/self-hosted services are hardened before they enter an instance runtime. |
 | [context-budget.md](context-budget.md) | Keeping the living handoff fresh as the context window fills. |
+| [cost-budget.md](cost-budget.md) | Capping cumulative token spend per run — warn, then a narrow over-budget deny that never strands work in flight. |
 | [session-discipline.md](session-discipline.md) | Making the PIV planning phase structural — no edit without a plan. |
 | [observability.md](observability.md) | Making the framework's own runs measurable — the run-record. |
+| [trajectory-eval.md](trajectory-eval.md) | Scoring a whole run, not just its answer — a recorded trajectory vs a pinned baseline, with a deterministic floor and cross-version regression. |
 | [judge-bias.md](judge-bias.md) | Keeping judge-backed evals order-neutral, verbosity-neutral, and separate from the solver under test. |
 | [judge-validity.md](judge-validity.md) | Proving judge-backed evals agree with a gold set before their verdicts are trusted. |
 | [faithfulness-trace.md](faithfulness-trace.md) | Mapping every closeout claim to the evidence that proves it. |

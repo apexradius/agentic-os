@@ -1,0 +1,23 @@
+{
+  "kind": "brief",
+  "objective": "Add an optional timeout parameter to the data client's fetch path, defaulting to today's behavior when it is omitted.",
+  "inputs": [
+    "The client lives in src/client.js; its fetch method currently takes (url, options).",
+    "The recon slice recon-surface found one caller in src/index.js that relies on the default.",
+    "Tests for the client live in test/client.test.js and are owned by a sibling slice — do not edit them."
+  ],
+  "constraints": [
+    "Own only src/client.js — do not touch any other file.",
+    "Keep the change backward compatible: omitting the timeout must preserve today's behavior.",
+    "Add no new dependencies; use the platform's built-in timeout mechanism."
+  ],
+  "stance": "Verify before reporting: run the client tests and observe them pass; flag any deviation from this brief rather than absorbing it.",
+  "verify_bar": "npm test -- client passes, the fetch path honors the timeout when supplied, and behavior is unchanged when it is omitted.",
+  "return_contract": {
+    "required_fields": ["summary", "status", "evidence"],
+    "summary_max_chars": 1500
+  },
+  "plan_anchor": "impl-client",
+  "hold_point": "Hand back uncommitted; the verifier commits.",
+  "deviation_policy": "Flag any needed deviation in the return's deviations field; do not silently absorb it."
+}

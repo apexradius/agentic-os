@@ -1,0 +1,30 @@
+{
+  "_note": "SYNTHETIC self-verify manifest that VIOLATES sequencing-spine: a 'publish'-classed node with no 'de-bloat' ancestor (rule de-bloat before publish). Shape (orchestration-manifest) and routing (model-tier-routing) are valid, so score.mjs proves it surfaces the sequencing-spine verdict specifically as an (a) artifact-set failure.",
+  "id": "parity-bench-bad-sequence",
+  "nodes": [
+    {
+      "id": "debloat",
+      "class": "de-bloat",
+      "owner": "role/executor",
+      "model_tier": "mid",
+      "effort": "medium",
+      "depends_on": [],
+      "files_owned": ["fixture/lib/cache.js"],
+      "validation_command": "true",
+      "output_artifact": "artifacts/debloat.md",
+      "resume_key": "debloat"
+    },
+    {
+      "id": "publish",
+      "class": "publish",
+      "owner": "role/executor",
+      "model_tier": "mid",
+      "effort": "high",
+      "depends_on": [],
+      "files_owned": ["fixture/api/handler.js"],
+      "validation_command": "true",
+      "output_artifact": "artifacts/publish.md",
+      "resume_key": "publish"
+    }
+  ]
+}

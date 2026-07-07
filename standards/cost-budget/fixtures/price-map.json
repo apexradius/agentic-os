@@ -1,0 +1,5 @@
+{
+  "_note": "SYNTHETIC illustrative rates for the selftest ONLY — not real list prices. Rates are $ per 1,000,000 tokens. The real instance price map lives in the apex zone and is maintained there; the framework ships no prices (zone-pure).",
+  "claude-fable-5": { "input": 10, "cache_read": 1, "cache_creation": 12.5, "output": 50 },
+  "default": { "input": 10, "cache_read": 1, "cache_creation": 12.5, "output": 50 }
+}

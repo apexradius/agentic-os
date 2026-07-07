@@ -17,6 +17,11 @@ const LIBRARY_PATH =
   process.env['APEX_PROMPT_LIBRARY_PATH'] ??
   path.join(os.homedir(), 'prompt-library.md');
 const hasLibrary = existsSync(LIBRARY_PATH);
+const STRUCTURED_LIBRARY_PATH = path.resolve(
+  process.cwd(),
+  '../../../..',
+  'apex/config/prompt-router/library/index.generated.md',
+);
 
 const tmpDirs: string[] = [];
 
@@ -124,6 +129,22 @@ describe.runIf(hasLibrary)('real library reconciliation', () => {
     const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir(), 30);
     expect(report.ok).toBe(true);
     expect(report.library.prompt_count).toBeGreaterThanOrEqual(30);
+  });
+});
+
+describe.runIf(existsSync(STRUCTURED_LIBRARY_PATH))('structured Prompt OS health', () => {
+  it('includes read-only proof coverage when capabilities.json is present', async () => {
+    const report = await buildHealthReport(
+      'apex-prompt-router-mcp',
+      '0.4.1',
+      STRUCTURED_LIBRARY_PATH,
+      os.homedir(),
+      30,
+    );
+    expect(report.ok).toBe(true);
+    expect(report.prompt_os.capability_index_readable).toBe(true);
+    expect(report.prompt_os.proof_summary?.records).toBeGreaterThanOrEqual(30);
+    expect(report.prompt_os.proof_summary?.high_risk_missing).toBe(0);
   });
 });
 

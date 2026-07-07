@@ -1,0 +1,9 @@
+{
+  "id": "trajectory-eval-judge-replay-smoke",
+  "gate_id": "trajectory-eval-judge-path",
+  "original": { "presentation": "candidate-first", "verdict": "pass" },
+  "swapped": { "presentation": "baseline-first", "verdict": "pass" },
+  "consistent": true,
+  "escalation": { "required": false, "state": "not-needed" },
+  "gold_set": { "id": "trajectory-eval-judge-gold", "labels": ["pass", "fail"], "ratings_count": 6 }
+}

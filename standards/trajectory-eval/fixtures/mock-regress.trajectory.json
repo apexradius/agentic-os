@@ -1,0 +1,25 @@
+{
+  "schema": "trajectory/1",
+  "trace_id": "mock-trace-regress",
+  "recorded_at": "2026-02-01T00:00:12Z",
+  "provenance": {
+    "model": "mock-model-b",
+    "agent_type": "executor",
+    "prompt_version": null,
+    "task_fingerprint": "task:fix-auth-bug"
+  },
+  "spans": [
+    { "span_id": "r0", "parent_span_id": null, "operation": "invoke_agent", "name": "invoke_agent executor", "start_ts": "2026-02-01T00:00:00Z", "end_ts": "2026-02-01T00:00:09Z", "duration_ms": 9000, "agent_type": "executor", "model": "mock-model-b", "self_report": "completed", "attributes": {} },
+    { "span_id": "r1", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:01Z", "model": "mock-model-b", "tokens_in": 95, "tokens_out": 19, "finish_reason": "tool_use", "attributes": {} },
+    { "span_id": "r2", "parent_span_id": "r1", "operation": "execute_tool", "name": "execute_tool Read", "start_ts": "2026-02-01T00:00:02Z", "duration_ms": 41, "tool_name": "Read", "attributes": {} },
+    { "span_id": "r3", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:03Z", "model": "mock-model-b", "tokens_in": 100, "tokens_out": 40, "finish_reason": "end_turn", "attributes": {} },
+    { "span_id": "r4", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:04Z", "model": "mock-model-b", "tokens_in": 115, "tokens_out": 26, "finish_reason": "tool_use", "attributes": {} },
+    { "span_id": "r5", "parent_span_id": "r4", "operation": "execute_tool", "name": "execute_tool Write", "start_ts": "2026-02-01T00:00:05Z", "duration_ms": 16, "tool_name": "Write", "attributes": {} },
+    { "span_id": "r6", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:06Z", "model": "mock-model-b", "tokens_in": 130, "tokens_out": 44, "finish_reason": "end_turn", "attributes": {} },
+    { "span_id": "r7", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:07Z", "model": "mock-model-b", "tokens_in": 150, "tokens_out": 27, "finish_reason": "tool_use", "attributes": {} },
+    { "span_id": "r8", "parent_span_id": "r7", "operation": "execute_tool", "name": "execute_tool Write", "start_ts": "2026-02-01T00:00:08Z", "duration_ms": 15, "tool_name": "Write", "attributes": {} },
+    { "span_id": "r9", "parent_span_id": "r0", "operation": "chat", "name": "chat", "start_ts": "2026-02-01T00:00:09Z", "model": "mock-model-b", "tokens_in": 160, "tokens_out": 70, "finish_reason": "end_turn", "attributes": {} },
+    { "span_id": "r10", "parent_span_id": "r0", "operation": "execute_tool", "name": "execute_tool AskUser", "start_ts": "2026-02-01T00:00:10Z", "duration_ms": 10, "tool_name": "AskUser", "attributes": {} },
+    { "span_id": "r11", "parent_span_id": "r0", "operation": "execute_tool", "name": "execute_tool AskUser", "start_ts": "2026-02-01T00:00:11Z", "duration_ms": 10, "tool_name": "AskUser", "attributes": {} }
+  ]
+}

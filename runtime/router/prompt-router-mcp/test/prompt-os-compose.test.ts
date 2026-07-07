@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 import {
   composePromptText,
   loadLoopBlocks,
+  loadStrategyBlocks,
   parsePromptLibrary,
   resolveRoutes,
   INTAKE_CONTRACT_NAME,
@@ -39,6 +40,7 @@ const GENERATED_PATH =
     ? ENV_LIBRARY_PATH
     : path.join(LIBRARY_DIR, 'index.generated.md');
 const LOOPS_DIR = path.join(LIBRARY_DIR, 'loops');
+const STRATEGIES_DIR = path.join(LIBRARY_DIR, 'strategies');
 const REFERENCE_FILE = path.join(
   LIBRARY_DIR,
   'prompts/lifecycle/production-deploy-verify.prompt.md',
@@ -98,6 +100,35 @@ describe('loadLoopBlocks', () => {
       expect(block, `loop block "${stem}" must be loaded`).toBeDefined();
       expect(block!.slug, `slug must equal filename stem "${stem}"`).toBe(stem);
       expect(block!.text.trim().length, `${stem} text must be non-empty`).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Strategy block structural validity
+// ---------------------------------------------------------------------------
+
+describe('strategy blocks: structural validity', () => {
+  const EXPECTED_STEMS = ['extract', 'critique', 'proof', 'redteam', 'ship'] as const;
+
+  for (const stem of EXPECTED_STEMS) {
+    it(`${stem}.md: heading present, non-empty text fence`, async () => {
+      const filePath = path.join(STRATEGIES_DIR, `${stem}.md`);
+      const text = await fs.readFile(filePath, 'utf8');
+      const { prompts, warnings } = parsePromptLibrary(text);
+      expect(warnings, `${stem}.md should have no parser warnings`).toHaveLength(0);
+      expect(prompts, `${stem}.md should parse to exactly 1 prompt`).toHaveLength(1);
+      expect(prompts[0]!.text.trim().length, `${stem} text must be non-empty`).toBeGreaterThan(0);
+    });
+  }
+
+  it('loads all 5 strategy blocks with strategies/<stem> slugs', async () => {
+    const blocks = await loadStrategyBlocks(LIBRARY_DIR);
+    expect(blocks.length, 'should load 5 strategy blocks').toBe(5);
+
+    const slugs = new Set(blocks.map((block) => block.slug));
+    for (const stem of EXPECTED_STEMS) {
+      expect(slugs.has(`strategies/${stem}`), `strategies/${stem} must be loaded`).toBe(true);
     }
   });
 });
@@ -289,6 +320,19 @@ describe('composePromptText: unresolved includes', () => {
     expect(text).toContain('<!-- include unresolved: loops/b -->');
     expect(text).toContain('<!-- include unresolved: universal-intake-contract -->');
   });
+
+  it('resolves strategy includes as static text blocks', async () => {
+    const strategyBlocks = await loadStrategyBlocks(LIBRARY_DIR);
+    const prompt: PromptEntry = {
+      name: 'My Prompt',
+      slug: 'my-prompt',
+      text: 'Body.',
+      includes: ['strategies/proof'],
+    };
+    const { text, composition } = composePromptText(prompt, strategyBlocks);
+    expect(text).toContain('Convert every completion claim into observed evidence.');
+    expect(composition).toEqual(['Proof Strategy', 'My Prompt']);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -309,11 +353,25 @@ describe('routing: loop blocks do not change resolved route count', () => {
     }
   });
 
-  it('resolveRoutes with loop blocks added: 30 resolved, 0 missing', async () => {
+  it('UNROUTED_ALLOWED contains all 5 strategy block names', () => {
+    const expected = [
+      'Extract Strategy',
+      'Critique Strategy',
+      'Proof Strategy',
+      'Redteam Strategy',
+      'Ship Strategy',
+    ];
+    for (const name of expected) {
+      expect(UNROUTED_ALLOWED.has(name), `"${name}" must be in UNROUTED_ALLOWED`).toBe(true);
+    }
+  });
+
+  it('resolveRoutes with loop and strategy blocks added: 30 resolved, 0 missing', async () => {
     const generatedText = await fs.readFile(GENERATED_PATH, 'utf8');
     const { prompts: basePrompts } = parsePromptLibrary(generatedText);
     const loopBlocks = await loadLoopBlocks(LIBRARY_DIR);
-    const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks];
+    const strategyBlocks = await loadStrategyBlocks(LIBRARY_DIR);
+    const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks, ...strategyBlocks];
 
     const result = resolveRoutes(allPrompts);
     expect(result.missing_route_prompts, 'no missing routes').toEqual([]);
@@ -323,6 +381,12 @@ describe('routing: loop blocks do not change resolved route count', () => {
       expect(
         result.unrouted_prompts,
         `loop block "${block.name}" must not appear in unrouted_prompts`,
+      ).not.toContain(block.name);
+    }
+    for (const block of strategyBlocks) {
+      expect(
+        result.unrouted_prompts,
+        `strategy block "${block.name}" must not appear in unrouted_prompts`,
       ).not.toContain(block.name);
     }
   });
