@@ -11,7 +11,7 @@ import {
   resolveRoutes,
   scanWorkspace,
 } from '../src/lib.js';
-import { buildHealthReport, routePromptCore } from '../src/router.js';
+import { buildHealthReport, loadEffectiveRoutes, routePromptCore } from '../src/router.js';
 
 const LIBRARY_PATH =
   process.env['APEX_PROMPT_LIBRARY_PATH'] ??
@@ -119,14 +119,15 @@ describe('workspace scanner', () => {
 describe.runIf(hasLibrary)('real library reconciliation', () => {
   it('every route resolves to a parsed prompt and every prompt is routed (or allowlisted)', async () => {
     const { prompts, warnings } = await readPromptLibrary(LIBRARY_PATH);
-    const resolution = resolveRoutes(prompts);
+    const routes = await loadEffectiveRoutes(LIBRARY_PATH);
+    const resolution = resolveRoutes(prompts, routes);
     expect(warnings).toEqual([]);
     expect(resolution.missing_route_prompts).toEqual([]);
     expect(resolution.unrouted_prompts).toEqual([]);
   });
 
   it('health reports ok', async () => {
-    const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir(), 30);
+    const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir());
     expect(report.ok).toBe(true);
     expect(report.library.prompt_count).toBeGreaterThanOrEqual(30);
   });
@@ -139,7 +140,6 @@ describe.runIf(existsSync(STRUCTURED_LIBRARY_PATH))('structured Prompt OS health
       '0.4.1',
       STRUCTURED_LIBRARY_PATH,
       os.homedir(),
-      30,
     );
     expect(report.ok).toBe(true);
     expect(report.prompt_os.capability_index_readable).toBe(true);

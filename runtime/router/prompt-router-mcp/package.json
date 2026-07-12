@@ -13,11 +13,12 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs",
     "prepublishOnly": "npm run build && chmod +x dist/index.js",
-    "lint:prompts": "tsc && node dist/prompt-os/cli.js library/prompts",
+    "lint:prompts": "tsc && node dist/prompt-os/cli.js",
     "prompt-os:migrate": "tsc && node scripts/prompt-os/migrate.mjs",
     "prompt-os:build": "tsc && node scripts/prompt-os/build.mjs",
-    "eval:tier1": "tsc && node dist/prompt-os/eval/tier1-cli.js library",
+    "eval:tier1": "tsc && node dist/prompt-os/eval/tier1-cli.js",
     "prompt": "tsc && node dist/prompt-os/operator-cli.js"
   },
   "dependencies": {

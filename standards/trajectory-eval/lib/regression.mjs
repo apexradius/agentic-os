@@ -79,10 +79,21 @@ export function compareToBaseline(candidate, baseline) {
   const floor_pass = gating.every((d) => d.meets_threshold);
   const regressed = gating.some((d) => d.regressed);
 
+  // Degenerate floor: a candidate with ZERO mutation spans passes verification_discipline
+  // vacuously (1.0 = "nothing to verify", not discipline) — a near-empty run can clear the whole
+  // floor without exhibiting any of the behaviour it gates. Verdict-neutral by design (cert
+  // ruling 2026-07-06: judge dimensions carry the weight on such runs); this flag makes the
+  // vacuity machine-readable instead of a hand-written scoring caveat.
+  const floor_degenerate = cand.verification.mutations === 0;
+
   return {
     floor_pass,
     regressed,
     pass: floor_pass && !regressed,
+    floor_degenerate,
+    ...(floor_degenerate
+      ? { floor_degenerate_reason: "zero mutation spans — verification_discipline is vacuously green" }
+      : {}),
     thresholds: th,
     dimensions,
     metrics: { candidate: cand, baseline: base },

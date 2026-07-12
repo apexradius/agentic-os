@@ -570,4 +570,13 @@ describe('guards and stack detection', () => {
     expect(new Set(names).size).toBe(names.length);
     expect(UNROUTED_ALLOWED.has('Universal Intake Contract')).toBe(true);
   });
+
+  it('every static route selects itself when invoked by its exact trigger', () => {
+    for (const route of ROUTES) {
+      const scores = scoreRoutes(ROUTES, route.trigger.toLowerCase(), '', makeScan(), {
+        userGoalText: route.trigger,
+      });
+      expect(scores[0]?.prompt_name, route.trigger).toBe(route.promptName);
+    }
+  });
 });

@@ -12,6 +12,7 @@ Apex-free; source committed, build artifacts gitignored. Apex wiring lives in `a
 | [`mcp-shared/`](mcp-shared/) | The shared MCP factory (`createApexServer`, error handling, breaker, health) — `@framework/mcp-shared`. | Stage 4D ✅ |
 | [`mcp-servers/`](mcp-servers/) | The generic **reference server** on the factory — `@framework/data-mcp` (Postgres, read-only-gated): the worked example an instance copies. An instance's own fleet lives in its instance zone (e.g. `apex/runtime/mcp-servers/`), never in `framework/`. | active |
 | [`router/`](router/) | The routing engine: `prompt-router-mcp` (`@framework/prompt-router-mcp`, workspace member) + a Python `semantic/` classifier + a `harness/`. Instance routes/library → `apex/config`. | Stage 4G ✅ |
+| [`capabilities.json`](capabilities.json) + [`capabilities.schema.json`](capabilities.schema.json) | Runtime capability matrix stub + shared validator finding shape (`severity`, `path`, `message`, `fix`) for remediation-bearing validation output; gated by [`standards/runtime-capability-matrix`](../standards/runtime-capability-matrix/). | stub |
 | [`package.json`](package.json) | npm **workspace** root (`mcp-shared`, `mcp-servers/*` = the reference server, `router/prompt-router-mcp`) + shared [`tsconfig.base.json`](tsconfig.base.json). | Stage 4D ✅ |
 | [`verify-zone-purity.sh`](verify-zone-purity.sh) | Zone-purity tripwire — fails on any Apex coupling outside the documented residual ([`.zone-residual.allow`](.zone-residual.allow)). | active |
 

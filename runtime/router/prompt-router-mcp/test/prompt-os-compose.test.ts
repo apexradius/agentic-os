@@ -26,6 +26,7 @@ import {
   UNROUTED_ALLOWED,
   type PromptEntry,
 } from '../src/lib.js';
+import { loadEffectiveRoutes } from '../src/router.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
@@ -366,16 +367,17 @@ describe('routing: loop blocks do not change resolved route count', () => {
     }
   });
 
-  it('resolveRoutes with loop and strategy blocks added: 30 resolved, 0 missing', async () => {
+  it('resolveRoutes with loop and strategy blocks added: all routes resolved, 0 missing', async () => {
     const generatedText = await fs.readFile(GENERATED_PATH, 'utf8');
     const { prompts: basePrompts } = parsePromptLibrary(generatedText);
     const loopBlocks = await loadLoopBlocks(LIBRARY_DIR);
     const strategyBlocks = await loadStrategyBlocks(LIBRARY_DIR);
     const allPrompts: PromptEntry[] = [...basePrompts, ...loopBlocks, ...strategyBlocks];
+    const routes = await loadEffectiveRoutes(GENERATED_PATH);
 
-    const result = resolveRoutes(allPrompts);
+    const result = resolveRoutes(allPrompts, routes);
     expect(result.missing_route_prompts, 'no missing routes').toEqual([]);
-    expect(result.resolved).toHaveLength(30);
+    expect(result.resolved).toHaveLength(routes.length);
     // Loop blocks must NOT appear in unrouted_prompts
     for (const block of loopBlocks) {
       expect(

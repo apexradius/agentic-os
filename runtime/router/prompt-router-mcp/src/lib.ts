@@ -69,6 +69,7 @@ export type RouteDefinition = {
   trigger: string;
   reason: string;
   keywords: string[];
+  triggerPhrases?: string[];
   fileHints?: string[];
   stackHints?: string[];
   emptyWorkspace?: boolean;
@@ -131,6 +132,7 @@ export class InvalidWorkspaceError extends Error {
 // ---------------------------------------------------------------------------
 
 export const WEIGHTS = {
+  PRIMARY_TRIGGER: 60,
   STATE: 30,
   PRIMARY_PHRASE: 9,
   PRIMARY_WORD: 6,
@@ -171,8 +173,9 @@ const INTAKE_GATE_MARKER = '## Intake Gate';
 export const STACK_POLICY_VERSION = 'stack-policy-2026-06-11.v1';
 
 // ---------------------------------------------------------------------------
-// Route table. Single source of truth for routing; reconciled against the
-// library at startup and in health (resolveRoutes).
+// Route overrides for behavior that cannot be inferred from prompt metadata:
+// lifecycle state, workspace shape, file/stack hints, and chain transitions.
+// buildEffectiveRoutes() combines these with the active structured library.
 // ---------------------------------------------------------------------------
 
 export const ROUTES: RouteDefinition[] = [
@@ -667,10 +670,69 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'Account Growth System',
     trigger: 'ACCOUNT_GROWTH_RUN',
-    reason: 'Use for full growth engagements spanning multiple Apex services.',
+    reason: 'Use for full growth engagements spanning multiple services.',
     keywords: ['growth system', 'growth engagement', 'full client growth', 'account growth'],
   },
 ];
+
+export type PromptRouteMetadata = {
+  id: string;
+  name: string;
+  status: string;
+  tags: string[];
+  trigger_phrases: string[];
+};
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function routeTriggerFromId(id: string): string {
+  return `${id.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')}_RUN`;
+}
+
+/**
+ * Keep routing policy in the engine while deriving instance prompt coverage
+ * from the structured library. Static routes are overrides for lifecycle,
+ * state, file, stack, and chain behavior; published records without an
+ * override receive a deterministic route from their own metadata.
+ */
+export function buildEffectiveRoutes(
+  baseRoutes: RouteDefinition[],
+  records: PromptRouteMetadata[],
+): RouteDefinition[] {
+  const published = records.filter((record) => record.status === 'published');
+  const metadataByName = new Map(published.map((record) => [record.name, record]));
+  const routes = baseRoutes.map((route) => {
+    const record = metadataByName.get(route.promptName);
+    if (!record) return { ...route, keywords: [...route.keywords] };
+    const tagKeywords = record.tags.flatMap((tag) => [tag, tag.replaceAll('-', ' ')]);
+    return {
+      ...route,
+      keywords: uniqueStrings([...route.keywords, ...tagKeywords]),
+      triggerPhrases: uniqueStrings(record.trigger_phrases),
+    };
+  });
+
+  const routedNames = new Set(routes.map((route) => route.promptName));
+  for (const record of published) {
+    if (routedNames.has(record.name)) continue;
+    const tagKeywords = record.tags.flatMap((tag) => [tag, tag.replaceAll('-', ' ')]);
+    routes.push({
+      promptName: record.name,
+      trigger: routeTriggerFromId(record.id),
+      reason: `Use for ${record.name.toLowerCase()} requests declared by the active prompt library.`,
+      keywords: uniqueStrings(tagKeywords),
+      triggerPhrases: uniqueStrings(record.trigger_phrases),
+    });
+  }
+
+  const names = routes.map((route) => route.promptName);
+  const triggers = routes.map((route) => route.trigger);
+  if (new Set(names).size !== names.length) throw new Error('route table contains duplicate prompt names');
+  if (new Set(triggers).size !== triggers.length) throw new Error('route table contains duplicate triggers');
+  return routes;
+}
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -942,15 +1004,15 @@ export function findPrompt(prompts: PromptEntry[], requestedName: string): Promp
 
 // Reconcile the route table against the parsed library. A route whose prompt
 // is missing is excluded from scoring (loudly) instead of failing at selection.
-export function resolveRoutes(prompts: PromptEntry[]): RouteResolution {
+export function resolveRoutes(prompts: PromptEntry[], routes: RouteDefinition[] = ROUTES): RouteResolution {
   const names = new Set(prompts.map((prompt) => prompt.name));
-  const routedNames = new Set(ROUTES.map((route) => route.promptName));
-  const missing = ROUTES.filter((route) => !names.has(route.promptName)).map((route) => route.promptName);
+  const routedNames = new Set(routes.map((route) => route.promptName));
+  const missing = routes.filter((route) => !names.has(route.promptName)).map((route) => route.promptName);
   const unrouted = prompts
     .map((prompt) => prompt.name)
     .filter((name) => !routedNames.has(name) && !UNROUTED_ALLOWED.has(name));
   return {
-    resolved: ROUTES.filter((route) => names.has(route.promptName)),
+    resolved: routes.filter((route) => names.has(route.promptName)),
     missing_route_prompts: missing,
     unrouted_prompts: unrouted,
   };
@@ -1638,6 +1700,15 @@ export function scoreRoutes(
       if (quality > bestQuality) bestQuality = quality;
       matchedSignals.push(signal);
     };
+
+    const explicitSignals = [route.trigger, ...(route.triggerPhrases ?? [])];
+    const matchedExplicit = hasPrimaryIntent
+      ? explicitSignals.find((signal) => keywordMatcher(signal).test(primaryText))
+      : undefined;
+    if (matchedExplicit) {
+      matchedPrimary = true;
+      bump(WEIGHTS.PRIMARY_TRIGGER, QUALITY.PRIMARY_PHRASE, `trigger:${matchedExplicit}`);
+    }
 
     const unmatchedKeywords: string[] = [];
     for (const keyword of route.keywords) {

@@ -64,7 +64,7 @@ level: 4
 
   <Tool_Usage>
     - Use AskUserQuestion for all preference/priority questions (provides clickable options).
-    - Spawn explore agent (model=haiku) for codebase context questions.
+    - Spawn explore agent (model=sonnet-5) for codebase context questions.
     - Spawn document-specialist agent for external documentation needs.
     - Use Write to save plans to `.agent/plans/{name}.md`.
   </Tool_Usage>

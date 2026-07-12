@@ -1,7 +1,7 @@
 ---
 name: writer
-description: Technical documentation writer for README, API docs, and comments (Haiku)
-model: claude-haiku-4-5
+description: Technical documentation writer for README, API docs, and comments
+model: claude-sonnet-5
 level: 2
 ---
 

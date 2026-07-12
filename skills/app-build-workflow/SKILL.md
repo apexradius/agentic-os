@@ -14,6 +14,7 @@ Use this skill to turn a raw web app idea into an agent-ready build package. The
 Create or update these files under `specs/`:
 
 ```text
+0_viability.md
 00_build_intake.md
 01_prd.md
 02_trd.md
@@ -31,20 +32,26 @@ Templates are in `templates/`.
 
 1. Create `specs/` if it does not exist.
 2. Copy the templates into `specs/`, preserving file names.
-3. Fill `00_build_intake.md` from the user idea and any discoverable project context.
-4. Ask only for decisions that cannot be discovered from repo, docs, logs, or tools.
-5. Stop at the intake gate until the user confirms scope.
-6. Draft `01_prd.md`, then stop at the PRD gate until the user confirms P0 scope.
-7. Treat new P0 work after PRD approval as a change request.
-8. Complete the remaining docs in order: TRD, app flow, UI/UX brief, backend schema, implementation plan, verification plan.
-9. Run role-based review lanes before implementation: Product Manager, Architect, Tech Lead, UI/UX Designer, Senior Developer, QA Engineer, Security Engineer, and DevOps Engineer.
-10. Run the engineering modes that match the phase: Full Startup Engineering Team, Senior Codebase Audit, Production Debugging, Performance Optimization, Clean Architecture Refactor, Startup Backend Architect, AI Engineering Team, Senior Frontend Engineer, AI Technical Lead, Production Security Audit, and Senior DevOps And Deployment Engineer.
-11. Resolve all block and fix-before-build findings in the specs.
-12. Do not implement until every gate passes.
-13. During implementation, update `progress.md` after every phase, failed check, blocker, change request, and deploy.
+3. **Gate 0 FIRST — run the viability kill-test (`0_viability.md`) before drafting ANY spec doc.** Four cheap checks, hours not days; fail any → stop and report, do not proceed to intake. This is the front-loaded feasibility pass that catches distribution/mechanism/policy kills before spec effort is sunk:
+   - **Distribution + unit economics** — realistic acquisition channel for this budget; order-of-magnitude CAC vs LTV. Underwater → kill.
+   - **Mechanism feasibility** — can the core promise physically be built on the target platform? (Does an API/primitive exist to do the load-bearing thing — e.g. run code at a future time, sync across accounts, access the sensor?) One doc-read or one-day spike. No path → kill or redesign.
+   - **Platform-policy legality** — do the store guidelines + regulators allow this architecture? (Search the actual guideline text for the data/category, not memory.) Forbidden → redesign or kill.
+   - **Wedge reachability** — is the market gap not just real but *reachable* vs free/incumbent competitors with distribution.
+4. Fill `00_build_intake.md` from the user idea and any discoverable project context.
+5. Ask only for decisions that cannot be discovered from repo, docs, logs, or tools.
+6. Stop at the intake gate until the user confirms scope.
+7. Draft `01_prd.md`, then stop at the PRD gate until the user confirms P0 scope.
+8. Treat new P0 work after PRD approval as a change request.
+9. Complete the remaining docs in order: TRD, app flow, UI/UX brief, backend schema, implementation plan, verification plan.
+10. Run role-based review lanes before implementation: Product Manager, Architect, Tech Lead, UI/UX Designer, Senior Developer, QA Engineer, Security Engineer, and DevOps Engineer.
+11. Run the engineering modes that match the phase: Full Startup Engineering Team, Senior Codebase Audit, Production Debugging, Performance Optimization, Clean Architecture Refactor, Startup Backend Architect, AI Engineering Team, Senior Frontend Engineer, AI Technical Lead, Production Security Audit, and Senior DevOps And Deployment Engineer.
+12. Resolve all block and fix-before-build findings in the specs.
+13. Do not implement until every gate passes.
+14. During implementation, update `progress.md` after every phase, failed check, blocker, change request, and deploy.
 
 ## Gates
 
+- Viability (Gate 0, before all others): distribution/CAC-vs-LTV is not underwater; the core mechanism is physically buildable on the target platform (named API/primitive, or a spike that ran); no store guideline or regulation forbids the chosen architecture (quoted from the live guideline text); the wedge is reachable vs free/incumbent competitors. Any hard fail here stops the workflow before intake — no spec docs are drafted.
 - Intake: primary v1 user, buyer/operator roles, measurable launch outcome, assumptions, open questions, and user signoff.
 - PRD: P0 features map to user stories, atomic acceptance criteria, and verification methods.
 - TRD: stack, runtime, package manager, lockfile, clean-checkout setup, env contract, secrets source, CI, observability, deploy, and rollback are explicit.
@@ -58,6 +65,7 @@ Templates are in `templates/`.
 
 ## Rules
 
+- Run Gate 0 (`0_viability.md`) before any spec doc; a hard viability fail stops the workflow — do not draft intake/PRD to "keep momentum" on a project that can't distribute, can't run, or is architecturally disallowed.
 - Never code before the package exists and gates pass.
 - Every feature traces to story, acceptance criterion, screen/API/data, task, and verification method.
 - Every acceptance criterion has exactly one primary verification method.
@@ -76,6 +84,7 @@ Templates are in `templates/`.
 
 ## Template Map
 
+- `templates/0_viability.md`
 - `templates/00_build_intake.md`
 - `templates/01_prd.md`
 - `templates/02_trd.md`

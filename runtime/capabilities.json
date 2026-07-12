@@ -1,0 +1,53 @@
+{
+  "$schema": "./capabilities.schema.json",
+  "version": 1,
+  "status": "stub",
+  "purpose": "Declare runtime support and validator finding shape from one portable framework-owned source.",
+  "validator_finding_shape": {
+    "severity": "error | warning | note",
+    "path": "relative path to the failing artifact",
+    "message": "human-readable failure",
+    "fix": "smallest concrete repair step"
+  },
+  "runtimes": [
+    {
+      "id": "claude-code",
+      "label": "Claude Code",
+      "support": {
+        "agents": "native",
+        "skills": "native",
+        "commands": "native",
+        "hooks": "native",
+        "mcp": "native",
+        "plugins": "partial",
+        "evals": "framework"
+      }
+    },
+    {
+      "id": "opencode",
+      "label": "OpenCode",
+      "support": {
+        "agents": "native",
+        "skills": "native",
+        "commands": "native",
+        "hooks": "plugin",
+        "mcp": "native",
+        "plugins": "native",
+        "evals": "framework"
+      }
+    },
+    {
+      "id": "codex-local",
+      "label": "Codex local",
+      "support": {
+        "agents": "adapter",
+        "skills": "adapter",
+        "commands": "adapter",
+        "hooks": "adapter",
+        "mcp": "adapter",
+        "plugins": "none",
+        "evals": "framework"
+      }
+    }
+  ]
+}

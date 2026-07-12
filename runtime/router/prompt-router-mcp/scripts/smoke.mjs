@@ -1,10 +1,14 @@
 import { spawn } from 'node:child_process';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const SERVER = join(PACKAGE_ROOT, 'dist/index.js');
+const REPO_ROOT = resolve(PACKAGE_ROOT, '../../../..');
+const LIBRARY = process.env.APEX_PROMPT_LIBRARY_PATH
+  ?? join(REPO_ROOT, 'apex/config/prompt-router/library/index.generated.md');
+const SERVER_ENV = { ...process.env, APEX_PROMPT_LIBRARY_PATH: LIBRARY };
 
 function rpc(id, method, params) {
   return `${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`;
@@ -12,7 +16,7 @@ function rpc(id, method, params) {
 
 function callTool(name, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [SERVER], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn('node', [SERVER], { env: SERVER_ENV, stdio: ['pipe', 'pipe', 'pipe'] });
     let out = '';
     let err = '';
     const timer = setTimeout(() => {
@@ -52,6 +56,30 @@ function callTool(name, args) {
     );
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
     child.stdin.write(rpc(2, 'tools/call', { name, arguments: args }));
+  });
+}
+
+function closesAfterStdinEof() {
+  return new Promise((resolve, reject) => {
+    const child = spawn('node', [SERVER], { env: SERVER_ENV, stdio: ['pipe', 'pipe', 'pipe'] });
+    let err = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error(`server remained alive after stdin EOF; stderr: ${err}`));
+    }, 5000);
+    child.stderr.on('data', (data) => {
+      err += data.toString();
+    });
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on('exit', (code, signal) => {
+      clearTimeout(timer);
+      if (code === 0 && signal === null) resolve(err);
+      else reject(new Error(`server exited abnormally after stdin EOF (code=${code}, signal=${signal})`));
+    });
+    child.stdin.end();
   });
 }
 
@@ -210,9 +238,9 @@ const probes = [
     check: (p) =>
       p.body.selected_prompt.name === 'Prompt 3 Ultimate Design Research Mockup Brief' &&
       p.body.selected_prompt.confidence === 'high' &&
-      p.body.prompt_text.includes('GPT Image 2 / Image Gen 2') &&
-      p.body.prompt_text.includes('Nano Banana Pro') &&
-      p.body.prompt_text.includes('Higgsfield'),
+      p.body.prompt_text.includes('GENERATION_PROMPT_PACK') &&
+      p.body.prompt_text.includes('tool lane +') &&
+      p.body.prompt_text.includes('paid generation or publish'),
     show: (p) =>
       `${p.body.selected_prompt.name} | ${p.body.selected_prompt.confidence} ${p.body.selected_prompt.confidence_score}/100`,
   },
@@ -267,6 +295,16 @@ const probes = [
 ];
 
 let failures = 0;
+try {
+  const lifecycleStderr = await closesAfterStdinEof();
+  if (!lifecycleStderr.includes('library ok [structured]')) {
+    throw new Error(`startup did not report structured mode; stderr: ${lifecycleStderr}`);
+  }
+  console.log('PASS  P-lifecycle: structured server closes on stdin EOF');
+} catch (error) {
+  failures += 1;
+  console.log(`FAIL  P-lifecycle: stdin EOF closes the server\n      ${error.message}`);
+}
 for (const probe of probes) {
   try {
     const result = await callTool(probe.tool, probe.args);

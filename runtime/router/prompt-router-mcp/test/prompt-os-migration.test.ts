@@ -8,9 +8,13 @@ import {
   parsePromptLibrary,
   resolveLibraryPath,
   resolveRoutes,
+  ROUTES,
+  scoreRoutes,
   type PromptEntry,
+  type WorkspaceScan,
 } from '../src/lib.js';
 import { readCapabilityIndex, readIndex } from '../src/prompt-os/build.js';
+import { loadEffectiveRoutes } from '../src/router.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
@@ -33,6 +37,21 @@ function parseFileOrThrow(p: string): PromptEntry[] {
   expect(warnings, `parser warnings in ${p}`).toHaveLength(0);
   return prompts;
 }
+
+const NEUTRAL_SCAN: WorkspaceScan = {
+  workspace_path: '/tmp/prompt-router-migration',
+  exists: true,
+  empty_workspace: false,
+  file_count: 0,
+  file_paths: [],
+  important_files: [],
+  git_status: null,
+  detected_stack: [],
+  lifecycle_stage: null,
+  lifecycle_complete: false,
+  gtm_decision: null,
+  warnings: [],
+};
 
 // ---------------------------------------------------------------------------
 // HARD GATE — byte-identical migration proof + routing baseline preserved.
@@ -85,17 +104,42 @@ describe('Prompt OS migration HARD GATE', () => {
     }
   });
 
-  it('resolveRoutes(gen) preserves the routing baseline: 30 resolved, 0 missing', () => {
-    const res = resolveRoutes(gen);
+  it('every published record has exactly one effective route', async () => {
+    const index = await readIndex(LIBRARY_DIR);
+    expect(index, 'index.json must exist').not.toBeNull();
+    const routes = await loadEffectiveRoutes(GENERATED_PATH);
+    const res = resolveRoutes(gen, routes);
+    const publishedNames = index!
+      .filter((record) => record.status === 'published')
+      .map((record) => record.name)
+      .sort();
+
     expect(res.missing_route_prompts).toEqual([]);
-    expect(res.resolved.length).toBe(30);
+    expect(res.unrouted_prompts).toEqual([]);
+    expect(res.resolved.map((route) => route.promptName).sort()).toEqual(publishedNames);
   });
 
-  itMono('resolveRoutes(mono) and resolveRoutes(gen) agree on resolved count and missing', () => {
-    const monoRes = resolveRoutes(mono);
-    const genRes = resolveRoutes(gen);
-    expect(genRes.resolved.length).toBe(monoRes.resolved.length);
-    expect(genRes.missing_route_prompts).toEqual(monoRes.missing_route_prompts);
+  it('every published trigger phrase selects its owning prompt', async () => {
+    const index = await readIndex(LIBRARY_DIR);
+    expect(index, 'index.json must exist').not.toBeNull();
+    const routes = await loadEffectiveRoutes(GENERATED_PATH);
+
+    for (const record of index!.filter((entry) => entry.status === 'published')) {
+      for (const phrase of record.trigger_phrases) {
+        const scores = scoreRoutes(routes, phrase.toLowerCase(), '', NEUTRAL_SCAN, { userGoalText: phrase });
+        expect(scores[0]?.prompt_name, `${record.name}: ${phrase}`).toBe(record.name);
+      }
+    }
+  });
+
+  itMono('the current generated library preserves every legacy monolith route', async () => {
+    const monoRes = resolveRoutes(mono, ROUTES);
+    const routes = await loadEffectiveRoutes(GENERATED_PATH);
+    const genRes = resolveRoutes(gen, routes);
+    const generatedNames = new Set(genRes.resolved.map((route) => route.promptName));
+
+    expect(monoRes.missing_route_prompts).toEqual([]);
+    for (const route of monoRes.resolved) expect(generatedNames.has(route.promptName), route.promptName).toBe(true);
   });
 
   itMono('generated library additionally contains the reference record -> 32 total', () => {

@@ -35,6 +35,9 @@ metadata-only and does not verify live endpoints, logs, tests, or artifacts.
 
 The library is **instance content** — it is not shipped here. The Apex library source lives under
 `apex/config/prompt-router/library/`; point `APEX_PROMPT_LIBRARY_PATH` at it (or any conformant library).
+In structured mode, published records supply their tags and `trigger_phrases`; the engine combines
+that metadata with its generic lifecycle/file/stack route overrides. Adding a published prompt does
+not require duplicating an instance-specific route in `src/lib.ts`.
 
 ## What ships here vs. what doesn't
 
@@ -53,5 +56,8 @@ The library is **instance content** — it is not shipped here. The Apex library
 npm run build                       # tsc → dist/
 npm start                           # run the MCP over stdio
 npm run prompt-os:build             # regenerate the library index from a prompt library
+npm run lint:prompts -- /path/to/library/prompts
+npm run eval:tier1 -- /path/to/library
 npm test                            # vitest — integration/migration suites self-skip without a library
+npm run smoke                       # stdio lifecycle + end-to-end routing probes
 ```

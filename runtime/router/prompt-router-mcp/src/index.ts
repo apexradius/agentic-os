@@ -17,11 +17,10 @@ import {
   loadLibrary,
   resolveLibraryPath,
   resolveRoutes,
-  ROUTES,
 } from './lib.js';
 import { readIndex } from './prompt-os/build.js';
 import type { IndexRecord } from './prompt-os/build.js';
-import { buildHealthReport, routePromptCore } from './router.js';
+import { buildHealthReport, loadEffectiveRoutes, routePromptCore } from './router.js';
 import { logRoutingDecision } from './prompt-os/telemetry.js';
 
 const require = createRequire(import.meta.url);
@@ -74,10 +73,11 @@ function errorCode(error: unknown, fallback: string): string {
 async function reportStartupReconciliation(): Promise<void> {
   try {
     const { prompts, warnings, source_path } = await loadLibrary(DEFAULT_LIBRARY_PATH);
-    const resolution = resolveRoutes(prompts);
-    const mode = source_path === DEFAULT_LIBRARY_PATH ? 'monolith' : 'structured';
+    const routes = await loadEffectiveRoutes(source_path);
+    const resolution = resolveRoutes(prompts, routes);
+    const mode = source_path.endsWith('index.generated.md') ? 'structured' : 'monolith';
     process.stderr.write(
-      `${MCP_NAME} v${MCP_VERSION}: library ok [${mode}] (${prompts.length} prompts, ${resolution.resolved.length}/${ROUTES.length} routes resolved)\n`,
+      `${MCP_NAME} v${MCP_VERSION}: library ok [${mode}] (${prompts.length} prompts, ${resolution.resolved.length}/${routes.length} routes resolved)\n`,
     );
     for (const warning of warnings) {
       process.stderr.write(`${MCP_NAME} parser warning: ${warning}\n`);
@@ -219,7 +219,8 @@ function createServer(): McpServer {
     async (args) => {
       try {
         const { prompts, warnings, source_path } = await loadLibrary(DEFAULT_LIBRARY_PATH, args.library_path);
-        const routedBy = new Map(ROUTES.map((route) => [route.promptName, route.trigger]));
+        const routes = await loadEffectiveRoutes(source_path);
+        const routedBy = new Map(routes.map((route) => [route.promptName, route.trigger]));
         return textResult({
           library_path: source_path,
           prompt_count: prompts.length,
@@ -253,7 +254,6 @@ function createServer(): McpServer {
         MCP_VERSION,
         resolveLibraryPath(DEFAULT_LIBRARY_PATH, args.library_path),
         DEFAULT_WORKSPACE_PATH,
-        ROUTES.length,
       );
       return textResult(report);
     },
@@ -392,6 +392,31 @@ async function serveHttp(host: string, port: number): Promise<void> {
   });
 }
 
+async function serveStdio(): Promise<void> {
+  const server = createServer();
+  const transport = new StdioServerTransport();
+  let stop!: () => void;
+  const stopped = new Promise<void>((resolve) => {
+    stop = resolve;
+  });
+  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
+
+  process.stdin.once('end', stop);
+  process.stdin.once('close', stop);
+  for (const signal of signals) process.once(signal, stop);
+
+  try {
+    await server.connect(transport);
+    if (process.stdin.readableEnded || process.stdin.destroyed) stop();
+    await stopped;
+  } finally {
+    process.stdin.off('end', stop);
+    process.stdin.off('close', stop);
+    for (const signal of signals) process.off(signal, stop);
+    await server.close();
+  }
+}
+
 async function main(): Promise<void> {
   await reportStartupReconciliation();
   const httpMode =
@@ -403,8 +428,7 @@ async function main(): Promise<void> {
     const port = Number(process.env.PORT ?? argVal('--port') ?? 3003);
     await serveHttp(host, port);
   } else {
-    const server = createServer();
-    await server.connect(new StdioServerTransport());
+    await serveStdio();
   }
 }
 

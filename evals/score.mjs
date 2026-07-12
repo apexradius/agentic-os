@@ -675,7 +675,13 @@ async function main() {
     };
   }
 
-  const floor = { floor_pass: comparison.floor_pass, regressed: comparison.regressed };
+  const floor = {
+    floor_pass: comparison.floor_pass,
+    regressed: comparison.regressed,
+    // Verdict-neutral: a zero-mutation candidate passes verification vacuously (qwen1 class —
+    // "green-but-degenerate"); judge dims carry the weight, but the scorecard must say so itself.
+    ...(comparison.floor_degenerate ? { degenerate: true, degenerate_reason: comparison.floor_degenerate_reason } : {}),
+  };
   const conditionsPass = Object.values(conditions).every((c) => c.ok);
   const verdictPass = conditionsPass && comparison.floor_pass && !comparison.regressed;
   // T3 — a --allow-deferred run can never say PARITY-PASS: a clean run is MECHANICAL-ONLY (exit 3),
@@ -719,7 +725,7 @@ async function main() {
     for (const c of Object.values(conditions)) {
       console.log(`  ${c.ok ? "green" : "RED  "}  ${c.label}${c.detail ? `  — ${c.detail}` : ""}`);
     }
-    console.log(`  ${floor.floor_pass && !floor.regressed ? "green" : "RED  "}  deterministic floor (floor_pass=${floor.floor_pass}, regressed=${floor.regressed})`);
+    console.log(`  ${floor.floor_pass && !floor.regressed ? (floor.degenerate ? "green-but-DEGENERATE" : "green") : "RED  "}  deterministic floor (floor_pass=${floor.floor_pass}, regressed=${floor.regressed}${floor.degenerate ? `, degenerate: ${floor.degenerate_reason}` : ""})`);
     if (failed.length) console.log(`  failed: ${failed.join("; ")}`);
   }
 

@@ -36,13 +36,14 @@ Codex lane needs. Fallback only: sanitized session export or the local session
 DB (the DB schema is not a stable contract; never make it the primary
 instrument). Same redaction law as every lane: no raw arguments in spans.
 
-## 4. Subagent dispatch
+## 4. Runtime agents and dispatch
 
-Native primary agents and subagents with per-agent permissions. Binding: define
-the harness roles (explore, build, verify, review, orchestrator) as custom
-agents with strict per-role permissions. Return shape, file ownership, ledger
-rows, and main-context verification are not native — enforced by the
-orchestrator SOP plus a validator plugin, same as every lane.
+Native primary agents and subagents with per-agent model pins. Binding: define
+the runtime lanes as `orchestrator`, `planner`, `explorer`, `gpt-builder`, and
+`opus-builder`. `planner` is the only read-only lane. The other runtime lanes
+inherit the shared full-capability permission profile, including task dispatch;
+return shape, file ownership, route policy, and main-context verification are
+enforced by the orchestrator SOP plus validator plugins, same as every lane.
 
 ## 5. Scope fence
 

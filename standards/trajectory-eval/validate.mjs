@@ -128,6 +128,18 @@ ok("gateHigher: verification_discipline threshold 0 also fully ungates (uniform,
 ok("compare: a NONZERO threshold still gates floor AND regression (preservation)",
   red.dimensions.tool_path.gating === true && red.pass === false);
 
+// ── 3d. floor degeneracy: zero mutation spans → floor_degenerate flag (verdict-neutral) ──
+const readOnlyCand = { schema: "trajectory/1", trace_id: "readonly", provenance: { model: "m2", prompt_version: null, task_fingerprint: "f" }, spans: [
+  { span_id: "r0", parent_span_id: null, operation: "invoke_agent", name: "invoke_agent executor", start_ts: "2026-01-03T00:00:00Z", agent_type: "executor" },
+  { span_id: "r1", operation: "execute_tool", name: "execute_tool Read", start_ts: "2026-01-03T00:00:01Z", tool_name: "Read" },
+  { span_id: "r2", operation: "execute_tool", name: "execute_tool Grep", start_ts: "2026-01-03T00:00:02Z", tool_name: "Grep" },
+] };
+const degen = compareToBaseline(readOnlyCand, baseline.trajectory);
+ok("compare: zero-mutation candidate → floor_degenerate true with reason (vacuous verification)",
+  degen.floor_degenerate === true && typeof degen.floor_degenerate_reason === "string");
+ok("compare: mutating candidate → floor_degenerate false, verdict fields unchanged",
+  green.floor_degenerate === false && green.floor_degenerate_reason === undefined && green.pass === true);
+
 // ── 4. judge layer: no provider / consistent / order-swap disagreement ──────────────
 const noProvider = await scoreJudge({ candidate: passCand.trajectory, baseline: baseline.trajectory });
 ok("scoreJudge: no provider → not gradeable (judge-required)", noProvider.gradeable === false && Object.values(noProvider.dimensions).every((d) => d.gradeable === false));

@@ -3,6 +3,7 @@ import { dirname, extname } from 'node:path';
 
 import {
   buildStackRecommendation,
+  buildEffectiveRoutes,
   buildOnComplete,
   buildPrimaryText,
   buildWorkspaceText,
@@ -11,6 +12,7 @@ import {
   assessConfidence,
   readPromptLibrary,
   resolveRoutes,
+  ROUTES,
   scanWorkspace,
   scoreRoutes,
   selectRoute,
@@ -18,11 +20,12 @@ import {
   STACK_POLICY_VERSION,
   type OnComplete,
   type RouteScore,
+  type RouteDefinition,
   type Selection,
   type StackRecommendation,
   type WorkspaceScan,
 } from './lib.js';
-import { buildProofReport, readCapabilityIndex, type PromptProofReport } from './prompt-os/build.js';
+import { buildProofReport, readCapabilityIndex, readIndex, type PromptProofReport } from './prompt-os/build.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { name: string; version: string };
@@ -400,7 +403,8 @@ function composeMultiPromptText(selectedPrompts: SelectedPromptInternal[]): stri
 
 export async function routePromptCore(options: RoutePromptOptions): Promise<RoutePromptResponse> {
   const { prompts, warnings: parserWarnings } = await readPromptLibrary(options.libraryPath);
-  const resolution = resolveRoutes(prompts);
+  const routes = await loadEffectiveRoutes(options.libraryPath);
+  const resolution = resolveRoutes(prompts, routes);
   const scan = await scanWorkspace(options.workspacePath, options.maxFiles, options.maxDepth, options.maxReadBytes);
 
   const primaryText = buildPrimaryText(options.userGoal, options.sessionSummary);
@@ -441,6 +445,9 @@ export async function routePromptCore(options: RoutePromptOptions): Promise<Rout
     warnings.push(
       `Routes excluded (prompt missing from library): ${resolution.missing_route_prompts.join('; ')}`,
     );
+  }
+  if (resolution.unrouted_prompts.length > 0) {
+    warnings.push(`Published prompts without routes: ${resolution.unrouted_prompts.join('; ')}`);
   }
 
   return {
@@ -520,21 +527,31 @@ function promptOsLibraryDir(libraryPath: string): string {
   return extname(libraryPath) ? dirname(libraryPath) : libraryPath;
 }
 
+export async function loadEffectiveRoutes(libraryPath: string): Promise<RouteDefinition[]> {
+  const index = await readIndex(promptOsLibraryDir(libraryPath));
+  return index ? buildEffectiveRoutes(ROUTES, index) : ROUTES.map((route) => ({ ...route }));
+}
+
 export async function buildHealthReport(
   serverName: string,
   serverVersion: string,
   libraryPath: string,
   defaultWorkspacePath: string,
-  routesTotal: number,
 ): Promise<HealthReport> {
+  let routesTotal = ROUTES.length;
   try {
     const { prompts, warnings } = await readPromptLibrary(libraryPath);
-    const resolution = resolveRoutes(prompts);
+    const routes = await loadEffectiveRoutes(libraryPath);
+    routesTotal = routes.length;
+    const resolution = resolveRoutes(prompts, routes);
     const promptOsDir = promptOsLibraryDir(libraryPath);
     const capabilityIndex = await readCapabilityIndex(promptOsDir);
     const proofReport = capabilityIndex ? buildProofReport(capabilityIndex) : null;
     return {
-      ok: resolution.missing_route_prompts.length === 0 && warnings.length === 0,
+      ok:
+        resolution.missing_route_prompts.length === 0 &&
+        resolution.unrouted_prompts.length === 0 &&
+        warnings.length === 0,
       server: { name: serverName, version: serverVersion },
       library: {
         path: libraryPath,
