@@ -1,5 +1,5 @@
-import postgres from "postgres";
-import { isReadOnlyQuery } from "./utils.js";
+import postgres from 'postgres';
+import { isReadOnlyQuery } from './utils.js';
 
 export interface PgConfig {
   connectionString?: string;
@@ -37,7 +37,7 @@ export class PgClient {
     };
 
     if (config.ssl) {
-      opts.ssl = "require";
+      opts.ssl = 'require';
     }
 
     if (config.connectionString) {
@@ -59,7 +59,7 @@ export class PgClient {
     const enforceReadOnly = this.config.readOnly || readOnly === true;
     if (enforceReadOnly && !isReadOnlyQuery(queryStr)) {
       throw new Error(
-        "Read-only mode: only SELECT, EXPLAIN, SHOW, WITH, and VALUES queries are allowed.",
+        'Read-only mode: only SELECT, EXPLAIN, SHOW, WITH, and VALUES queries are allowed.',
       );
     }
 

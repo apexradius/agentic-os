@@ -1,12 +1,89 @@
 {
   "id": "example-corp-tiered-release",
   "nodes": [
-    { "id": "sync-main", "owner": "role/executor", "class": "sync", "model_tier": "fast", "effort": "low", "depends_on": [], "files_owned": ["work/sync-main.txt"], "validation_command": "git fetch --all", "output_artifact": "state/synced", "resume_key": "sync-main" },
-    { "id": "edit-core", "owner": "role/executor", "class": "edit", "model_tier": "mid", "effort": "medium", "depends_on": ["sync-main"], "files_owned": ["work/edit-core.txt"], "validation_command": "true", "output_artifact": "src/core", "resume_key": "edit-core" },
-    { "id": "wire-tests", "owner": "role/executor", "class": "test-signal", "model_tier": "mid", "effort": "high", "depends_on": ["edit-core"], "files_owned": ["work/wire-tests.txt"], "validation_command": "true", "output_artifact": "ci/tests", "resume_key": "wire-tests" },
-    { "id": "write-lock", "owner": "role/executor", "class": "lockfile", "model_tier": "fast", "effort": "low", "depends_on": ["edit-core"], "files_owned": ["work/write-lock.txt"], "validation_command": "true", "output_artifact": "state/lock", "resume_key": "write-lock" },
-    { "id": "upgrade-deps", "owner": "role/executor", "class": "dep-upgrade", "model_tier": "strongest", "effort": "xhigh", "depends_on": ["write-lock", "wire-tests"], "files_owned": ["work/upgrade-deps.txt"], "validation_command": "true", "output_artifact": "state/upgraded", "resume_key": "upgrade-deps" },
-    { "id": "prune-dead", "owner": "role/executor", "class": "de-bloat", "model_tier": "mid", "effort": "medium", "depends_on": ["edit-core"], "files_owned": ["work/prune-dead.txt"], "validation_command": "true", "output_artifact": "src/pruned", "resume_key": "prune-dead" },
-    { "id": "publish-release", "owner": "role/executor", "class": "publish", "model_tier": "strongest", "effort": "high", "depends_on": ["prune-dead", "upgrade-deps"], "files_owned": ["work/publish-release.txt"], "validation_command": "true", "output_artifact": "release/tag", "resume_key": "publish-release" }
+    {
+      "id": "sync-main",
+      "owner": "role/executor",
+      "class": "sync",
+      "model_tier": "fast",
+      "effort": "low",
+      "depends_on": [],
+      "files_owned": ["work/sync-main.txt"],
+      "validation_command": "git fetch --all",
+      "output_artifact": "state/synced",
+      "resume_key": "sync-main"
+    },
+    {
+      "id": "edit-core",
+      "owner": "role/executor",
+      "class": "edit",
+      "model_tier": "mid",
+      "effort": "medium",
+      "depends_on": ["sync-main"],
+      "files_owned": ["work/edit-core.txt"],
+      "validation_command": "true",
+      "output_artifact": "src/core",
+      "resume_key": "edit-core"
+    },
+    {
+      "id": "wire-tests",
+      "owner": "role/executor",
+      "class": "test-signal",
+      "model_tier": "mid",
+      "effort": "high",
+      "depends_on": ["edit-core"],
+      "files_owned": ["work/wire-tests.txt"],
+      "validation_command": "true",
+      "output_artifact": "ci/tests",
+      "resume_key": "wire-tests"
+    },
+    {
+      "id": "write-lock",
+      "owner": "role/executor",
+      "class": "lockfile",
+      "model_tier": "fast",
+      "effort": "low",
+      "depends_on": ["edit-core"],
+      "files_owned": ["work/write-lock.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/lock",
+      "resume_key": "write-lock"
+    },
+    {
+      "id": "upgrade-deps",
+      "owner": "role/executor",
+      "class": "dep-upgrade",
+      "model_tier": "strongest",
+      "effort": "xhigh",
+      "depends_on": ["write-lock", "wire-tests"],
+      "files_owned": ["work/upgrade-deps.txt"],
+      "validation_command": "true",
+      "output_artifact": "state/upgraded",
+      "resume_key": "upgrade-deps"
+    },
+    {
+      "id": "prune-dead",
+      "owner": "role/executor",
+      "class": "de-bloat",
+      "model_tier": "mid",
+      "effort": "medium",
+      "depends_on": ["edit-core"],
+      "files_owned": ["work/prune-dead.txt"],
+      "validation_command": "true",
+      "output_artifact": "src/pruned",
+      "resume_key": "prune-dead"
+    },
+    {
+      "id": "publish-release",
+      "owner": "role/executor",
+      "class": "publish",
+      "model_tier": "strongest",
+      "effort": "high",
+      "depends_on": ["prune-dead", "upgrade-deps"],
+      "files_owned": ["work/publish-release.txt"],
+      "validation_command": "true",
+      "output_artifact": "release/tag",
+      "resume_key": "publish-release"
+    }
   ]
 }

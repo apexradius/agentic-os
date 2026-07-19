@@ -4,7 +4,7 @@
 // gradient domination. Those are statements about the *distribution* of hue across a
 // surface, so they need a histogram, not a per-declaration check.
 
-import { rgbToHsl, isNeutral } from "./color.mjs";
+import { isNeutral, rgbToHsl } from './color.mjs';
 
 /**
  * Classify a palette from a list of {r,g,b,a} colors.
@@ -29,16 +29,26 @@ export function classifyPalette(colors) {
   }
   const chromaticCount = hues.length;
   if (chromaticCount === 0) {
-    return { chromaticCount: 0, dominantHue: null, spreadDegrees: null, oneHue: false, beigeBrown: false };
+    return {
+      chromaticCount: 0,
+      dominantHue: null,
+      spreadDegrees: null,
+      oneHue: false,
+      beigeBrown: false,
+    };
   }
 
   // Circular spread: smallest arc that contains all hues.
   const sorted = [...hues].sort((a, b) => a - b);
-  let maxGap = 0, gapStart = 0;
+  let maxGap = 0,
+    gapStart = 0;
   for (let i = 0; i < sorted.length; i++) {
     const next = i === sorted.length - 1 ? sorted[0] + 360 : sorted[i + 1];
     const gap = next - sorted[i];
-    if (gap > maxGap) { maxGap = gap; gapStart = i; }
+    if (gap > maxGap) {
+      maxGap = gap;
+      gapStart = i;
+    }
   }
   const spreadDegrees = 360 - maxGap;
   const dominantHue = Math.round(sorted[(gapStart + 1) % sorted.length]);
@@ -53,7 +63,8 @@ export function classifyPalette(colors) {
 
 /** Are the chromatic stops of a gradient predominantly in the blue→purple band (215–290°)? */
 export function isPurpleBlueDominated(colors) {
-  let chromatic = 0, band = 0;
+  let chromatic = 0,
+    band = 0;
   for (const c of colors) {
     if (isNeutral(c)) continue;
     chromatic++;

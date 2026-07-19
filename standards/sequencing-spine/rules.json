@@ -1,9 +1,33 @@
 [
   { "before": "sync", "after": "edit", "why": "edits on a stale base create merge debt" },
-  { "before": "cascade", "after": "gate-add", "why": "a decision must reach every artifact before the gate that checks them is armed, or the gate fires on known-stale state" },
-  { "before": "cascade", "after": "publish", "why": "publish the fully-propagated shape, not a half-cascaded one" },
-  { "before": "pin", "after": "baseline", "why": "a baseline recorded against an unpinned or dead version is worthless" },
-  { "before": "lockfile", "after": "dep-upgrade", "why": "lock the resolved graph before bumping majors, so the bump is reviewable and revertable" },
-  { "before": "test-signal", "after": "dep-upgrade", "why": "establish test signal before an upgrade so breakage is detectable" },
-  { "before": "de-bloat", "after": "publish", "why": "publish the cleaned shape once; do not publish and then prune" }
+  {
+    "before": "cascade",
+    "after": "gate-add",
+    "why": "a decision must reach every artifact before the gate that checks them is armed, or the gate fires on known-stale state"
+  },
+  {
+    "before": "cascade",
+    "after": "publish",
+    "why": "publish the fully-propagated shape, not a half-cascaded one"
+  },
+  {
+    "before": "pin",
+    "after": "baseline",
+    "why": "a baseline recorded against an unpinned or dead version is worthless"
+  },
+  {
+    "before": "lockfile",
+    "after": "dep-upgrade",
+    "why": "lock the resolved graph before bumping majors, so the bump is reviewable and revertable"
+  },
+  {
+    "before": "test-signal",
+    "after": "dep-upgrade",
+    "why": "establish test signal before an upgrade so breakage is detectable"
+  },
+  {
+    "before": "de-bloat",
+    "after": "publish",
+    "why": "publish the cleaned shape once; do not publish and then prune"
+  }
 ]

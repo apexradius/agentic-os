@@ -45,10 +45,7 @@
         }
       },
       "additionalProperties": false,
-      "anyOf": [
-        { "required": ["contains"] },
-        { "required": ["fn"] }
-      ]
+      "anyOf": [{ "required": ["contains"] }, { "required": ["fn"] }]
     },
     "discoverable_fact": {
       "type": "object",

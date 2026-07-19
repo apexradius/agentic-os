@@ -9,6 +9,7 @@ const out = {
   warnings: (warnings || []).length,
   resolved: res.resolved.length,
   missing: (res.missing || []).length,
-  ok: (warnings || []).length === 0 && res.resolved.length === 28 && (res.missing || []).length === 0,
+  ok:
+    (warnings || []).length === 0 && res.resolved.length === 28 && (res.missing || []).length === 0,
 };
 console.log(JSON.stringify(out));

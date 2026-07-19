@@ -11,11 +11,11 @@ const BUDGET = 200_000;
 /** Recursively gather string content from an arbitrary tool_response node into `out`. */
 export function collectInto(node, out) {
   if (out.reduce((n, s) => n + s.length, 0) > BUDGET) return;
-  if (typeof node === "string") {
+  if (typeof node === 'string') {
     out.push(node);
   } else if (Array.isArray(node)) {
     for (const v of node) collectInto(v, out);
-  } else if (node && typeof node === "object") {
+  } else if (node && typeof node === 'object') {
     for (const v of Object.values(node)) collectInto(v, out);
   }
 }
@@ -24,5 +24,5 @@ export function collectInto(node, out) {
 export function collectText(toolResponse) {
   const parts = [];
   collectInto(toolResponse, parts);
-  return parts.join("\n");
+  return parts.join('\n');
 }

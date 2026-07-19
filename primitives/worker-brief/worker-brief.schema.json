@@ -5,15 +5,20 @@
   "description": "The self-contained task an orchestrator hands a cold worker (kind=brief) and the summary-only result the worker hands back (kind=return). One document is one or the other, discriminated by `kind`. The return shape enforces 'summary only, never the trajectory' by omission — additionalProperties:false and no field for a tool log — so a conforming return literally cannot carry the reasoning trace. See framework/coordination/fan-out.md.",
   "type": "object",
   "required": ["kind"],
-  "oneOf": [
-    { "$ref": "#/$defs/brief" },
-    { "$ref": "#/$defs/return" }
-  ],
+  "oneOf": [{ "$ref": "#/$defs/brief" }, { "$ref": "#/$defs/return" }],
   "$defs": {
     "brief": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "objective", "inputs", "constraints", "stance", "verify_bar", "return_contract"],
+      "required": [
+        "kind",
+        "objective",
+        "inputs",
+        "constraints",
+        "stance",
+        "verify_bar",
+        "return_contract"
+      ],
       "properties": {
         "kind": { "const": "brief" },
         "objective": {

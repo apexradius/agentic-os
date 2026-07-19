@@ -3,11 +3,11 @@
 // global --read-only lock cannot be relaxed per-call. Runs against the compiled
 // dist output. No live database: the client's `sql` handle is stubbed so the
 // read-only gate (which runs before any connection) is exercised in isolation.
-import assert from "node:assert/strict";
-import test from "node:test";
-import { z } from "zod";
-import { PgClient } from "../dist/client.js";
-import { registerQueryTools } from "../dist/tools/query.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { z } from 'zod';
+import { PgClient } from '../dist/client.js';
+import { registerQueryTools } from '../dist/tools/query.js';
 
 function makeFakeServer() {
   const tools = {};
@@ -24,7 +24,7 @@ function makeFakeServer() {
 // real code under test.
 function makeClient(configReadOnly) {
   const client = new PgClient({
-    host: "127.0.0.1",
+    host: '127.0.0.1',
     port: 1,
     maxRows: 500,
     queryTimeout: 1000,
@@ -53,41 +53,41 @@ function getPgQuery(configReadOnly) {
   return { shape, handler, client };
 }
 
-test("pg_query schema defaults readOnly to true when the arg is omitted", () => {
+test('pg_query schema defaults readOnly to true when the arg is omitted', () => {
   const { shape } = getPgQuery(false);
-  const parsed = z.object(shape).parse({ sql: "SELECT 1" });
+  const parsed = z.object(shape).parse({ sql: 'SELECT 1' });
   assert.equal(parsed.readOnly, true);
 });
 
-test("omitted readOnly rejects a write statement", async () => {
+test('omitted readOnly rejects a write statement', async () => {
   const { shape, handler, client } = getPgQuery(false);
-  const args = z.object(shape).parse({ sql: "DELETE FROM users" });
+  const args = z.object(shape).parse({ sql: 'DELETE FROM users' });
   const res = await handler(args);
   assert.equal(res.isError, true);
   assert.match(res.content[0].text, /Read-only mode/);
-  assert.equal(client.calls.length, 0, "write must not reach the sql layer");
+  assert.equal(client.calls.length, 0, 'write must not reach the sql layer');
 });
 
-test("readOnly:false permits a write statement (reaches the sql layer)", async () => {
+test('readOnly:false permits a write statement (reaches the sql layer)', async () => {
   const { shape, handler, client } = getPgQuery(false);
-  const args = z.object(shape).parse({ sql: "DELETE FROM users", readOnly: false });
+  const args = z.object(shape).parse({ sql: 'DELETE FROM users', readOnly: false });
   const res = await handler(args);
   assert.notEqual(res.isError, true);
-  assert.equal(client.calls.length, 1, "write should reach the sql layer");
+  assert.equal(client.calls.length, 1, 'write should reach the sql layer');
   assert.match(client.calls[0].q, /DELETE/);
 });
 
-test("default (read-only) still allows a SELECT", async () => {
+test('default (read-only) still allows a SELECT', async () => {
   const { shape, handler, client } = getPgQuery(false);
-  const args = z.object(shape).parse({ sql: "SELECT 1" });
+  const args = z.object(shape).parse({ sql: 'SELECT 1' });
   const res = await handler(args);
   assert.notEqual(res.isError, true);
   assert.equal(client.calls.length, 1);
 });
 
-test("server-wide --read-only cannot be relaxed by readOnly:false", async () => {
+test('server-wide --read-only cannot be relaxed by readOnly:false', async () => {
   const { shape, handler, client } = getPgQuery(true);
-  const args = z.object(shape).parse({ sql: "DELETE FROM users", readOnly: false });
+  const args = z.object(shape).parse({ sql: 'DELETE FROM users', readOnly: false });
   const res = await handler(args);
   assert.equal(res.isError, true);
   assert.match(res.content[0].text, /Read-only mode/);

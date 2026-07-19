@@ -1,5 +1,5 @@
-import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { MessagePort } from "node:worker_threads";
+import type { MessagePort } from 'node:worker_threads';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export class WorkerServerTransport implements Transport {
   onclose?: () => void;
@@ -7,19 +7,19 @@ export class WorkerServerTransport implements Transport {
   onmessage?: (message: unknown) => void;
 
   constructor(private port: MessagePort) {
-    this.port.on("message", (msg) => {
+    this.port.on('message', (msg) => {
       if (this.onmessage) this.onmessage(msg);
     });
-    this.port.on("error", (err) => {
+    this.port.on('error', (err) => {
       if (this.onerror) this.onerror(err);
     });
-    this.port.on("close", () => {
+    this.port.on('close', () => {
       if (this.onclose) this.onclose();
     });
   }
 
   async start() {}
-  
+
   async close() {
     this.port.close();
   }
@@ -35,13 +35,13 @@ export class WorkerClientTransport implements Transport {
   onmessage?: (message: unknown) => void;
 
   constructor(private worker: any) {
-    this.worker.on("message", (msg: any) => {
+    this.worker.on('message', (msg: any) => {
       if (this.onmessage) this.onmessage(msg);
     });
-    this.worker.on("error", (err: any) => {
+    this.worker.on('error', (err: any) => {
       if (this.onerror) this.onerror(err);
     });
-    this.worker.on("exit", () => {
+    this.worker.on('exit', () => {
       if (this.onclose) this.onclose();
     });
   }

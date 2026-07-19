@@ -1,0 +1,42 @@
+{
+  "name": "@framework/pipeline-mcp",
+  "version": "0.1.0",
+  "description": "Reference MCP server for pipeline stage completion — the first adopter of the completion-proof params (a state-changing tool that refuses to record 'done' without proof).",
+  "keywords": [
+    "mcp",
+    "pipeline",
+    "proof",
+    "completion",
+    "claude",
+    "ai"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "pipeline-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "test": "vitest --passWithNoTests run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3",
+    "@framework/mcp-shared": "1.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

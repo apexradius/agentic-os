@@ -48,11 +48,13 @@ disallowedTools: Write, Edit
     Reject-first. Any of these present a finding (blocking unless trivially cosmetic):
     - Generic-AI look: centered gradient hero filler, decorative orbs/blobs, atmospheric stock darkness, glassmorphism-as-default.
     - Radius misuse: pill-shaping every control; marketing surfaces not at radius 0; operational UI exceeding a small max (~8px).
-    - Type: body text below 16px; viewport-width font scaling instead of stable role-based sizes; metrics without tabular numbers.
+    - Type: body text below 16px; viewport-width font scaling instead of stable role-based sizes; metrics without tabular numbers; more than two font families; a display/handwritten face setting body copy; body line-height far from ~150% or heading line-height outside ~110-130%.
     - Spacing: off the 8px grid; a card nested inside another card (never allowed).
-    - Color: gradient-text, side-stripe cards, purple/blue gradient domination, beige/brown monotone, one-hue palette; status conveyed by color alone (must pair with text or icon).
+    - Color: gradient-text, side-stripe cards, purple/blue gradient domination, beige/brown monotone, one-hue palette; status conveyed by color alone (must pair with text or icon); in an operational surface, a fixed 60-30-10 split instead of a layered neutral shell, an accent bled across non-primary elements, or an active/selected state marked by color alone (needs ≥2 cues).
+    - Depth: harsh pure-black drop shadows, or shadows untinted toward their background; dark-mode elevation faked with shadow instead of a lighter surface; pure #000/#fff backgrounds (must be off-black/off-white).
     - Motion: animating anything beyond opacity/transform without cause; no prefers-reduced-motion handling; motion that hides data or causes layout shift; decorative animation on conversion-critical or data-bearing interactions.
     - Imagery: atmospheric stock fill where the user needs to inspect the real product/place/workflow.
+    - Copy: Lorem Ipsum or placeholder filler on a surface presented as done.
     - Controls: icon-only actions with no label or tooltip.
   </Design_Anti_Patterns>
 

@@ -1,6 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { promises as fs } from 'node:fs';
-import { existsSync } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -182,7 +181,8 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'Application Development Lifecycle Master Prompt',
     trigger: 'S0_BOOTSTRAP',
-    reason: 'Use when starting an application from an empty folder or driving the staged product lifecycle.',
+    reason:
+      'Use when starting an application from an empty folder or driving the staged product lifecycle.',
     emptyWorkspace: true,
     chainNext: { trigger: 'GTM_READY', when: 'after S11_OPERATE passes its exit gate' },
     keywords: [
@@ -343,7 +343,8 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'QA Test Strategy Prompt',
     trigger: 'QA_PLAN',
-    reason: 'Use when the main deliverable is test strategy, regression coverage, or quality gates.',
+    reason:
+      'Use when the main deliverable is test strategy, regression coverage, or quality gates.',
     keywords: [
       'qa',
       'test plan',
@@ -415,7 +416,8 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'Existing Codebase Onboarding Prompt',
     trigger: 'ONBOARD_REPO',
-    reason: 'Use when entering an existing repository and needing orientation before first safe action.',
+    reason:
+      'Use when entering an existing repository and needing orientation before first safe action.',
     existingWorkspace: true,
     keywords: [
       'existing codebase',
@@ -450,7 +452,8 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'Focused GTM Slice Prompt',
     trigger: 'FOCUSED_GTM_SLICE',
-    reason: 'Use when repairing or classifying one GTM blocker for one app repo before rerunning readiness.',
+    reason:
+      'Use when repairing or classifying one GTM blocker for one app repo before rerunning readiness.',
     keywords: [
       'focused gtm',
       'focused go to market',
@@ -469,7 +472,10 @@ export const ROUTES: RouteDefinition[] = [
     promptName: 'Go To Market Readiness Prompt',
     trigger: 'GTM_READY',
     reason: 'Use for launch readiness, channel plan, sales enablement, and market entry checks.',
-    chainNext: { trigger: 'ACCOUNT_GROWTH_RUN', when: 'after a GO decision in docs/gtm/readiness.md' },
+    chainNext: {
+      trigger: 'ACCOUNT_GROWTH_RUN',
+      when: 'after a GO decision in docs/gtm/readiness.md',
+    },
     keywords: [
       'go to market',
       'gtm readiness',
@@ -576,19 +582,43 @@ export const ROUTES: RouteDefinition[] = [
     promptName: 'Paid Advertising',
     trigger: 'PAID_ADS_PLAN',
     reason: 'Use for Google, Meta, LinkedIn, or other paid acquisition planning.',
-    keywords: ['paid ads', 'google ads', 'meta ads', 'facebook ads', 'linkedin ads', 'ad campaign', 'ppc'],
+    keywords: [
+      'paid ads',
+      'google ads',
+      'meta ads',
+      'facebook ads',
+      'linkedin ads',
+      'ad campaign',
+      'ppc',
+    ],
   },
   {
     promptName: 'SEO & Content',
     trigger: 'SEO_CONTENT_PLAN',
     reason: 'Use for search visibility, rankings, content strategy, and AI citation growth.',
-    keywords: ['seo', 'content', 'rankings', 'search visibility', 'blog', 'editorial', 'ai citation'],
+    keywords: [
+      'seo',
+      'content',
+      'rankings',
+      'search visibility',
+      'blog',
+      'editorial',
+      'ai citation',
+    ],
   },
   {
     promptName: 'Social Media Management',
     trigger: 'SOCIAL_RUN',
     reason: 'Use for social calendars, posting systems, comments, and community workflows.',
-    keywords: ['social media', 'instagram', 'facebook', 'linkedin', 'tiktok', 'content calendar', 'community'],
+    keywords: [
+      'social media',
+      'instagram',
+      'facebook',
+      'linkedin',
+      'tiktok',
+      'content calendar',
+      'community',
+    ],
   },
   {
     promptName: 'Reputation & Reviews',
@@ -600,7 +630,14 @@ export const ROUTES: RouteDefinition[] = [
     promptName: 'Marketing Automation',
     trigger: 'AUTOMATION_RUN',
     reason: 'Use for CRM workflows, lead nurture, and operational automations.',
-    keywords: ['marketing automation', 'crm', 'nurture', 'follow up', 'workflow automation', 'zapier'],
+    keywords: [
+      'marketing automation',
+      'crm',
+      'nurture',
+      'follow up',
+      'workflow automation',
+      'zapier',
+    ],
   },
   {
     promptName: 'Analytics & Reporting',
@@ -623,14 +660,27 @@ export const ROUTES: RouteDefinition[] = [
   {
     promptName: 'Lead Generation Funnel',
     trigger: 'LEAD_FUNNEL_RUN',
-    reason: 'Use for qualified booked opportunities, funnel design, qualification, and conversion flow.',
-    keywords: ['lead generation', 'lead funnel', 'qualified leads', 'booked calls', 'conversion funnel'],
+    reason:
+      'Use for qualified booked opportunities, funnel design, qualification, and conversion flow.',
+    keywords: [
+      'lead generation',
+      'lead funnel',
+      'qualified leads',
+      'booked calls',
+      'conversion funnel',
+    ],
   },
   {
     promptName: 'Growth Ops System',
     trigger: 'GROWTH_OPS_RUN',
     reason: 'Use for growth operations spanning intake, automation, and reporting.',
-    keywords: ['growth ops', 'growth operations', 'growth engine', 'intake automation', 'operations automation'],
+    keywords: [
+      'growth ops',
+      'growth operations',
+      'growth engine',
+      'intake automation',
+      'operations automation',
+    ],
   },
   {
     promptName: 'AI Voice Agent',
@@ -665,7 +715,14 @@ export const ROUTES: RouteDefinition[] = [
     trigger: 'ENGAGEMENT_MODEL',
     reason: 'Use to choose between managed retainer and fixed-scope engagement shapes.',
     chainNext: { trigger: 'ACCOUNT_GROWTH_RUN', when: 'after the engagement model is selected' },
-    keywords: ['engagement model', 'retainer', 'managed retainer', 'one-and-done', 'one and done', 'fixed scope'],
+    keywords: [
+      'engagement model',
+      'retainer',
+      'managed retainer',
+      'one-and-done',
+      'one and done',
+      'fixed scope',
+    ],
   },
   {
     promptName: 'Account Growth System',
@@ -688,7 +745,10 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 function routeTriggerFromId(id: string): string {
-  return `${id.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '')}_RUN`;
+  return `${id
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')}_RUN`;
 }
 
 /**
@@ -729,8 +789,10 @@ export function buildEffectiveRoutes(
 
   const names = routes.map((route) => route.promptName);
   const triggers = routes.map((route) => route.trigger);
-  if (new Set(names).size !== names.length) throw new Error('route table contains duplicate prompt names');
-  if (new Set(triggers).size !== triggers.length) throw new Error('route table contains duplicate triggers');
+  if (new Set(names).size !== names.length)
+    throw new Error('route table contains duplicate prompt names');
+  if (new Set(triggers).size !== triggers.length)
+    throw new Error('route table contains duplicate triggers');
   return routes;
 }
 
@@ -853,7 +915,9 @@ export function parsePromptLibrary(libraryText: string): ParsedLibrary {
   }
 
   if (state === 'inside' && candidate) {
-    warnings.push(`Unbalanced \`\`\` fence: section "${candidate}" never closed; partial text kept`);
+    warnings.push(
+      `Unbalanced \`\`\` fence: section "${candidate}" never closed; partial text kept`,
+    );
     const text = capture.join('\n').trim();
     if (text) prompts.push({ name: candidate, slug: slugify(candidate), text });
   }
@@ -926,14 +990,16 @@ export function resolveLibraryPath(defaultLibraryPath: string, explicitPath?: st
  * as unrouted, but they are in UNROUTED_ALLOWED by virtue of being loop fragments
  * (callers must filter them when listing user-facing prompts if desired).
  */
-async function loadLibraryStructured(generatedPath: string): Promise<ParsedLibrary & { source_path: string }> {
+async function loadLibraryStructured(
+  generatedPath: string,
+): Promise<ParsedLibrary & { source_path: string }> {
   // Step 1: parse the generated markdown (monolith-equivalent)
   const parsed = await readPromptLibrary(generatedPath);
 
   // Step 2: load index.json to get includes metadata
   const libraryDir = path.dirname(generatedPath);
   const indexPath = path.join(libraryDir, 'index.json');
-  let indexBySlug = new Map<string, string[]>();
+  const indexBySlug = new Map<string, string[]>();
   try {
     const raw = await fs.readFile(indexPath, 'utf8');
     const records = JSON.parse(raw) as Array<{
@@ -1004,10 +1070,15 @@ export function findPrompt(prompts: PromptEntry[], requestedName: string): Promp
 
 // Reconcile the route table against the parsed library. A route whose prompt
 // is missing is excluded from scoring (loudly) instead of failing at selection.
-export function resolveRoutes(prompts: PromptEntry[], routes: RouteDefinition[] = ROUTES): RouteResolution {
+export function resolveRoutes(
+  prompts: PromptEntry[],
+  routes: RouteDefinition[] = ROUTES,
+): RouteResolution {
   const names = new Set(prompts.map((prompt) => prompt.name));
   const routedNames = new Set(routes.map((route) => route.promptName));
-  const missing = routes.filter((route) => !names.has(route.promptName)).map((route) => route.promptName);
+  const missing = routes
+    .filter((route) => !names.has(route.promptName))
+    .map((route) => route.promptName);
   const unrouted = prompts
     .map((prompt) => prompt.name)
     .filter((name) => !routedNames.has(name) && !UNROUTED_ALLOWED.has(name));
@@ -1151,7 +1222,9 @@ export function isSensitivePath(relativePath: string): boolean {
 
 export function isImportantPath(relativePath: string): boolean {
   const normalized = normalizeRelativePath(relativePath);
-  return IMPORTANT_EXACT_PATHS.has(normalized) || IMPORTANT_BASENAMES.has(path.basename(normalized));
+  return (
+    IMPORTANT_EXACT_PATHS.has(normalized) || IMPORTANT_BASENAMES.has(path.basename(normalized))
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1205,7 +1278,9 @@ async function walkWorkspace(
   try {
     entries = await fs.readdir(currentPath, { withFileTypes: true });
   } catch (error) {
-    warnings.push(`Could not read ${path.relative(rootPath, currentPath) || '.'}: ${errorMessage(error)}`);
+    warnings.push(
+      `Could not read ${path.relative(rootPath, currentPath) || '.'}: ${errorMessage(error)}`,
+    );
     return;
   }
 
@@ -1225,7 +1300,16 @@ async function walkWorkspace(
 
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name) || isSensitivePath(relativePath)) continue;
-      await walkWorkspace(rootPath, absolutePath, depth + 1, maxDepth, maxFiles, files, warnings, flags);
+      await walkWorkspace(
+        rootPath,
+        absolutePath,
+        depth + 1,
+        maxDepth,
+        maxFiles,
+        files,
+        warnings,
+        flags,
+      );
       continue;
     }
 
@@ -1268,7 +1352,9 @@ export function detectStack(filePaths: string[], importantText = ''): string[] {
   if (names.has('package.json')) stack.add('node');
   if (
     names.has('tsconfig.json') ||
-    filePaths.some((p) => p.startsWith('src/') || p.includes('/src/') || p.endsWith('.ts') || p.endsWith('.tsx'))
+    filePaths.some(
+      (p) => p.startsWith('src/') || p.includes('/src/') || p.endsWith('.ts') || p.endsWith('.tsx'),
+    )
   ) {
     stack.add('typescript');
   }
@@ -1280,32 +1366,45 @@ export function detectStack(filePaths: string[], importantText = ''): string[] {
   ) {
     stack.add('frontend');
   }
-  if (names.has('next.config.js') || names.has('next.config.mjs') || /"next"\s*:/.test(joined)) stack.add('nextjs');
+  if (names.has('next.config.js') || names.has('next.config.mjs') || /"next"\s*:/.test(joined))
+    stack.add('nextjs');
   if (names.has('astro.config.mjs') || /"astro"\s*:/.test(joined)) stack.add('astro');
   if (names.has('vite.config.ts') || /"vite"\s*:/.test(joined)) stack.add('vite');
   if (/"react"\s*:/.test(joined)) stack.add('react');
   if (/"@react-three\/fiber"\s*:/.test(joined)) stack.add('react-three-fiber');
   if (/"three"\s*:/.test(joined)) stack.add('threejs');
   if (/"gsap"\s*:/.test(joined)) stack.add('gsap');
-  if (/"tailwindcss"\s*:/.test(joined) || filePaths.some((p) => p.includes('tailwind.config.'))) stack.add('tailwind');
+  if (/"tailwindcss"\s*:/.test(joined) || filePaths.some((p) => p.includes('tailwind.config.')))
+    stack.add('tailwind');
   if (/"@sanity\/client"\s*:/.test(joined) || /"sanity"\s*:/.test(joined)) stack.add('sanity');
   if (/"stripe"\s*:/.test(joined)) stack.add('stripe');
-  if (/"prisma"\s*:/.test(joined) || filePaths.some((p) => p.startsWith('prisma/'))) stack.add('prisma');
+  if (/"prisma"\s*:/.test(joined) || filePaths.some((p) => p.startsWith('prisma/')))
+    stack.add('prisma');
   if (/"@supabase\/supabase-js"\s*:/.test(joined)) stack.add('supabase');
   if (/"redis"\s*:/.test(joined) || /"ioredis"\s*:/.test(joined)) stack.add('redis');
   if (/"vue"\s*:/.test(joined)) stack.add('vue');
   if (/"nuxt"\s*:/.test(joined)) stack.add('nuxt');
   if (/"@sveltejs\/kit"\s*:/.test(joined) || /"sveltekit"\s*:/.test(joined)) stack.add('sveltekit');
   if (joined.includes('webflow')) stack.add('webflow');
-  if (joined.includes('custom js') || joined.includes('vanilla js') || joined.includes('vanilla javascript')) {
+  if (
+    joined.includes('custom js') ||
+    joined.includes('vanilla js') ||
+    joined.includes('vanilla javascript')
+  ) {
     stack.add('custom_js');
   }
   if (/"cloudinary"\s*:/.test(joined)) stack.add('cloudinary');
   if (joined.includes('postgres') || joined.includes('postgresql')) stack.add('postgresql');
-  if (filePaths.some((p) => path.basename(p).toLowerCase().startsWith('dockerfile')) || joined.includes('docker')) {
+  if (
+    filePaths.some((p) => path.basename(p).toLowerCase().startsWith('dockerfile')) ||
+    joined.includes('docker')
+  ) {
     stack.add('docker');
   }
-  if (joined.includes('kubernetes') || filePaths.some((p) => p.startsWith('k8s/') || p.startsWith('kubernetes/'))) {
+  if (
+    joined.includes('kubernetes') ||
+    filePaths.some((p) => p.startsWith('k8s/') || p.startsWith('kubernetes/'))
+  ) {
     stack.add('kubernetes');
   }
   if (names.has('pyproject.toml') || names.has('requirements.txt')) stack.add('python');
@@ -1325,7 +1424,11 @@ const PRIMARY_SHELLS = [
   { key: 'sveltekit', label: 'SvelteKit', aliases: ['sveltekit', 'svelte kit', 'svelte app'] },
   { key: 'webflow', label: 'Webflow', aliases: ['webflow'] },
   { key: 'vite', label: 'Vite', aliases: ['vite', 'vite app'] },
-  { key: 'custom_js', label: 'Custom JS', aliases: ['custom js', 'vanilla js', 'vanilla javascript'] },
+  {
+    key: 'custom_js',
+    label: 'Custom JS',
+    aliases: ['custom js', 'vanilla js', 'vanilla javascript'],
+  },
 ] as const;
 
 const STACK_ALIASES = [
@@ -1333,7 +1436,10 @@ const STACK_ALIASES = [
   { canonical: 'Next.js', aliases: ['next', 'next.js', 'nextjs', 'next app'] },
   { canonical: 'React', aliases: ['react'] },
   { canonical: 'React components', aliases: ['react components', 'react component'] },
-  { canonical: 'React Three Fiber', aliases: ['react three fiber', 'react-three-fiber', 'r3f', '@react-three/fiber'] },
+  {
+    canonical: 'React Three Fiber',
+    aliases: ['react three fiber', 'react-three-fiber', 'r3f', '@react-three/fiber'],
+  },
   { canonical: 'Three.js', aliases: ['three.js', 'threejs', 'three'] },
   { canonical: 'GSAP', aliases: ['gsap'] },
   { canonical: 'Tailwind', aliases: ['tailwind', 'tailwindcss', 'tailwind css'] },
@@ -1427,7 +1533,10 @@ function hasKeyword(text: string, keywords: string[]): boolean {
   return keywords.some((keyword) => keywordMatcher(keyword).test(text));
 }
 
-function collectStackAliases(text: string, detectedStack: string[]): { technologies: string[]; aliases: string[] } {
+function collectStackAliases(
+  text: string,
+  detectedStack: string[],
+): { technologies: string[]; aliases: string[] } {
   const technologies = new Set<string>();
   const aliases = new Set<string>();
 
@@ -1492,7 +1601,14 @@ export function buildStackRecommendation(
     siteType = 'commerce_storefront';
   } else if (
     selectedTrigger === 'WEB_BUILD' ||
-    hasKeyword(primaryText, ['public site', 'public website', 'brand site', 'brand website', 'marketing site', 'landing page'])
+    hasKeyword(primaryText, [
+      'public site',
+      'public website',
+      'brand site',
+      'brand website',
+      'marketing site',
+      'landing page',
+    ])
   ) {
     siteType = 'public_brand_site';
   } else if (
@@ -1515,7 +1631,8 @@ export function buildStackRecommendation(
       optional_addons: requestedOptional(PUBLIC_SITE_OPTIONAL, PUBLIC_SITE_CORE_STACK),
       conflicts,
       aliases_matched: aliases,
-      reason: 'Public/brand site work should use Astro as the shell and add heavier services only when the brief requires them.',
+      reason:
+        'Public/brand site work should use Astro as the shell and add heavier services only when the brief requires them.',
     };
   }
 
@@ -1528,7 +1645,8 @@ export function buildStackRecommendation(
       optional_addons: requestedOptional(APP_SAAS_OPTIONAL, APP_SAAS_CORE_STACK),
       conflicts,
       aliases_matched: aliases,
-      reason: 'App/SaaS work should use Next.js as the shell with Stripe in the default commercial path.',
+      reason:
+        'App/SaaS work should use Next.js as the shell with Stripe in the default commercial path.',
     };
   }
 
@@ -1541,7 +1659,8 @@ export function buildStackRecommendation(
       optional_addons: requestedOptional(new Set(['Cloudinary']), SHOPIFY_CORE_STACK),
       conflicts,
       aliases_matched: aliases,
-      reason: 'Shopify storefront work should stay on the Shopify/Liquid route unless the brief explicitly calls for a headless build.',
+      reason:
+        'Shopify storefront work should stay on the Shopify/Liquid route unless the brief explicitly calls for a headless build.',
     };
   }
 
@@ -1554,7 +1673,8 @@ export function buildStackRecommendation(
     optional_addons: technologies,
     conflicts,
     aliases_matched: aliases,
-    reason: 'No public-site, app/SaaS, or commerce-storefront intent was strong enough to make a stack recommendation.',
+    reason:
+      'No public-site, app/SaaS, or commerce-storefront intent was strong enough to make a stack recommendation.',
   };
 }
 
@@ -1615,7 +1735,12 @@ export async function scanWorkspace(
       break;
     }
     if (importantSeen.has(file.relativePath) || !isImportantPath(file.relativePath)) continue;
-    const read = await readImportantFile(file.absolutePath, file.relativePath, maxReadBytes, warnings);
+    const read = await readImportantFile(
+      file.absolutePath,
+      file.relativePath,
+      maxReadBytes,
+      warnings,
+    );
     if (read) {
       importantFiles.push(read);
       importantSeen.add(file.relativePath);
@@ -1629,12 +1754,11 @@ export async function scanWorkspace(
   }
 
   const lifecycle = extractLifecycleState(importantFiles);
-  const detectedStack = detectStack(
-    filePaths,
-    importantFiles.map((file) => file.text).join('\n'),
-  );
+  const detectedStack = detectStack(filePaths, importantFiles.map((file) => file.text).join('\n'));
   for (const conflict of buildStackConflicts(detectedStack)) {
-    warnings.push(`Stack shell conflict detected: ${conflict.shells.join(', ')}. ${conflict.recommendation}`);
+    warnings.push(
+      `Stack shell conflict detected: ${conflict.shells.join(', ')}. ${conflict.recommendation}`,
+    );
   }
 
   return {
@@ -1754,16 +1878,35 @@ export function scoreRoutes(
     // Deterministic chain-state signals. They are authoritative only when the
     // operator did not state a fresh goal, or the fresh goal is itself asking
     // to continue the lifecycle/chain. Otherwise explicit intent wins.
-    if (chainStateCanRoute && scan.lifecycle_stage && !scan.lifecycle_complete && route.trigger === 'S0_BOOTSTRAP') {
+    if (
+      chainStateCanRoute &&
+      scan.lifecycle_stage &&
+      !scan.lifecycle_complete &&
+      route.trigger === 'S0_BOOTSTRAP'
+    ) {
       bump(WEIGHTS.STATE, QUALITY.STATE, `lifecycle:${scan.lifecycle_stage}`);
     }
-    if (chainStateCanRoute && scan.lifecycle_complete && route.trigger === 'GTM_READY' && scan.gtm_decision !== 'go') {
+    if (
+      chainStateCanRoute &&
+      scan.lifecycle_complete &&
+      route.trigger === 'GTM_READY' &&
+      scan.gtm_decision !== 'go'
+    ) {
       bump(WEIGHTS.STATE, QUALITY.STATE, 'lifecycle:complete');
     }
-    if (chainStateCanRoute && scan.gtm_decision === 'go' && route.trigger === 'ACCOUNT_GROWTH_RUN') {
+    if (
+      chainStateCanRoute &&
+      scan.gtm_decision === 'go' &&
+      route.trigger === 'ACCOUNT_GROWTH_RUN'
+    ) {
       bump(WEIGHTS.STATE, QUALITY.STATE, 'gtm:go');
     }
-    if (chainStateCanRoute && scan.gtm_decision && scan.gtm_decision !== 'go' && route.trigger === 'GTM_READY') {
+    if (
+      chainStateCanRoute &&
+      scan.gtm_decision &&
+      scan.gtm_decision !== 'go' &&
+      route.trigger === 'GTM_READY'
+    ) {
       bump(WEIGHTS.STATE, QUALITY.STATE, `gtm:${scan.gtm_decision}`);
     }
 
@@ -1853,7 +1996,8 @@ export function selectRoute(scores: RouteScore[], scan: WorkspaceScan): Selectio
     prompt_name: fallbackName,
     trigger: fallbackRoute?.trigger ?? 'ROUTE_FALLBACK',
     reason:
-      fallbackRoute?.reason ?? 'Fallback route selected because no prompt-specific signals were found.',
+      fallbackRoute?.reason ??
+      'Fallback route selected because no prompt-specific signals were found.',
     score: 0,
     best_quality: QUALITY.PRIOR,
     matched_signals: ['fallback'],

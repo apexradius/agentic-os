@@ -2,10 +2,10 @@
 // contains; the selftest asserts every rule here has a RED + GREEN fixture, so coverage
 // can't rot.
 
-import destructive from "./destructive.mjs";
-import exfiltration from "./exfiltration.mjs";
-import secrets from "./secret-scan.mjs";
-import injection from "./injection.mjs";
+import destructive from './destructive.mjs';
+import exfiltration from './exfiltration.mjs';
+import injection from './injection.mjs';
+import secrets from './secret-scan.mjs';
 
 export const RULES = [...destructive, ...exfiltration, ...secrets, ...injection];
 

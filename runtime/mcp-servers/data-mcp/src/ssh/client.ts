@@ -4,7 +4,7 @@
  * All SSH tools use this client, which is backed by the connection pool.
  */
 
-import type { ServerConfig, SSHPool } from "./pool.js";
+import type { ServerConfig, SSHPool } from './pool.js';
 
 export interface ExecResult {
   stdout: string;
@@ -41,22 +41,22 @@ export class SSHClient {
           return;
         }
 
-        let stdout = "";
-        let stderr = "";
+        let stdout = '';
+        let stderr = '';
 
-        stream.on("data", (data: Buffer) => {
+        stream.on('data', (data: Buffer) => {
           stdout += data.toString();
         });
-        stream.stderr.on("data", (data: Buffer) => {
+        stream.stderr.on('data', (data: Buffer) => {
           stderr += data.toString();
         });
 
-        stream.on("close", (code: number) => {
+        stream.on('close', (code: number) => {
           clearTimeout(timer);
           resolve({ stdout, stderr, exitCode: code ?? 0 });
         });
 
-        stream.on("error", (e: Error) => {
+        stream.on('error', (e: Error) => {
           clearTimeout(timer);
           reject(e);
         });
@@ -71,7 +71,7 @@ export class SSHClient {
   ): Promise<ExecResult> {
     // If running as root, sudo is unnecessary
     const config = opts?.server ?? this.defaultServer;
-    if (config.username === "root") {
+    if (config.username === 'root') {
       return this.exec(command, opts);
     }
     return this.exec(`sudo -n ${command}`, opts);

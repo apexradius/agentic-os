@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url';
 const PACKAGE_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const SERVER = join(PACKAGE_ROOT, 'dist/index.js');
 const REPO_ROOT = resolve(PACKAGE_ROOT, '../../../..');
-const LIBRARY = process.env.APEX_PROMPT_LIBRARY_PATH
-  ?? join(REPO_ROOT, 'apex/config/prompt-router/library/index.generated.md');
+const LIBRARY =
+  process.env.APEX_PROMPT_LIBRARY_PATH ??
+  join(REPO_ROOT, 'apex/config/prompt-router/library/index.generated.md');
 const SERVER_ENV = { ...process.env, APEX_PROMPT_LIBRARY_PATH: LIBRARY };
 
 function rpc(id, method, params) {
@@ -54,7 +55,9 @@ function callTool(name, args) {
         clientInfo: { name: 'smoke', version: '0.0.0' },
       }),
     );
-    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`,
+    );
     child.stdin.write(rpc(2, 'tools/call', { name, arguments: args }));
   });
 }
@@ -77,7 +80,10 @@ function closesAfterStdinEof() {
     child.on('exit', (code, signal) => {
       clearTimeout(timer);
       if (code === 0 && signal === null) resolve(err);
-      else reject(new Error(`server exited abnormally after stdin EOF (code=${code}, signal=${signal})`));
+      else
+        reject(
+          new Error(`server exited abnormally after stdin EOF (code=${code}, signal=${signal})`),
+        );
     });
     child.stdin.end();
   });
@@ -105,7 +111,10 @@ async function prepareFixtures() {
   await writeFixtureFile('/tmp/apex-rt-neutral/notes.txt', 'neutral notes');
   await writeFixtureFile('/tmp/apex-rt-visual/notes.txt', 'brand refresh visual production');
   await writeFixtureFile('/tmp/apex-rt-chain/README.md', 'chain fixture');
-  await writeFixtureFile('/tmp/apex-rt-chain/docs/ops/lifecycle-state.md', 'Current stage: S11 - complete\n');
+  await writeFixtureFile(
+    '/tmp/apex-rt-chain/docs/ops/lifecycle-state.md',
+    'Current stage: S11 - complete\n',
+  );
   await writeFixtureFile('/tmp/apex-rt-chain/docs/gtm/readiness.md', 'GTM Decision: GO\n');
   await writeFixtureFile(
     '/tmp/apex-rt-mcpish/README.md',
@@ -143,7 +152,10 @@ const probes = [
   {
     label: 'P1: product page goal (was Release 68/100)',
     tool: 'route_prompt',
-    args: { workspace_path: '/tmp/apex-rt-neutral', user_goal: 'build the product page for the new pricing tier' },
+    args: {
+      workspace_path: '/tmp/apex-rt-neutral',
+      user_goal: 'build the product page for the new pricing tier',
+    },
     check: (p) => p.body.selected_prompt.name !== 'Production Release Deploy Prompt',
     show: (p) =>
       `${p.body.selected_prompt.name} | ${p.body.selected_prompt.confidence} ${p.body.selected_prompt.confidence_score}/100`,
@@ -159,7 +171,10 @@ const probes = [
   {
     label: 'P3: paid ads goal in empty dir (was Bootstrap 100/100)',
     tool: 'route_prompt',
-    args: { workspace_path: '/tmp/apex-rt-empty', user_goal: 'plan a paid ads campaign for a Calgary HVAC client' },
+    args: {
+      workspace_path: '/tmp/apex-rt-empty',
+      user_goal: 'plan a paid ads campaign for a Calgary HVAC client',
+    },
     check: (p) =>
       p.body.selected_prompt.name === 'Paid Advertising' &&
       JSON.stringify(p.body.selected_prompt.composition) ===
@@ -200,7 +215,8 @@ const probes = [
     tool: 'route_prompt',
     args: {
       workspace_path: '/tmp/apex-rt-empty',
-      user_goal: 'build a public brand site with Astro, React components, R3F, GSAP, Tailwind, Sanity, and Stripe',
+      user_goal:
+        'build a public brand site with Astro, React components, R3F, GSAP, Tailwind, Sanity, and Stripe',
     },
     check: (p) =>
       p.body.metadata.response_contract_version === '0.4' &&
@@ -216,7 +232,8 @@ const probes = [
     tool: 'route_prompt',
     args: {
       workspace_path: '/tmp/apex-rt-empty',
-      user_goal: 'build a SaaS app with Next.js, R3F, Superbase, Postgres, Prisma, Redis, Docker, and Kubernetes',
+      user_goal:
+        'build a SaaS app with Next.js, R3F, Superbase, Postgres, Prisma, Redis, Docker, and Kubernetes',
     },
     check: (p) =>
       p.body.selected_prompt.name === 'Application Development Lifecycle Master Prompt' &&

@@ -39,11 +39,13 @@ instrument). Same redaction law as every lane: no raw arguments in spans.
 ## 4. Runtime agents and dispatch
 
 Native primary agents and subagents with per-agent model pins. Binding: define
-the runtime lanes as `orchestrator`, `planner`, `explorer`, `gpt-builder`, and
-`opus-builder`. `planner` is the only read-only lane. The other runtime lanes
-inherit the shared full-capability permission profile, including task dispatch;
-return shape, file ownership, route policy, and main-context verification are
-enforced by the orchestrator SOP plus validator plugins, same as every lane.
+exactly two runtime roles, `plan` and `build`, each with `mode: "all"` so the
+same roles are available as primary agents and spawnable subagents. Both inherit
+the shared OpenCode permission profile with no agent-local `permission` or
+`tools` narrowing, and both carry a high `steps` budget so model selection can
+change per role without multiplying runtime lanes. Return shape, file ownership,
+route policy, and main-context verification are enforced by the shared SOP plus
+validator plugins, same as every lane.
 
 ## 5. Scope fence
 

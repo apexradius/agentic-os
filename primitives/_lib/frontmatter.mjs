@@ -23,7 +23,7 @@ export function parseFrontmatter(raw) {
   const text = stripBom(String(raw));
   const lines = text.split(/\r?\n/);
 
-  if (!FENCE.test(lines[0] ?? "")) {
+  if (!FENCE.test(lines[0] ?? '')) {
     return { data: {}, body: text, hasFrontmatter: false };
   }
 
@@ -35,12 +35,12 @@ export function parseFrontmatter(raw) {
     }
   }
   if (close === -1) {
-    throw new Error("frontmatter opened with `---` on line 1 but no closing `---` line was found");
+    throw new Error('frontmatter opened with `---` on line 1 but no closing `---` line was found');
   }
 
-  const fmText = lines.slice(1, close).join("\n");
-  const body = lines.slice(close + 1).join("\n");
-  const data = fmText.trim() === "" ? {} : parseYaml(fmText);
+  const fmText = lines.slice(1, close).join('\n');
+  const body = lines.slice(close + 1).join('\n');
+  const data = fmText.trim() === '' ? {} : parseYaml(fmText);
 
   return { data: data ?? {}, body, hasFrontmatter: true };
 }

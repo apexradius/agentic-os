@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // lib/audit.mjs — opt-in, append-only NDJSON record of tool-gate decisions.
 //
 // Records THAT a decision happened — the tool, the verdict, which rules fired, and a hash of the
@@ -13,20 +14,23 @@
 //
 //   node audit.mjs <logfile> [--denied] [--since <iso>]   read back the trail
 
-import { appendFileSync, readFileSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
+import { appendFileSync, readFileSync } from 'node:fs';
 
 /** sha256/12 of the reason — enough to correlate identical reasons, reveals nothing of the call. */
 export function reasonHash(reason) {
-  return createHash("sha256").update(String(reason ?? "")).digest("hex").slice(0, 12);
+  return createHash('sha256')
+    .update(String(reason ?? ''))
+    .digest('hex')
+    .slice(0, 12);
 }
 
 /** Build the redacted record for one decision. Pure — no I/O, trivially assertable. */
 export function buildRecord(result, now) {
   return {
     ts: (now ?? new Date()).toISOString(),
-    tool: String(result?.surface?.tool ?? result?.tool ?? ""),
-    decision: String(result?.decision ?? ""),
+    tool: String(result?.surface?.tool ?? result?.tool ?? ''),
+    decision: String(result?.decision ?? ''),
     rules: (result?.findings ?? []).map((f) => f.rule),
     reason_hash: reasonHash(result?.reason),
   };
@@ -40,7 +44,7 @@ export function auditDecision(result, { logPath = process.env.TOOLGATE_AUDIT_LOG
   if (!logPath) return null;
   try {
     const record = buildRecord(result, now);
-    appendFileSync(logPath, JSON.stringify(record) + "\n");
+    appendFileSync(logPath, JSON.stringify(record) + '\n');
     return record;
   } catch {
     return null; // fail-open: a logging fault must not block the call the gate already decided
@@ -48,34 +52,44 @@ export function auditDecision(result, { logPath = process.env.TOOLGATE_AUDIT_LOG
 }
 
 // ── CLI: read the trail ──────────────────────────────────────────────────────
-if (process.argv[1] && process.argv[1].endsWith("audit.mjs")) {
+if (process.argv[1] && process.argv[1].endsWith('audit.mjs')) {
   const argv = process.argv.slice(2);
-  const denied = argv.includes("--denied");
-  const sinceIdx = argv.indexOf("--since");
+  const denied = argv.includes('--denied');
+  const sinceIdx = argv.indexOf('--since');
   const since = sinceIdx >= 0 ? argv[sinceIdx + 1] : null;
-  const file = argv.find((a) => !a.startsWith("--") && a !== since);
+  const file = argv.find((a) => !a.startsWith('--') && a !== since);
 
   if (!file) {
-    console.error("usage: audit.mjs <logfile> [--denied] [--since <iso>]");
+    console.error('usage: audit.mjs <logfile> [--denied] [--since <iso>]');
     process.exit(2);
   }
   let raw;
   try {
-    raw = readFileSync(file, "utf8");
+    raw = readFileSync(file, 'utf8');
   } catch (err) {
     console.error(`cannot read ${file}: ${err.message}`);
     process.exit(2);
   }
   const recs = raw
-    .split("\n")
+    .split('\n')
     .filter(Boolean)
-    .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+    .map((l) => {
+      try {
+        return JSON.parse(l);
+      } catch {
+        return null;
+      }
+    })
     .filter(Boolean);
-  const out = recs.filter((r) => (!denied || r.decision === "deny") && (!since || r.ts >= since));
+  const out = recs.filter((r) => (!denied || r.decision === 'deny') && (!since || r.ts >= since));
   for (const r of out) {
-    console.log(`${r.ts}  ${String(r.decision).toUpperCase().padEnd(5)} ${String(r.tool).padEnd(8)} [${(r.rules || []).join(",")}] ${r.reason_hash}`);
+    console.log(
+      `${r.ts}  ${String(r.decision).toUpperCase().padEnd(5)} ${String(r.tool).padEnd(8)} [${(r.rules || []).join(',')}] ${r.reason_hash}`,
+    );
   }
   const tally = out.reduce((a, r) => ((a[r.decision] = (a[r.decision] || 0) + 1), a), {});
-  console.error(`${out.length} record(s)${denied ? " (denied only)" : ""}${since ? ` since ${since}` : ""} — ${tally.deny || 0} deny, ${tally.ask || 0} ask, ${tally.allow || 0} allow`);
+  console.error(
+    `${out.length} record(s)${denied ? ' (denied only)' : ''}${since ? ` since ${since}` : ''} — ${tally.deny || 0} deny, ${tally.ask || 0} ask, ${tally.allow || 0} allow`,
+  );
   process.exit(0);
 }

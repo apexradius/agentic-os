@@ -15,16 +15,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { runTier1, GoldenCaseSchema } from '../src/prompt-os/eval/tier1.js';
+import { GoldenCaseSchema, runTier1 } from '../src/prompt-os/eval/tier1.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(PACKAGE_ROOT, '../../../..');
 const ENV_LIBRARY_PATH = process.env['APEX_PROMPT_LIBRARY_PATH'];
-const LIBRARY_DIR =
-  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
-    ? path.dirname(ENV_LIBRARY_PATH)
-    : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
+const LIBRARY_DIR = ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+  ? path.dirname(ENV_LIBRARY_PATH)
+  : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
 const RUN_TIER2_PY = path.join(PACKAGE_ROOT, 'scripts/prompt-os/eval/run_tier2.py');
 
 // ---------------------------------------------------------------------------
@@ -219,11 +218,7 @@ Step 3: verify with real input.
       'golden/test-prompt-empty-golden.jsonl',
       FULL_BODY_SECTIONS,
     );
-    await fs.writeFile(
-      path.join(tmpDir, 'golden', 'test-prompt-empty-golden.jsonl'),
-      '',
-      'utf8',
-    );
+    await fs.writeFile(path.join(tmpDir, 'golden', 'test-prompt-empty-golden.jsonl'), '', 'utf8');
 
     const result = await runTier1(tmpDir);
 

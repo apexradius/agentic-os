@@ -5,12 +5,12 @@ import { composePromptText, findPrompt, loadLibrary } from '../lib.js';
 import {
   buildCapabilityIndex,
   buildProofReport,
-  readCapabilityIndex,
-  readIndex,
   type CapabilityIndex,
   type IndexRecord,
   type PromptCapability,
   type PromptProofRecord,
+  readCapabilityIndex,
+  readIndex,
 } from './build.js';
 
 type ParsedArgs = {
@@ -106,7 +106,19 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { command, positionals, libraryDir, json, input, risk, proof, strategy, tag, tool, domain };
+  return {
+    command,
+    positionals,
+    libraryDir,
+    json,
+    input,
+    risk,
+    proof,
+    strategy,
+    tag,
+    tool,
+    domain,
+  };
 }
 
 async function loadIndexOrThrow(libraryDir: string): Promise<IndexRecord[]> {
@@ -181,7 +193,10 @@ function compactRecord(record: IndexRecord): Record<string, unknown> {
   };
 }
 
-function filterCapabilities(capabilities: PromptCapability[], args: ParsedArgs): PromptCapability[] {
+function filterCapabilities(
+  capabilities: PromptCapability[],
+  args: ParsedArgs,
+): PromptCapability[] {
   return capabilities.filter((capability) => {
     if (args.domain && capability.domain !== args.domain) return false;
     if (args.risk && (capability.risk_level ?? 'unrated') !== args.risk) return false;
@@ -206,9 +221,13 @@ function printCapabilityTable(records: PromptCapability[]): void {
   for (const record of records) {
     const risk = record.risk_level ?? 'unrated';
     const proof = record.proof_required.length ? ` proof=${record.proof_required.join(',')}` : '';
-    const strategies = record.strategy_overlays.length ? ` strategies=${record.strategy_overlays.join(',')}` : '';
+    const strategies = record.strategy_overlays.length
+      ? ` strategies=${record.strategy_overlays.join(',')}`
+      : '';
     const tags = record.tags.length ? ` tags=${record.tags.join(',')}` : '';
-    console.log(`${record.slug}\t${record.status}\t${record.domain}\t${risk}${proof}${strategies}${tags}`);
+    console.log(
+      `${record.slug}\t${record.status}\t${record.domain}\t${risk}${proof}${strategies}${tags}`,
+    );
   }
 }
 
@@ -221,10 +240,15 @@ function printProofTable(records: PromptProofRecord[]): void {
 }
 
 function arrayField(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : [];
 }
 
-async function loadComposedPrompt(libraryDir: string, slug: string): Promise<{
+async function loadComposedPrompt(
+  libraryDir: string,
+  slug: string,
+): Promise<{
   record: IndexRecord | null;
   composition: string[];
   text: string;
@@ -240,7 +264,12 @@ async function loadComposedPrompt(libraryDir: string, slug: string): Promise<{
   const prompt = findPrompt(library.prompts, slug);
   if (!prompt) throw new Error(`Prompt not found: ${slug}`);
   const composed = composePromptText(prompt, library.prompts);
-  return { record, composition: composed.composition, text: composed.text, source_path: library.source_path };
+  return {
+    record,
+    composition: composed.composition,
+    text: composed.text,
+    source_path: library.source_path,
+  };
 }
 
 async function main(): Promise<void> {
@@ -278,22 +307,30 @@ async function main(): Promise<void> {
     const capabilityIndex = await loadCapabilityIndexOrBuild(args.libraryDir);
     const matches = filterCapabilities(capabilityIndex.capabilities, args);
     if (args.json) {
-      console.log(JSON.stringify({
-        schema_version: capabilityIndex.schema_version,
-        summary: capabilityIndex.summary,
-        filters: {
-          domain: args.domain || null,
-          risk: args.risk || null,
-          proof: args.proof || null,
-          strategy: args.strategy || null,
-          tag: args.tag || null,
-          tool: args.tool || null,
-        },
-        count: matches.length,
-        capabilities: matches.map(compactCapability),
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            schema_version: capabilityIndex.schema_version,
+            summary: capabilityIndex.summary,
+            filters: {
+              domain: args.domain || null,
+              risk: args.risk || null,
+              proof: args.proof || null,
+              strategy: args.strategy || null,
+              tag: args.tag || null,
+              tool: args.tool || null,
+            },
+            count: matches.length,
+            capabilities: matches.map(compactCapability),
+          },
+          null,
+          2,
+        ),
+      );
     } else {
-      console.log(`records=${capabilityIndex.summary.records} published=${capabilityIndex.summary.published} matches=${matches.length}`);
+      console.log(
+        `records=${capabilityIndex.summary.records} published=${capabilityIndex.summary.published} matches=${matches.length}`,
+      );
       printCapabilityTable(matches);
     }
     return;
@@ -324,7 +361,9 @@ async function main(): Promise<void> {
     if (args.json) {
       console.log(JSON.stringify(output, null, 2));
     } else {
-      console.log(`records=${report.summary.records} proof_required=${report.summary.proof_required} proof_missing=${report.summary.proof_missing} high_risk_missing=${report.summary.high_risk_missing}`);
+      console.log(
+        `records=${report.summary.records} proof_required=${report.summary.proof_required} proof_missing=${report.summary.proof_missing} high_risk_missing=${report.summary.high_risk_missing}`,
+      );
       printProofTable(report.records);
     }
     return;
@@ -341,7 +380,9 @@ async function main(): Promise<void> {
     } else {
       console.log(`${record.name} (${record.slug})`);
       console.log(`status=${record.status} domain=${record.domain} version=${record.version}`);
-      console.log(`risk=${record.risk_level ?? 'unrated'} proof=${arrayField(record.proof_required).join(',') || 'unspecified'}`);
+      console.log(
+        `risk=${record.risk_level ?? 'unrated'} proof=${arrayField(record.proof_required).join(',') || 'unspecified'}`,
+      );
       console.log(`includes=${record.includes.join(',') || 'none'}`);
       console.log(`strategies=${arrayField(record.strategy_overlays).join(',') || 'none'}`);
       console.log(`file=${record.file}`);

@@ -2,20 +2,20 @@
  * SSH module index - initializes the connection pool, client, and registers all SSH tools.
  */
 
-import { log } from "@framework/mcp-shared";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SSHClient } from "./client.js";
-import { type ServerConfig, SSHPool } from "./pool.js";
-import { registerBackupTools } from "./tools/backup.js";
-import { registerDatabaseTools } from "./tools/database.js";
-import { registerExecutionTools } from "./tools/execution.js";
-import { registerFileTools } from "./tools/files.js";
-import { registerMonitoringTools } from "./tools/monitoring.js";
-import { registerServerTools } from "./tools/server.js";
-import { registerSessionTools } from "./tools/sessions.js";
-import { closeAllTunnels, registerTunnelTools } from "./tools/tunnels.js";
+import { log } from '@framework/mcp-shared';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { SSHClient } from './client.js';
+import { type ServerConfig, SSHPool } from './pool.js';
+import { registerBackupTools } from './tools/backup.js';
+import { registerDatabaseTools } from './tools/database.js';
+import { registerExecutionTools } from './tools/execution.js';
+import { registerFileTools } from './tools/files.js';
+import { registerMonitoringTools } from './tools/monitoring.js';
+import { registerServerTools } from './tools/server.js';
+import { registerSessionTools } from './tools/sessions.js';
+import { closeAllTunnels, registerTunnelTools } from './tools/tunnels.js';
 
-const MCP = "apex-data-mcp";
+const MCP = 'apex-data-mcp';
 
 export interface SSHConfig {
   host: string;
@@ -53,11 +53,11 @@ export function initSSH(server: McpServer, config: SSHConfig): SSHModule {
     username: config.user,
     privateKeyPath: config.keyPath,
     password: config.password,
-    alias: "vps",
+    alias: 'vps',
   };
 
   const servers = new Map<string, ServerConfig>();
-  servers.set("vps", defaultServer);
+  servers.set('vps', defaultServer);
 
   // Register extra servers (e.g. staging or storage hosts) from config
   if (config.extraServers) {
@@ -70,7 +70,7 @@ export function initSSH(server: McpServer, config: SSHConfig): SSHModule {
         password: srv.password,
         alias,
       });
-      log.info(MCP, "ssh", "init", `Registered extra server: ${alias} (${srv.host})`);
+      log.info(MCP, 'ssh', 'init', `Registered extra server: ${alias} (${srv.host})`);
     }
   }
 
@@ -86,7 +86,7 @@ export function initSSH(server: McpServer, config: SSHConfig): SSHModule {
   registerMonitoringTools(server, client, servers); // 3 tools
   registerServerTools(server, client, pool, servers); // 11 tools
 
-  log.info(MCP, "ssh", "init", "Registered 36 SSH tools");
+  log.info(MCP, 'ssh', 'init', 'Registered 36 SSH tools');
 
   return {
     pool,
@@ -98,5 +98,5 @@ export function initSSH(server: McpServer, config: SSHConfig): SSHModule {
   };
 }
 
-export { SSHClient } from "./client.js";
-export { type ServerConfig, SSHPool } from "./pool.js";
+export { SSHClient } from './client.js';
+export { type ServerConfig, SSHPool } from './pool.js';

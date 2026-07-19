@@ -7,10 +7,10 @@
  * shorter delays (~50ms), external APIs use the defaults.
  */
 
-import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
-import { ErrorClassifier, type ClassifierFn } from './classifier.js';
-import { ErrorSeverity, ErrorType, McpError, type StandardError } from './types.js';
 import { log } from '../logging/index.js';
+import { CircuitBreaker, type CircuitBreakerConfig } from './circuit-breaker.js';
+import { type ClassifierFn, ErrorClassifier } from './classifier.js';
+import { ErrorSeverity, ErrorType, McpError, type StandardError } from './types.js';
 
 export interface RetryConfig {
   maxRetries: number;
@@ -22,12 +22,48 @@ export interface RetryConfig {
 
 /** Sensible defaults per service type */
 export const RETRY_PRESETS: Record<string, RetryConfig> = {
-  ssh: { maxRetries: 2, initialDelayMs: 1000, maxDelayMs: 30_000, jitterFactor: 0.1, backoffMultiplier: 2 },
-  postgres: { maxRetries: 3, initialDelayMs: 50, maxDelayMs: 5_000, jitterFactor: 0.1, backoffMultiplier: 2 },
-  'rate-limited-api': { maxRetries: 3, initialDelayMs: 2000, maxDelayMs: 60_000, jitterFactor: 0.2, backoffMultiplier: 3 },
-  'external-api': { maxRetries: 3, initialDelayMs: 100, maxDelayMs: 10_000, jitterFactor: 0.1, backoffMultiplier: 2 },
-  proxy: { maxRetries: 2, initialDelayMs: 200, maxDelayMs: 5_000, jitterFactor: 0.1, backoffMultiplier: 2 },
-  default: { maxRetries: 3, initialDelayMs: 100, maxDelayMs: 10_000, jitterFactor: 0.1, backoffMultiplier: 2 },
+  ssh: {
+    maxRetries: 2,
+    initialDelayMs: 1000,
+    maxDelayMs: 30_000,
+    jitterFactor: 0.1,
+    backoffMultiplier: 2,
+  },
+  postgres: {
+    maxRetries: 3,
+    initialDelayMs: 50,
+    maxDelayMs: 5_000,
+    jitterFactor: 0.1,
+    backoffMultiplier: 2,
+  },
+  'rate-limited-api': {
+    maxRetries: 3,
+    initialDelayMs: 2000,
+    maxDelayMs: 60_000,
+    jitterFactor: 0.2,
+    backoffMultiplier: 3,
+  },
+  'external-api': {
+    maxRetries: 3,
+    initialDelayMs: 100,
+    maxDelayMs: 10_000,
+    jitterFactor: 0.1,
+    backoffMultiplier: 2,
+  },
+  proxy: {
+    maxRetries: 2,
+    initialDelayMs: 200,
+    maxDelayMs: 5_000,
+    jitterFactor: 0.1,
+    backoffMultiplier: 2,
+  },
+  default: {
+    maxRetries: 3,
+    initialDelayMs: 100,
+    maxDelayMs: 10_000,
+    jitterFactor: 0.1,
+    backoffMultiplier: 2,
+  },
 } as const;
 
 export interface ErrorHandlerOptions {
@@ -93,11 +129,7 @@ export class UnifiedErrorHandler {
    * @param operation - Operation name for logging (e.g. 'pg_query', 'ssh_execute')
    * @param fn - The async operation to execute
    */
-  async executeWithRetry<T>(
-    service: string,
-    operation: string,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  async executeWithRetry<T>(service: string, operation: string, fn: () => Promise<T>): Promise<T> {
     const breaker = this.getBreaker(service);
     const retryConfig = this.getRetryConfig(service);
 
@@ -130,8 +162,12 @@ export class UnifiedErrorHandler {
         // Non-retryable → fail immediately
         if (!classified.isRetryable || attempt === retryConfig.maxRetries) {
           breaker.recordFailure();
-          log.error(this.mcpName, service, operation,
-            `Failed (attempt ${attempt + 1}/${retryConfig.maxRetries + 1}): ${classified.message}`);
+          log.error(
+            this.mcpName,
+            service,
+            operation,
+            `Failed (attempt ${attempt + 1}/${retryConfig.maxRetries + 1}): ${classified.message}`,
+          );
           throw new McpError(classified);
         }
 
@@ -139,8 +175,12 @@ export class UnifiedErrorHandler {
         const delay = this.calculateBackoff(attempt, retryConfig);
         classified.context!.nextRetryAt = new Date(Date.now() + delay);
 
-        log.warn(this.mcpName, service, operation,
-          `Retry ${attempt + 1}/${retryConfig.maxRetries} in ${delay}ms: ${classified.message}`);
+        log.warn(
+          this.mcpName,
+          service,
+          operation,
+          `Retry ${attempt + 1}/${retryConfig.maxRetries} in ${delay}ms: ${classified.message}`,
+        );
 
         await this.sleep(delay);
       }
@@ -154,11 +194,7 @@ export class UnifiedErrorHandler {
    * Execute without retry — just classify errors and record breaker state.
    * Use for operations that should not be retried (e.g. mutations).
    */
-  async executeOnce<T>(
-    service: string,
-    operation: string,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  async executeOnce<T>(service: string, operation: string, fn: () => Promise<T>): Promise<T> {
     const breaker = this.getBreaker(service);
 
     if (breaker.isOpen()) {
@@ -197,7 +233,7 @@ export class UnifiedErrorHandler {
   }
 
   private calculateBackoff(attempt: number, config: RetryConfig): number {
-    const baseDelay = config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt);
+    const baseDelay = config.initialDelayMs * config.backoffMultiplier ** attempt;
     const capped = Math.min(baseDelay, config.maxDelayMs);
     const jitter = capped * config.jitterFactor * Math.random();
     return Math.round(capped + jitter);

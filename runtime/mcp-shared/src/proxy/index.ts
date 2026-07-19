@@ -9,11 +9,11 @@
  *          apex-commerce-mcp (shopify)
  */
 
-import { spawn, type ChildProcess } from 'node:child_process';
-import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { z, type ZodTypeAny } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { type ZodTypeAny, z } from 'zod';
 import { log } from '../logging/index.js';
 
 export interface ProxyTarget {
@@ -123,7 +123,9 @@ function jsonSchemaToZodShape(
 ): Record<string, ZodTypeAny> {
   if (!inputSchema) return {};
 
-  const properties = inputSchema['properties'] as Record<string, Record<string, unknown>> | undefined;
+  const properties = inputSchema['properties'] as
+    | Record<string, Record<string, unknown>>
+    | undefined;
   if (!properties) return {};
 
   const required = new Set(
@@ -179,7 +181,12 @@ export async function proxyChildMcp(
       return 0;
     }
 
-    log.info(mcpName, target.name, 'proxy_start', `Discovered ${tools.length} tools from ${target.name}`);
+    log.info(
+      mcpName,
+      target.name,
+      'proxy_start',
+      `Discovered ${tools.length} tools from ${target.name}`,
+    );
 
     // Register each tool on the parent server, forwarding calls to the child.
     // Convert the child's JSON Schema inputSchema into a Zod shape so that
@@ -225,9 +232,8 @@ export async function proxyChildMcp(
     // Spawn errors can embed the full argv / env in the message on some
     // platforms. Scrub any `key=value` pair whose key matches the sensitive
     // pattern before logging.
-    const msg = raw.replace(
-      /([A-Za-z_][A-Za-z0-9_]*)=([^\s"']+)/g,
-      (match, key: string) => (SENSITIVE_ENV_KEY.test(key) ? `${key}=[REDACTED]` : match),
+    const msg = raw.replace(/([A-Za-z_][A-Za-z0-9_]*)=([^\s"']+)/g, (match, key: string) =>
+      SENSITIVE_ENV_KEY.test(key) ? `${key}=[REDACTED]` : match,
     );
     log.error(mcpName, target.name, 'proxy_start', `Failed to spawn child MCP: ${msg}`);
     return 0;

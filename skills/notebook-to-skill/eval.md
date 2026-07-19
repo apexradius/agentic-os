@@ -16,9 +16,12 @@ load-signal description, no extracted procedure/rules, and no eval — a researc
 It won't trigger reliably and won't pass the skills validator.
 
 ## Pass
-With the notebook-to-skill skill loaded, the agent extracts the findings, rules, and procedures into
-a structured `SKILL.md` (load-signal description, procedure body) with a sibling `eval.md`.
+With the notebook-to-skill skill loaded, the agent reads the notebook's sources through the live
+`notebooklm-mcp` server (not pasted text), picks the extraction method by corpus size
+(`source_get_content` for a faithful single creator, `notebook_query` for a large multi-creator
+corpus), and distills the findings, rules, and procedures into a structured `SKILL.md` (load-signal
+description, decision-complete procedure) with `references/` whose claims carry `(<source-id>)`
+citations and a sibling `eval.md`.
 
-Pass criterion: the output is a validator-passing skill (real load-signal description + procedure +
-eval), not a pasted notebook. **Fail** if it dumps the research as prose with no skill structure or
-eval.
+Pass criterion: the output is a validator-passing, source-cited skill built from live MCP reads, not
+a pasted notebook. **Fail** if it pastes/transcribes prose, invents uncited rules, or ships no eval.

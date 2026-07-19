@@ -1,5 +1,4 @@
-import { existsSync } from 'node:fs';
-import { promises as fs } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -14,8 +13,7 @@ import {
 import { buildHealthReport, loadEffectiveRoutes, routePromptCore } from '../src/router.js';
 
 const LIBRARY_PATH =
-  process.env['APEX_PROMPT_LIBRARY_PATH'] ??
-  path.join(os.homedir(), 'prompt-library.md');
+  process.env['APEX_PROMPT_LIBRARY_PATH'] ?? path.join(os.homedir(), 'prompt-library.md');
 const hasLibrary = existsSync(LIBRARY_PATH);
 const STRUCTURED_LIBRARY_PATH = path.resolve(
   process.cwd(),
@@ -62,12 +60,18 @@ describe('workspace scanner', () => {
 
   it('rejects filesystem and home roots', async () => {
     await expect(scanWorkspace('/', 300, 5, 12000)).rejects.toBeInstanceOf(InvalidWorkspaceError);
-    await expect(scanWorkspace(os.homedir(), 300, 5, 12000)).rejects.toBeInstanceOf(InvalidWorkspaceError);
-    await expect(scanWorkspace('/tmp', 300, 5, 12000)).rejects.toBeInstanceOf(InvalidWorkspaceError);
+    await expect(scanWorkspace(os.homedir(), 300, 5, 12000)).rejects.toBeInstanceOf(
+      InvalidWorkspaceError,
+    );
+    await expect(scanWorkspace('/tmp', 300, 5, 12000)).rejects.toBeInstanceOf(
+      InvalidWorkspaceError,
+    );
   });
 
   it('raises WORKSPACE_NOT_FOUND for a nonexistent path instead of empty-workspace routing', async () => {
-    await expect(scanWorkspace('/tmp/definitely-not-here-zzz', 300, 5, 12000)).rejects.toMatchObject({
+    await expect(
+      scanWorkspace('/tmp/definitely-not-here-zzz', 300, 5, 12000),
+    ).rejects.toMatchObject({
       code: 'WORKSPACE_NOT_FOUND',
     });
   });
@@ -76,7 +80,7 @@ describe('workspace scanner', () => {
     const dir = await makeWorkspace({
       '.env': 'SECRET=1',
       '.env.example': 'SECRET=',
-      'id_ed25519': 'key',
+      id_ed25519: 'key',
       'readme.md': 'hello',
     });
     const scan = await scanWorkspace(dir, 300, 5, 12000);
@@ -108,7 +112,9 @@ describe('workspace scanner', () => {
     const dir = await makeWorkspace({
       'astro.config.mjs': 'export default {};',
       'next.config.mjs': 'export default {};',
-      'package.json': JSON.stringify({ dependencies: { astro: '^5.0.0', next: '^15.0.0', nuxt: '^4.0.0' } }),
+      'package.json': JSON.stringify({
+        dependencies: { astro: '^5.0.0', next: '^15.0.0', nuxt: '^4.0.0' },
+      }),
     });
     const scan = await scanWorkspace(dir, 300, 5, 12000);
     expect(scan.detected_stack).toEqual(expect.arrayContaining(['astro', 'nextjs', 'nuxt']));
@@ -127,7 +133,12 @@ describe.runIf(hasLibrary)('real library reconciliation', () => {
   });
 
   it('health reports ok', async () => {
-    const report = await buildHealthReport('apex-prompt-router-mcp', '0.4.1', LIBRARY_PATH, os.homedir());
+    const report = await buildHealthReport(
+      'apex-prompt-router-mcp',
+      '0.4.1',
+      LIBRARY_PATH,
+      os.homedir(),
+    );
     expect(report.ok).toBe(true);
     expect(report.library.prompt_count).toBeGreaterThanOrEqual(30);
   });
@@ -200,7 +211,10 @@ describe.runIf(hasLibrary)('review-probe regressions (end to end)', () => {
   it('P5: a goal-less scan of an MCP-ish repo onboards at honest confidence instead of MCP high', async () => {
     const dir = await makeWorkspace({
       'README.md': 'An MCP server with plugin connectors, webhook handlers, and oauth support.',
-      'package.json': JSON.stringify({ name: 'x', dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' } }),
+      'package.json': JSON.stringify({
+        name: 'x',
+        dependencies: { '@modelcontextprotocol/sdk': '^1.0.0' },
+      }),
       'pyproject.toml': '[project]\nname = "x"\n',
       'tsconfig.json': '{}',
       'src/index.ts': 'export {};',
@@ -278,7 +292,9 @@ describe.runIf(hasLibrary)('review-probe regressions (end to end)', () => {
     ]);
     expect(res.execution_contract.on_complete.next_trigger).toBe('ACCOUNT_GROWTH_RUN');
     expect(res.multi_prompt_text).toContain('# Apex Multi-Prompt Execution Chain');
-    expect(res.multi_prompt_text).toContain('## Prompt 2: Prompt 3 Ultimate Design Research Mockup Brief');
+    expect(res.multi_prompt_text).toContain(
+      '## Prompt 2: Prompt 3 Ultimate Design Research Mockup Brief',
+    );
     expect(res.activation_message).toContain('Multi-prompt chain selected (3)');
   });
 });
@@ -361,7 +377,10 @@ describe.runIf(hasLibrary)('chain spine (empty → GTM → growth)', () => {
   it('service prompts are composed with the Universal Intake Contract', async () => {
     const dir = await makeWorkspace({});
     const res = await route(dir, 'plan a paid ads campaign for a client');
-    expect(res.selected_prompt.composition).toEqual(['Universal Intake Contract', 'Paid Advertising']);
+    expect(res.selected_prompt.composition).toEqual([
+      'Universal Intake Contract',
+      'Paid Advertising',
+    ]);
     expect(res.prompt_text).not.toContain('[SERVICE]');
     expect(res.prompt_text).toContain('Paid Advertising');
   });

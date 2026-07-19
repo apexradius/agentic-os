@@ -1,83 +1,87 @@
 // Server factory
-export {
-  createApexServer,
-  type ApexServerOptions,
-} from './server.js';
-
-// Error classification and types
-export {
-  ErrorSeverity,
-  ErrorType,
-  McpError,
-  EXIT_CODES,
-  type StandardError,
-  type ErrorContext,
-} from './errors/types.js';
 
 // Circuit breaker
 export {
-  CircuitBreaker,
   BREAKER_PRESETS,
+  CircuitBreaker,
   type CircuitBreakerConfig,
   type CircuitState,
 } from './errors/circuit-breaker.js';
-
 // Error classifier chain
 export {
-  ErrorClassifier,
+  type ClassifierFn,
+  classifyGoogle,
+  classifyMeta,
   classifyPostgres,
   classifySSH,
-  classifyMeta,
-  classifyGoogle,
-  type ClassifierFn,
+  ErrorClassifier,
 } from './errors/classifier.js';
-
 // Unified error handler with retry + breaker
 export {
-  UnifiedErrorHandler,
+  type ErrorHandlerOptions,
   RETRY_PRESETS,
   type RetryConfig,
-  type ErrorHandlerOptions,
+  UnifiedErrorHandler,
 } from './errors/handler.js';
+// Error classification and types
+export {
+  type ErrorContext,
+  ErrorSeverity,
+  ErrorType,
+  EXIT_CODES,
+  McpError,
+  type StandardError,
+} from './errors/types.js';
+// Health check registration
+export {
+  type HealthCheckOptions,
+  type HealthReport,
+  registerHealthTool,
+  type ServiceHealth,
+} from './health/index.js';
+// Structured logging
+export { log } from './logging/index.js';
+// Media utilities (yt-dlp)
+export {
+  type DownloadResult,
+  type SearchResult,
+  type VideoInfo,
+  YtdlpClient,
+  type YtdlpConfig,
+} from './media/ytdlp.js';
 
+// Completion-proof params for state-changing tools (ownership standard, MCP-substrate half)
+export {
+  evaluateProof,
+  PROOF_FIELDS,
+  type Proof,
+  type ProofVerdict,
+  proofObject,
+  proofRefusal,
+  proofShape,
+  withProof,
+} from './proof/index.js';
+// Child-process proxy
+export {
+  expandHome,
+  type ProxyTarget,
+  proxyChildMcp,
+} from './proxy/index.js';
 // Tool result builders
 export {
   formatError,
-  toolResult,
   geminiTextResult,
-  toolError,
   imageResult,
-  multimodalResult,
   multiContentResult,
-  type ToolTextResult,
+  multimodalResult,
   type ToolImageResult,
   type ToolResult,
+  type ToolTextResult,
+  toolError,
+  toolResult,
 } from './results/index.js';
-
-// Health check registration
 export {
-  registerHealthTool,
-  type HealthReport,
-  type ServiceHealth,
-  type HealthCheckOptions,
-} from './health/index.js';
-
-// Structured logging
-export { log } from './logging/index.js';
-
-// Child-process proxy
-export {
-  proxyChildMcp,
-  expandHome,
-  type ProxyTarget,
-} from './proxy/index.js';
-
-// Media utilities (yt-dlp)
-export {
-  YtdlpClient,
-  type YtdlpConfig,
-  type VideoInfo,
-  type SearchResult,
-  type DownloadResult,
-} from './media/ytdlp.js';
-export * from "./worker-transport.js";
+  type ApexServerOptions,
+  createApexServer,
+} from './server.js';
+export * from './worker-transport.js';

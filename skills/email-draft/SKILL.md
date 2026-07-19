@@ -7,6 +7,12 @@ argument-hint: "[type] [key-points]"
 
 # Email Draft
 
+> **Strategy depth — load `references/knowledge-base.md`** before designing a sequence or diagnosing
+> performance. It carries the layer beneath drafting: deliverability (SPF/DKIM/DMARC, reputation,
+> hygiene), list building & segmentation (single-list+tags, double opt-in, dynamic content), the full
+> lifecycle flows with per-email timing/counts, broadcast cadence, and metrics (bot-inflation, benchmarks,
+> layered diagnosis). Cited to source; treat numbers as source claims, verify live in the sending platform.
+
 ## Supported Types
 
 ### Transactional / Professional

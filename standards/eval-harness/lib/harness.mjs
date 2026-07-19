@@ -5,7 +5,7 @@
 // framework/primitives/skills/validate.mjs verbatim, re-implemented (not imported) because that
 // validator pulls in `yaml`/`ajv` and would break this tree's zero-npm contract.
 
-import { gradeBaseline, gradeRubric } from "./grade.mjs";
+import { gradeBaseline, gradeRubric } from './grade.mjs';
 
 const FENCE = /^---[ \t]*$/;
 
@@ -14,19 +14,24 @@ export function splitFrontmatter(raw) {
   let text = String(raw);
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const lines = text.split(/\r?\n/);
-  if (!FENCE.test(lines[0] ?? "")) return { fm: "", body: text };
+  if (!FENCE.test(lines[0] ?? '')) return { fm: '', body: text };
   let close = -1;
-  for (let i = 1; i < lines.length; i++) if (FENCE.test(lines[i])) { close = i; break; }
-  if (close === -1) throw new Error("frontmatter opened with `---` but never closed");
-  return { fm: lines.slice(1, close).join("\n"), body: lines.slice(close + 1).join("\n") };
+  for (let i = 1; i < lines.length; i++)
+    if (FENCE.test(lines[i])) {
+      close = i;
+      break;
+    }
+  if (close === -1) throw new Error('frontmatter opened with `---` but never closed');
+  return { fm: lines.slice(1, close).join('\n'), body: lines.slice(close + 1).join('\n') };
 }
 
 // A one-key scalar reader — we need only `eval-type`, not a full YAML parser.
 function readScalar(fm, key) {
-  const m = fm.match(new RegExp(`^${key}\\s*:\\s*(.+)$`, "im"));
+  const m = fm.match(new RegExp(`^${key}\\s*:\\s*(.+)$`, 'im'));
   if (!m) return null;
   let v = m[1].trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+    v = v.slice(1, -1);
   return v;
 }
 
@@ -41,18 +46,20 @@ const RE = {
  *  section (mirrors the skills validator's error contract). Returns {evalType, body}. */
 export function parseEval(raw) {
   const { fm, body } = splitFrontmatter(raw);
-  let evalType = "baseline";
-  const declared = readScalar(fm, "eval-type");
+  let evalType = 'baseline';
+  const declared = readScalar(fm, 'eval-type');
   if (declared != null) evalType = declared; // value is case-SENSITIVE, per the skills validator
-  if (evalType !== "baseline" && evalType !== "rubric") {
+  if (evalType !== 'baseline' && evalType !== 'rubric') {
     throw new Error(`unknown eval-type '${evalType}' (expected 'baseline' or 'rubric')`);
   }
-  if (evalType === "baseline") {
+  if (evalType === 'baseline') {
     if (!RE.baseline.test(body)) throw new Error("baseline eval missing a '## Baseline' section");
-    if (!RE.pass.test(body)) throw new Error("baseline eval missing a '## Pass' (or '## With skill') section");
+    if (!RE.pass.test(body))
+      throw new Error("baseline eval missing a '## Pass' (or '## With skill') section");
   } else {
     if (!RE.rubric.test(body)) throw new Error("rubric eval missing a '## Rubric' section");
-    if (!RE.threshold.test(body)) throw new Error("rubric eval missing a '## Pass threshold' section");
+    if (!RE.threshold.test(body))
+      throw new Error("rubric eval missing a '## Pass threshold' section");
   }
   return { evalType, body };
 }
@@ -64,17 +71,31 @@ export function parseEval(raw) {
  */
 export async function runHarness({ evals, provider }) {
   const results = [];
-  let passed = 0, failed = 0, skipped = 0, gradeable = 0, errored = 0;
+  let passed = 0,
+    failed = 0,
+    skipped = 0,
+    gradeable = 0,
+    errored = 0;
   for (const e of evals) {
     try {
       const { evalType, body } = parseEval(e.raw);
       const output = await provider({ skill: e.skill, evalType, raw: e.raw });
-      const verdict = evalType === "rubric" ? gradeRubric(body, output) : gradeBaseline(body, output);
+      const verdict =
+        evalType === 'rubric' ? gradeRubric(body, output) : gradeBaseline(body, output);
       results.push({ skill: e.skill, evalType, ...verdict });
       if (!verdict.gradeable) skipped++;
-      else { gradeable++; verdict.pass ? passed++ : failed++; }
+      else {
+        gradeable++;
+        verdict.pass ? passed++ : failed++;
+      }
     } catch (err) {
-      results.push({ skill: e.skill, evalType: null, gradeable: false, pass: null, error: err.message });
+      results.push({
+        skill: e.skill,
+        evalType: null,
+        gradeable: false,
+        pass: null,
+        error: err.message,
+      });
       errored++;
     }
   }

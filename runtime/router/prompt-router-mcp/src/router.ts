@@ -2,30 +2,35 @@ import { createRequire } from 'node:module';
 import { dirname, extname } from 'node:path';
 
 import {
-  buildStackRecommendation,
+  assessConfidence,
   buildEffectiveRoutes,
   buildOnComplete,
   buildPrimaryText,
+  buildStackRecommendation,
   buildWorkspaceText,
   composePromptText,
   findPrompt,
-  assessConfidence,
+  type OnComplete,
+  QUALITY,
+  ROUTES,
+  type RouteDefinition,
+  type RouteScore,
   readPromptLibrary,
   resolveRoutes,
-  ROUTES,
+  type Selection,
+  STACK_POLICY_VERSION,
+  type StackRecommendation,
   scanWorkspace,
   scoreRoutes,
   selectRoute,
-  QUALITY,
-  STACK_POLICY_VERSION,
-  type OnComplete,
-  type RouteScore,
-  type RouteDefinition,
-  type Selection,
-  type StackRecommendation,
   type WorkspaceScan,
 } from './lib.js';
-import { buildProofReport, readCapabilityIndex, readIndex, type PromptProofReport } from './prompt-os/build.js';
+import {
+  buildProofReport,
+  type PromptProofReport,
+  readCapabilityIndex,
+  readIndex,
+} from './prompt-os/build.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { name: string; version: string };
@@ -146,7 +151,10 @@ const STOP_CONDITIONS = [
   'The operator interrupts or the same failure repeats three times without a new root-cause hypothesis.',
 ];
 
-function buildExecutionContract(selection: Selection, selectedPrompts: SelectedPromptSummary[]): ExecutionContract {
+function buildExecutionContract(
+  selection: Selection,
+  selectedPrompts: SelectedPromptSummary[],
+): ExecutionContract {
   const finalSelectedPrompt = selectedPrompts[selectedPrompts.length - 1];
   const chainOnComplete = finalSelectedPrompt
     ? buildOnComplete(finalSelectedPrompt.trigger)
@@ -209,7 +217,9 @@ function composeActivationMessage(
         .map((prompt) => `${prompt.order}. ${prompt.name}`)
         .join(' -> ')}.`,
     );
-    lines.push('Use multi_prompt_text as the active operating prompt; it contains each selected prompt in execution order.');
+    lines.push(
+      'Use multi_prompt_text as the active operating prompt; it contains each selected prompt in execution order.',
+    );
     const finalPrompt = selectedPrompts[selectedPrompts.length - 1]!;
     lines.push(
       `Chain: follow execution_contract.prompt_sequence through prompt ${finalPrompt.order}; after "${finalPrompt.name}" passes its exit gate, use that prompt's on_complete hand-off or report final state if complete.`,
@@ -405,7 +415,12 @@ export async function routePromptCore(options: RoutePromptOptions): Promise<Rout
   const { prompts, warnings: parserWarnings } = await readPromptLibrary(options.libraryPath);
   const routes = await loadEffectiveRoutes(options.libraryPath);
   const resolution = resolveRoutes(prompts, routes);
-  const scan = await scanWorkspace(options.workspacePath, options.maxFiles, options.maxDepth, options.maxReadBytes);
+  const scan = await scanWorkspace(
+    options.workspacePath,
+    options.maxFiles,
+    options.maxDepth,
+    options.maxReadBytes,
+  );
 
   const primaryText = buildPrimaryText(options.userGoal, options.sessionSummary);
   const workspaceText = buildWorkspaceText(scan);
@@ -431,7 +446,9 @@ export async function routePromptCore(options: RoutePromptOptions): Promise<Rout
     options.sessionSummary,
     selection.route.trigger,
   );
-  const alternatives = scores.filter((score) => score.prompt_name !== selection.route.prompt_name).slice(0, 3);
+  const alternatives = scores
+    .filter((score) => score.prompt_name !== selection.route.prompt_name)
+    .slice(0, 3);
   const alternativeSummaries = alternatives.map((route) => ({
     prompt_name: route.prompt_name,
     trigger: route.trigger,
@@ -476,7 +493,13 @@ export async function routePromptCore(options: RoutePromptOptions): Promise<Rout
     selected_prompts: selectedPrompts,
     prompt_text: composed.text,
     multi_prompt_text: multiPromptText,
-    activation_message: composeActivationMessage(selection, contract, alternatives, scan, selectedPrompts),
+    activation_message: composeActivationMessage(
+      selection,
+      contract,
+      alternatives,
+      scan,
+      selectedPrompts,
+    ),
     suggested_chat_message: composeSuggestedChatMessage(selection, contract, selectedPrompts),
     execution_contract: contract,
     alternatives: alternativeSummaries,

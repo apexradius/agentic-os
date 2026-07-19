@@ -6,13 +6,20 @@
 // Deterministic-first is the law: never spend a judge call on a criterion a diff can decide.
 
 import {
-  toolPath, mutationVerification, fanOut, efficiency,
-  operatorAsks, planApprovals, askToolsOf, planApprovalToolsOf,
-} from "./trajectory.mjs";
+  askToolsOf,
+  efficiency,
+  fanOut,
+  mutationVerification,
+  operatorAsks,
+  planApprovals,
+  planApprovalToolsOf,
+  toolPath,
+} from './trajectory.mjs';
 
 /** Levenshtein edit distance over two token arrays (not characters — tool names are the tokens). */
 export function levenshtein(a, b) {
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
   let prev = Array.from({ length: n + 1 }, (_, j) => j);

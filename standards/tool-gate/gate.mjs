@@ -10,11 +10,11 @@
 // DNA; the judgment half is the `security-reviewer` role. What it cannot prove deterministically
 // (novel obfuscation, intent, "is this safe in context") it defers to that role — see README.md.
 
-import { readFileSync } from "node:fs";
+import { readFileSync } from 'node:fs';
 
-import { buildSurface, surfacesFromJsonl } from "./lib/parse.mjs";
-import { isAllowlisted } from "./rules/_shared.mjs";
-import { RULES } from "./rules/index.mjs";
+import { buildSurface, surfacesFromJsonl } from './lib/parse.mjs';
+import { isAllowlisted } from './rules/_shared.mjs';
+import { RULES } from './rules/index.mjs';
 
 /** Run every rule against one Surface → findings. */
 export function scanSurface(surface) {
@@ -27,7 +27,14 @@ export function scanSurface(surface) {
       hits = [{ evidence: `rule crashed: ${err.message}` }];
     }
     for (const h of hits) {
-      findings.push({ rule: rule.id, title: rule.title, severity: rule.severity, category: rule.category, ref: rule.ref, evidence: h.evidence });
+      findings.push({
+        rule: rule.id,
+        title: rule.title,
+        severity: rule.severity,
+        category: rule.category,
+        ref: rule.ref,
+        evidence: h.evidence,
+      });
     }
   }
   return findings;
@@ -42,35 +49,38 @@ export function scanSurface(surface) {
 export function decide(call) {
   const surface = buildSurface(call);
   const findings = scanSurface(surface);
-  const blocking = findings.filter((f) => f.severity === "blocking");
+  const blocking = findings.filter((f) => f.severity === 'blocking');
   if (blocking.length) {
-    return { decision: "deny", reason: blocking.map((f) => f.title).join("; "), findings, surface };
+    return { decision: 'deny', reason: blocking.map((f) => f.title).join('; '), findings, surface };
   }
   if (findings.length) {
-    return { decision: "ask", reason: findings.map((f) => f.title).join("; "), findings, surface };
+    return { decision: 'ask', reason: findings.map((f) => f.title).join('; '), findings, surface };
   }
   if (isAllowlisted(surface)) {
-    return { decision: "allow", reason: "known read-only operation", findings, surface };
+    return { decision: 'allow', reason: 'known read-only operation', findings, surface };
   }
-  return { decision: "ask", reason: "not pre-cleared — approve before running", findings, surface };
+  return { decision: 'ask', reason: 'not pre-cleared — approve before running', findings, surface };
 }
 
-const ICON = { deny: "✗", ask: "?", allow: "✓" };
+const ICON = { deny: '✗', ask: '?', allow: '✓' };
 
 function report(results) {
   for (const r of results) {
-    const where = r.surface.tool + (r.surface.path ? ` ${r.surface.path}` : "");
-    console.log(`\n${ICON[r.decision]} ${r.decision.toUpperCase()}  [${where}]  ${r.surface.command || r.surface.path || ""}`.trimEnd());
+    const where = r.surface.tool + (r.surface.path ? ` ${r.surface.path}` : '');
+    console.log(
+      `\n${ICON[r.decision]} ${r.decision.toUpperCase()}  [${where}]  ${r.surface.command || r.surface.path || ''}`.trimEnd(),
+    );
     if (r.reason) console.log(`    ${r.reason}`);
-    for (const f of r.findings) console.log(`    [${f.rule}] ${f.evidence}  → ${f.title} (${f.ref})`);
+    for (const f of r.findings)
+      console.log(`    [${f.rule}] ${f.evidence}  → ${f.title} (${f.ref})`);
   }
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-if (process.argv[1] && process.argv[1].endsWith("gate.mjs")) {
+if (process.argv[1] && process.argv[1].endsWith('gate.mjs')) {
   const argv = process.argv.slice(2);
-  const json = argv.includes("--json");
-  const targets = argv.filter((a) => !a.startsWith("--"));
+  const json = argv.includes('--json');
+  const targets = argv.filter((a) => !a.startsWith('--'));
 
   if (!targets.length) {
     console.error("usage: gate.mjs [--json] <file.jsonl>... | echo '<json>' | gate.mjs -");
@@ -79,21 +89,29 @@ if (process.argv[1] && process.argv[1].endsWith("gate.mjs")) {
 
   const surfaces = [];
   for (const t of targets) {
-    const raw = t === "-" ? readFileSync(0, "utf8") : readFileSync(t, "utf8");
+    const raw = t === '-' ? readFileSync(0, 'utf8') : readFileSync(t, 'utf8');
     // A single JSON object on stdin, or JSONL from a file.
     const trimmed = raw.trim();
-    if (trimmed.startsWith("{")) surfaces.push(buildSurface(JSON.parse(trimmed)));
+    if (trimmed.startsWith('{')) surfaces.push(buildSurface(JSON.parse(trimmed)));
     else surfaces.push(...surfacesFromJsonl(raw));
   }
 
   const results = surfaces.map((s) => decide(s.raw));
   if (json) {
-    console.log(JSON.stringify(results.map((r) => ({ decision: r.decision, reason: r.reason, findings: r.findings })), null, 2));
+    console.log(
+      JSON.stringify(
+        results.map((r) => ({ decision: r.decision, reason: r.reason, findings: r.findings })),
+        null,
+        2,
+      ),
+    );
   } else {
     const tally = results.reduce((a, r) => ((a[r.decision] = (a[r.decision] || 0) + 1), a), {});
-    console.log(`tool-gate: ${results.length} call(s) — ${tally.allow || 0} allow, ${tally.ask || 0} ask, ${tally.deny || 0} deny`);
+    console.log(
+      `tool-gate: ${results.length} call(s) — ${tally.allow || 0} allow, ${tally.ask || 0} ask, ${tally.deny || 0} deny`,
+    );
     report(results);
   }
 
-  process.exit(results.some((r) => r.decision === "deny") ? 1 : 0);
+  process.exit(results.some((r) => r.decision === 'deny') ? 1 : 0);
 }

@@ -44,8 +44,12 @@ function routePrompt(args) {
         clientInfo: { name: 'chain-fieldtest', version: '0' },
       }),
     );
-    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
-    child.stdin.write(rpc(2, 'tools/call', { name: 'route_prompt', arguments: { workspace_path: WS, ...args } }));
+    child.stdin.write(
+      `${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`,
+    );
+    child.stdin.write(
+      rpc(2, 'tools/call', { name: 'route_prompt', arguments: { workspace_path: WS, ...args } }),
+    );
   });
 }
 
@@ -91,21 +95,33 @@ await hop(
   'Hop 2: lifecycle mid-flight (S4) — resume via NEXT_GATE',
   async () => {
     await fs.mkdir(`${WS}/docs/ops`, { recursive: true });
-    await fs.writeFile(`${WS}/docs/ops/lifecycle-state.md`, '# State\n\nCurrent stage: S4\nResume: NEXT_GATE\n');
+    await fs.writeFile(
+      `${WS}/docs/ops/lifecycle-state.md`,
+      '# State\n\nCurrent stage: S4\nResume: NEXT_GATE\n',
+    );
     await fs.writeFile(`${WS}/README.md`, 'fieldtest project\n');
   },
   { session_summary: 'S3 exit gate passed; scaffold complete' },
-  (g) => g.name === 'Application Development Lifecycle Master Prompt' && g.next_trigger === 'NEXT_GATE' && g.stage === 'S4',
+  (g) =>
+    g.name === 'Application Development Lifecycle Master Prompt' &&
+    g.next_trigger === 'NEXT_GATE' &&
+    g.stage === 'S4',
 );
 
 // Hop 3 — S11 passes; master's Chain Handoff writes the completion line.
 await hop(
   'Hop 3: S11 complete — hand off to GTM readiness',
   async () => {
-    await fs.writeFile(`${WS}/docs/ops/lifecycle-state.md`, '# State\n\nCurrent stage: S11 — complete\n');
+    await fs.writeFile(
+      `${WS}/docs/ops/lifecycle-state.md`,
+      '# State\n\nCurrent stage: S11 — complete\n',
+    );
   },
   { session_summary: 'S11_OPERATE exit gate passed; lifecycle complete per Chain Handoff' },
-  (g) => g.name === 'Go To Market Readiness Prompt' && g.chain_next === 'ACCOUNT_GROWTH_RUN' && g.chain_complete === false,
+  (g) =>
+    g.name === 'Go To Market Readiness Prompt' &&
+    g.chain_next === 'ACCOUNT_GROWTH_RUN' &&
+    g.chain_complete === false,
 );
 
 // Hop 4 — GTM run scores CONDITIONAL; repair loop keeps routing to GTM.
@@ -130,5 +146,9 @@ await hop(
 );
 
 console.log(hops.join('\n'));
-console.log(failures === 0 ? '\nCHAIN FIELD TEST: ALL 5 HOPS PASS — empty folder to GTM-ready spine is live' : `\nCHAIN FIELD TEST: ${failures} FAILURE(S)`);
+console.log(
+  failures === 0
+    ? '\nCHAIN FIELD TEST: ALL 5 HOPS PASS — empty folder to GTM-ready spine is live'
+    : `\nCHAIN FIELD TEST: ${failures} FAILURE(S)`,
+);
 process.exit(failures === 0 ? 0 : 1);

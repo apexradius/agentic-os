@@ -2,14 +2,14 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 import { parsePromptLibrary, slugify } from '../lib.js';
-import { parseFrontmatter } from './frontmatter.js';
 import {
   ALLOWED_INCLUDES,
   DOMAINS,
+  FrontmatterSchema,
   REQUIRED_ALL,
   REQUIRED_WORKFLOW,
-  FrontmatterSchema,
 } from './contract.js';
+import { parseFrontmatter } from './frontmatter.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -88,11 +88,7 @@ export function lintRecord(fileText: string, opts: { filePath: string }): LintRe
         addError('R9a', `${fieldPath}: ${msg}`);
       } else if (msg.startsWith('R9b:')) {
         addError('R9b', `${fieldPath}: ${msg}`);
-      } else if (
-        fieldPath === 'created' ||
-        fieldPath === 'updated' ||
-        fieldPath === 'deprecated'
-      ) {
+      } else if (fieldPath === 'created' || fieldPath === 'updated' || fieldPath === 'deprecated') {
         // Date format issues surfaced as R10
         addError('R10', `${fieldPath}: ${msg}`);
       } else {
@@ -122,7 +118,10 @@ export function lintRecord(fileText: string, opts: { filePath: string }): LintRe
   // We pass the full fileText so the parser sees the ## heading in the body.
   const parsed = parsePromptLibrary(fileText);
   if (parsed.prompts.length === 0) {
-    addError('R11', 'parsePromptLibrary returned 0 prompts — missing or malformed ## heading or ```text fence');
+    addError(
+      'R11',
+      'parsePromptLibrary returned 0 prompts — missing or malformed ## heading or ```text fence',
+    );
   }
   if (parsed.warnings.length > 0) {
     for (const w of parsed.warnings) {
@@ -137,10 +136,7 @@ export function lintRecord(fileText: string, opts: { filePath: string }): LintRe
   if (fmId !== null && promptEntry !== null) {
     const expectedSlug = promptEntry.slug; // already slugified
     if (fmId !== expectedSlug) {
-      addError(
-        'R2',
-        `id "${fmId}" does not match slugify(heading) "${expectedSlug}"`,
-      );
+      addError('R2', `id "${fmId}" does not match slugify(heading) "${expectedSlug}"`);
     }
   }
 
@@ -195,7 +191,10 @@ export function lintRecord(fileText: string, opts: { filePath: string }): LintRe
     if (/^\s*-?\s*(NEVER|ALWAYS)\b/.test(line)) {
       const wordCount = line.trim().split(/\s+/).length;
       if (wordCount <= 6 && !QUALIFIERS.test(line)) {
-        addWarning('R7', `Potential blanket negative (${wordCount} words, no qualifier): ${line.trim()}`);
+        addWarning(
+          'R7',
+          `Potential blanket negative (${wordCount} words, no qualifier): ${line.trim()}`,
+        );
       }
     }
   }
@@ -223,7 +222,12 @@ export async function lintFile(absPath: string): Promise<LintResult> {
     return {
       file: absPath,
       ok: false,
-      errors: [{ code: 'R1', message: `Cannot read file: ${err instanceof Error ? err.message : String(err)}` }],
+      errors: [
+        {
+          code: 'R1',
+          message: `Cannot read file: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      ],
       warnings: [],
     };
   }

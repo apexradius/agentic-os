@@ -7,21 +7,21 @@ import {
   log,
   registerHealthTool,
   UnifiedErrorHandler,
-} from "@framework/mcp-shared";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { PgClient } from "./client.js";
-import { initSSH, type SSHModule } from "./ssh/index.js";
-import { registerExcelTools } from "./tools/excel.js";
-import { registerHealthTools } from "./tools/health.js";
-import { registerQueryTools } from "./tools/query.js";
-import { registerSchemaTools } from "./tools/schema.js";
-import type { Tunnel } from "./tunnel.js";
-import { openTunnel } from "./tunnel.js";
+} from '@framework/mcp-shared';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { PgClient } from './client.js';
+import { initSSH, type SSHModule } from './ssh/index.js';
+import { registerExcelTools } from './tools/excel.js';
+import { registerHealthTools } from './tools/health.js';
+import { registerQueryTools } from './tools/query.js';
+import { registerSchemaTools } from './tools/schema.js';
+import type { Tunnel } from './tunnel.js';
+import { openTunnel } from './tunnel.js';
 
-const MCP_NAME = "apex-data-mcp";
-const MCP_VERSION = "3.0.0";
-const SSH_OPTIONAL = process.env["OMNIBUS_DATA_SSH"] === "0";
+const MCP_NAME = 'apex-data-mcp';
+const MCP_VERSION = '3.0.0';
+const SSH_OPTIONAL = process.env['OMNIBUS_DATA_SSH'] === '0';
 
 interface CliConfig {
   pgUrl?: string;
@@ -43,10 +43,10 @@ interface CliConfig {
 
 function parseArgs(argv: string[]): CliConfig {
   const config: CliConfig = {
-    pgUrl: process.env["APEX_PG_URL"],
-    pgHost: "localhost",
+    pgUrl: process.env['APEX_PG_URL'],
+    pgHost: 'localhost',
     pgPort: 5432,
-    pgPassword: process.env["APEX_PG_PASSWORD"],
+    pgPassword: process.env['APEX_PG_PASSWORD'],
     ssl: false,
     readOnly: false,
     maxRows: 500,
@@ -64,64 +64,64 @@ function parseArgs(argv: string[]): CliConfig {
       return val;
     };
 
-    if (arg === "--pg-url") {
-      config.pgUrl = consume(next, "--pg-url");
+    if (arg === '--pg-url') {
+      config.pgUrl = consume(next, '--pg-url');
       continue;
     }
-    if (arg === "--pg-host") {
-      config.pgHost = consume(next, "--pg-host");
+    if (arg === '--pg-host') {
+      config.pgHost = consume(next, '--pg-host');
       continue;
     }
-    if (arg === "--pg-port") {
-      config.pgPort = parseInt(consume(next, "--pg-port"), 10);
+    if (arg === '--pg-port') {
+      config.pgPort = parseInt(consume(next, '--pg-port'), 10);
       continue;
     }
-    if (arg === "--pg-db") {
-      config.pgDb = consume(next, "--pg-db");
+    if (arg === '--pg-db') {
+      config.pgDb = consume(next, '--pg-db');
       continue;
     }
-    if (arg === "--pg-user") {
-      config.pgUser = consume(next, "--pg-user");
+    if (arg === '--pg-user') {
+      config.pgUser = consume(next, '--pg-user');
       continue;
     }
-    if (arg === "--pg-password") {
-      config.pgPassword = consume(next, "--pg-password");
+    if (arg === '--pg-password') {
+      config.pgPassword = consume(next, '--pg-password');
       continue;
     }
-    if (arg === "--ssl") {
+    if (arg === '--ssl') {
       config.ssl = true;
       continue;
     }
-    if (arg === "--read-only") {
+    if (arg === '--read-only') {
       config.readOnly = true;
       continue;
     }
-    if (arg === "--max-rows") {
-      config.maxRows = parseInt(consume(next, "--max-rows"), 10);
+    if (arg === '--max-rows') {
+      config.maxRows = parseInt(consume(next, '--max-rows'), 10);
       continue;
     }
-    if (arg === "--timeout") {
-      config.timeout = parseInt(consume(next, "--timeout"), 10);
+    if (arg === '--timeout') {
+      config.timeout = parseInt(consume(next, '--timeout'), 10);
       continue;
     }
-    if (arg === "--ssh-host") {
-      config.sshHost = consume(next, "--ssh-host");
+    if (arg === '--ssh-host') {
+      config.sshHost = consume(next, '--ssh-host');
       continue;
     }
-    if (arg === "--ssh-port") {
-      config.sshPort = parseInt(consume(next, "--ssh-port"), 10);
+    if (arg === '--ssh-port') {
+      config.sshPort = parseInt(consume(next, '--ssh-port'), 10);
       continue;
     }
-    if (arg === "--ssh-user") {
-      config.sshUser = consume(next, "--ssh-user");
+    if (arg === '--ssh-user') {
+      config.sshUser = consume(next, '--ssh-user');
       continue;
     }
-    if (arg === "--ssh-key") {
-      config.sshKey = consume(next, "--ssh-key");
+    if (arg === '--ssh-key') {
+      config.sshKey = consume(next, '--ssh-key');
       continue;
     }
-    if (arg === "--ssh-password") {
-      config.sshPassword = consume(next, "--ssh-password");
+    if (arg === '--ssh-password') {
+      config.sshPassword = consume(next, '--ssh-password');
       continue;
     }
     throw new Error(`Unknown argument: ${arg}`);
@@ -151,7 +151,7 @@ async function main(): Promise<void> {
   let sshModule: SSHModule | undefined;
 
   if (config.sshHost) {
-    if (!config.sshUser) throw new Error("--ssh-user is required when using SSH tunnel");
+    if (!config.sshUser) throw new Error('--ssh-user is required when using SSH tunnel');
     try {
       tunnel = await openTunnel({
         sshHost: config.sshHost,
@@ -163,14 +163,14 @@ async function main(): Promise<void> {
         pgPort: config.pgPort,
       });
       // Redirect Postgres connection through the tunnel
-      config.pgHost = "127.0.0.1";
+      config.pgHost = '127.0.0.1';
       config.pgPort = tunnel.localPort;
       serviceStatus.ssh = true;
     } catch (e) {
       log.warn(
         MCP_NAME,
-        "ssh",
-        "startup",
+        'ssh',
+        'startup',
         `SSH tunnel failed: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
@@ -191,13 +191,13 @@ async function main(): Promise<void> {
 
   // Test PG connectivity
   try {
-    await pgClient.query("SELECT 1");
+    await pgClient.query('SELECT 1');
     serviceStatus.postgres = true;
   } catch (e) {
     log.warn(
       MCP_NAME,
-      "postgres",
-      "startup",
+      'postgres',
+      'startup',
       `PostgreSQL unavailable: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
@@ -234,7 +234,7 @@ async function main(): Promise<void> {
       const alias = m[1]!.toLowerCase();
       const user = process.env[`APEX_SSH_${m[1]}_USER`];
       if (!user) {
-        log.warn(MCP_NAME, "ssh", "config", `Skipping APEX_SSH_${m[1]} because USER is missing`);
+        log.warn(MCP_NAME, 'ssh', 'config', `Skipping APEX_SSH_${m[1]} because USER is missing`);
         continue;
       }
       extraServers[alias] = {
@@ -280,7 +280,7 @@ async function main(): Promise<void> {
     checks: {
       postgres: async () => {
         try {
-          await pgClient.query("SELECT 1");
+          await pgClient.query('SELECT 1');
           return null;
         } catch (e) {
           return e instanceof Error ? e.message : String(e);
@@ -288,12 +288,12 @@ async function main(): Promise<void> {
       },
       ssh: async () => {
         if (SSH_OPTIONAL) return null;
-        if (!sshModule) return "SSH not configured";
+        if (!sshModule) return 'SSH not configured';
         try {
-          const result = await sshModule.client.exec("echo ok", {
+          const result = await sshModule.client.exec('echo ok', {
             timeout: 10_000,
           });
-          return result.exitCode === 0 && result.stdout.trim() === "ok"
+          return result.exitCode === 0 && result.stdout.trim() === 'ok'
             ? null
             : `SSH echo check failed: exit ${result.exitCode}`;
         } catch (e) {
@@ -304,26 +304,26 @@ async function main(): Promise<void> {
   });
 
   const cleanup = async () => {
-    log.info(MCP_NAME, "system", "shutdown", "Shutting down gracefully");
+    log.info(MCP_NAME, 'system', 'shutdown', 'Shutting down gracefully');
     await pgClient.end();
     tunnel?.close();
     if (sshModule) await sshModule.shutdown();
   };
 
-  process.on("SIGINT", () => {
+  process.on('SIGINT', () => {
     cleanup().finally(() => process.exit(EXIT_CODES.SUCCESS));
   });
-  process.on("SIGTERM", () => {
+  process.on('SIGTERM', () => {
     cleanup().finally(() => process.exit(EXIT_CODES.SUCCESS));
   });
-  process.on("uncaughtException", (err) => {
-    log.error(MCP_NAME, "system", "uncaught_exception", err.message);
+  process.on('uncaughtException', (err) => {
+    log.error(MCP_NAME, 'system', 'uncaught_exception', err.message);
   });
-  process.on("unhandledRejection", (reason) => {
+  process.on('unhandledRejection', (reason) => {
     log.error(
       MCP_NAME,
-      "system",
-      "unhandled_rejection",
+      'system',
+      'unhandled_rejection',
       reason instanceof Error ? reason.message : String(reason),
     );
   });
@@ -335,6 +335,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  log.error(MCP_NAME, "system", "fatal", err instanceof Error ? err.message : String(err));
+  log.error(MCP_NAME, 'system', 'fatal', err instanceof Error ? err.message : String(err));
   process.exit(EXIT_CODES.FATAL_CONFIG_ERROR);
 });

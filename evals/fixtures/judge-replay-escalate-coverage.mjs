@@ -4,9 +4,10 @@
 // score.mjs certification mode fails an ESCALATED gating dim (R1: deferred OR escalated = FAIL),
 // not only a deferred one. The other dimensions agree (pass) so they stay gradeable.
 // meta declares the cert-mode context contract (T5); this is a canned self-verify stand-in.
-export const meta = { context: ["answer-key", "artifacts", "fixture-diff"] };
+export const meta = { context: ['answer-key', 'artifacts', 'fixture-diff'] };
 
 export default async function judge({ dimension, presentation }) {
-  if (dimension === "finding_class_coverage") return presentation === "candidate-first" ? "pass" : "fail";
-  return "pass";
+  if (dimension === 'finding_class_coverage')
+    return presentation === 'candidate-first' ? 'pass' : 'fail';
+  return 'pass';
 }

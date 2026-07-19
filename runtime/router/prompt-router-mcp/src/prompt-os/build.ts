@@ -164,7 +164,9 @@ function addLookup(lookup: Record<string, string[]>, key: string, slug: string):
 }
 
 function sortedRecord<T>(record: Record<string, T>): Record<string, T> {
-  return Object.fromEntries(Object.entries(record).sort(([a], [b]) => a.localeCompare(b))) as Record<string, T>;
+  return Object.fromEntries(
+    Object.entries(record).sort(([a], [b]) => a.localeCompare(b)),
+  ) as Record<string, T>;
 }
 
 function sortLookup(lookup: Record<string, string[]>): Record<string, string[]> {
@@ -176,20 +178,22 @@ function sortLookup(lookup: Record<string, string[]>): Record<string, string[]> 
 }
 
 export function buildCapabilityIndex(index: IndexRecord[]): CapabilityIndex {
-  const capabilities: PromptCapability[] = index.map((record) => ({
-    slug: record.slug,
-    name: record.name,
-    domain: record.domain,
-    status: record.status,
-    risk_level: record.risk_level,
-    tags: asStringArray(record.tags),
-    trigger_phrases: asStringArray(record.trigger_phrases),
-    allowed_tools: asStringArray(record.allowed_tools),
-    proof_required: asStringArray(record.proof_required),
-    strategy_overlays: asStringArray(record.strategy_overlays),
-    sections: asStringArray(record.sections),
-    file: record.file,
-  })).sort((a, b) => a.slug.localeCompare(b.slug));
+  const capabilities: PromptCapability[] = index
+    .map((record) => ({
+      slug: record.slug,
+      name: record.name,
+      domain: record.domain,
+      status: record.status,
+      risk_level: record.risk_level,
+      tags: asStringArray(record.tags),
+      trigger_phrases: asStringArray(record.trigger_phrases),
+      allowed_tools: asStringArray(record.allowed_tools),
+      proof_required: asStringArray(record.proof_required),
+      strategy_overlays: asStringArray(record.strategy_overlays),
+      sections: asStringArray(record.sections),
+      file: record.file,
+    }))
+    .sort((a, b) => a.slug.localeCompare(b.slug));
 
   const summary: CapabilityIndex['summary'] = {
     records: capabilities.length,
@@ -260,22 +264,26 @@ export function buildCapabilityIndex(index: IndexRecord[]): CapabilityIndex {
 }
 
 export function buildProofReport(capabilityIndex: CapabilityIndex): PromptProofReport {
-  const records: PromptProofRecord[] = capabilityIndex.capabilities.map((capability) => {
-    const proofRequired = asStringArray(capability.proof_required);
-    return {
-      slug: capability.slug,
-      name: capability.name,
-      domain: capability.domain,
-      status: capability.status,
-      risk_level: capability.risk_level,
-      proof_required: proofRequired,
-      proof_status: proofRequired.length > 0 ? 'required' as const : 'missing' as const,
-      file: capability.file,
-    };
-  }).sort((a, b) => a.slug.localeCompare(b.slug));
+  const records: PromptProofRecord[] = capabilityIndex.capabilities
+    .map((capability) => {
+      const proofRequired = asStringArray(capability.proof_required);
+      return {
+        slug: capability.slug,
+        name: capability.name,
+        domain: capability.domain,
+        status: capability.status,
+        risk_level: capability.risk_level,
+        proof_required: proofRequired,
+        proof_status: proofRequired.length > 0 ? ('required' as const) : ('missing' as const),
+        file: capability.file,
+      };
+    })
+    .sort((a, b) => a.slug.localeCompare(b.slug));
 
   const missing = records.filter((record) => record.proof_status === 'missing');
-  const highRiskMissing = missing.filter((record) => record.risk_level === 'critical' || record.risk_level === 'high');
+  const highRiskMissing = missing.filter(
+    (record) => record.risk_level === 'critical' || record.risk_level === 'high',
+  );
   const byProof: Record<string, number> = {};
   for (const record of records) {
     for (const proof of record.proof_required) {
@@ -302,7 +310,9 @@ export function buildProofReport(capabilityIndex: CapabilityIndex): PromptProofR
  * Read every record, build index.json + labels.json + index.generated.md, and
  * write the sidecars to disk under libraryDir. Throws on any unparseable record.
  */
-export async function writeArtifacts(libraryDir: string): Promise<{ count: number; published: number; outFiles: string[] }> {
+export async function writeArtifacts(
+  libraryDir: string,
+): Promise<{ count: number; published: number; outFiles: string[] }> {
   const promptsDir = path.join(libraryDir, 'prompts');
   const files: string[] = [];
   await walkForPrompts(promptsDir, files);
@@ -320,7 +330,9 @@ export async function writeArtifacts(libraryDir: string): Promise<{ count: numbe
     }
     const parsed = parsePromptLibrary(fileText);
     if (parsed.prompts.length === 0) {
-      throw new Error(`build: no prompt parsed from ${absPath} (missing ## heading or \`\`\`text fence)`);
+      throw new Error(
+        `build: no prompt parsed from ${absPath} (missing ## heading or \`\`\`text fence)`,
+      );
     }
     if (parsed.warnings.length > 0) {
       throw new Error(`build: parser warning for ${absPath}: ${parsed.warnings.join('; ')}`);

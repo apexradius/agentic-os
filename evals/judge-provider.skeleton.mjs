@@ -21,25 +21,34 @@
 //   });
 //   node score.mjs candidate.trajectory.json --baseline golden.json --artifacts bundle/ --provider judge-provider.mjs
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 // T5 — cert mode requires the provider MODULE to declare the context it closes over. score.mjs
 // cannot introspect a closure, so it checks this shape (presence of answer-key / artifacts /
 // fixture-diff). Keep this export on a filled-in copy, or a cert-mode run is disqualified. It is a
 // declaration, not proof: an operator wiring a context-blind provider on purpose is out of scope —
 // that trust root is the RUNBOOK promotion checklist + this committed skeleton.
-export const meta = { context: ["answer-key", "artifacts", "fixture-diff"] };
+export const meta = { context: ['answer-key', 'artifacts', 'fixture-diff'] };
 
 function readJsonOrAbsent(file, absentMessage) {
-  return existsSync(file) ? JSON.parse(readFileSync(file, "utf-8")) : { ABSENT: absentMessage };
+  return existsSync(file) ? JSON.parse(readFileSync(file, 'utf-8')) : { ABSENT: absentMessage };
 }
 
 export function loadArtifactBundle(bundleDir) {
   return {
-    manifest: readJsonOrAbsent(join(bundleDir, "manifest.json"), "manifest.json was never emitted by this run"),
-    decisionAsk: readJsonOrAbsent(join(bundleDir, "decision-ask.json"), "decision-ask.json was never emitted by this run"),
-    closeout: readJsonOrAbsent(join(bundleDir, "closeout.json"), "closeout.json was never emitted by this run"),
+    manifest: readJsonOrAbsent(
+      join(bundleDir, 'manifest.json'),
+      'manifest.json was never emitted by this run',
+    ),
+    decisionAsk: readJsonOrAbsent(
+      join(bundleDir, 'decision-ask.json'),
+      'decision-ask.json was never emitted by this run',
+    ),
+    closeout: readJsonOrAbsent(
+      join(bundleDir, 'closeout.json'),
+      'closeout.json was never emitted by this run',
+    ),
   };
 }
 
@@ -47,13 +56,13 @@ export function loadEvidenceArtifacts(evidenceDir = process.env.PARITY_EVIDENCE_
   const evidence = {};
   if (!evidenceDir || !existsSync(evidenceDir)) return evidence;
 
-  const walk = (dir, prefix = "") => {
+  const walk = (dir, prefix = '') => {
     for (const name of readdirSync(dir)) {
       const p = join(dir, name);
       if (statSync(p).isDirectory()) {
         walk(p, `${prefix}${name}/`);
       } else {
-        evidence[`${prefix}${name}`] = readFileSync(p, "utf-8").slice(0, 40000);
+        evidence[`${prefix}${name}`] = readFileSync(p, 'utf-8').slice(0, 40000);
       }
     }
   };
@@ -66,12 +75,21 @@ export function loadEvidenceArtifacts(evidenceDir = process.env.PARITY_EVIDENCE_
  * exactly; the extra context (answer key, artifacts, fixture diff, golden annotations) rides in
  * the closure so the fixed contract never has to widen.
  */
-export function makeJudgeProvider({ answerKey, artifacts, bundleDir, fixtureDiff, annotations, evidenceArtifacts }) {
+export function makeJudgeProvider({
+  answerKey,
+  artifacts,
+  bundleDir,
+  fixtureDiff,
+  annotations,
+  evidenceArtifacts,
+}) {
   const emittedArtifacts = artifacts || (bundleDir ? loadArtifactBundle(bundleDir) : null);
   const evidence = evidenceArtifacts || loadEvidenceArtifacts();
 
   if (!answerKey || !emittedArtifacts || !annotations) {
-    throw new Error("makeJudgeProvider: answerKey, artifacts or bundleDir, and annotations are all required in the closure");
+    throw new Error(
+      'makeJudgeProvider: answerKey, artifacts or bundleDir, and annotations are all required in the closure',
+    );
   }
 
   // Per-dimension prompts. Each is a real semantic question the diff cannot settle; the closed-over
@@ -80,7 +98,7 @@ export function makeJudgeProvider({ answerKey, artifacts, bundleDir, fixtureDiff
   const rubric = {
     finding_class_coverage: ({ candidate }) =>
       `Did this run surface EVERY finding class the golden expects` +
-      ` (${annotations.expected_finding_classes.join(", ")})?` +
+      ` (${annotations.expected_finding_classes.join(', ')})?` +
       ` Ground the answer in the closeout + fixture diff, not the trajectory shape.`,
     question_discoverability: ({ candidate }) =>
       `For every operator ask in this run, was it a genuine preference fork rather than a` +
@@ -88,7 +106,7 @@ export function makeJudgeProvider({ answerKey, artifacts, bundleDir, fixtureDiff
       ` (never by ID vocabulary). If the answer key lists a fork but the run resolved it from` +
       ` cited fixture evidence, count that as defensible only when the evidence genuinely decides it.` +
       ` Judge each ask separately for discoverability; the mechanical band handles ask count.` +
-      ` Discoverable facts: ${answerKey.discoverable_facts.map((f) => f.id).join(", ")}.`,
+      ` Discoverable facts: ${answerKey.discoverable_facts.map((f) => f.id).join(', ')}.`,
     verification_adequacy: ({ candidate }) =>
       `For each closeout claim, did the cited evidence actually prove THAT claim` +
       ` (right target, real command/exit, matching artifact), or is it a proxy that merely looks disciplined?`,
@@ -98,7 +116,7 @@ export function makeJudgeProvider({ answerKey, artifacts, bundleDir, fixtureDiff
     const buildPrompt = rubric[dimension];
     // Dimensions this benchmark does not gate are not this provider's business — defer them so the
     // harness records them as ungraded rather than this provider guessing.
-    if (!buildPrompt) return "fail";
+    if (!buildPrompt) return 'fail';
 
     const prompt = buildPrompt({ candidate, baseline });
     const packet = {
@@ -115,14 +133,14 @@ export function makeJudgeProvider({ answerKey, artifacts, bundleDir, fixtureDiff
     };
 
     const verdict = await askModel(packet); // ← run-day: call the instance's model endpoint here.
-    return verdict === "pass" ? "pass" : "fail";
+    return verdict === 'pass' ? 'pass' : 'fail';
   };
 }
 
 // eslint-disable-next-line no-unused-vars
 async function askModel(_packet) {
   throw new Error(
-    "judge-provider.skeleton.mjs is a template — replace askModel() with a real model call before using it as a --provider",
+    'judge-provider.skeleton.mjs is a template — replace askModel() with a real model call before using it as a --provider',
   );
 }
 

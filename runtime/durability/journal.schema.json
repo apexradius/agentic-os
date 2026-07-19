@@ -7,13 +7,38 @@
   "additionalProperties": false,
   "required": ["ts", "task_id", "step"],
   "properties": {
-    "ts": { "type": "string", "format": "date-time", "description": "When this step record was written (ISO 8601, injected from the runtime clock)." },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this step record was written (ISO 8601, injected from the runtime clock)."
+    },
     "task_id": { "type": "string", "description": "The ledger task id this step belongs to." },
-    "step": { "type": "string", "minLength": 1, "description": "The named step within the task's run (e.g. claim, dispatch, verify, complete, escalate). Instance-defined; the framework fixes no set." },
-    "attempt": { "type": "integer", "minimum": 1, "description": "Which implement→verify attempt this record belongs to (the bounded-reiteration index)." },
-    "idempotency_key": { "type": "string", "description": "Deterministic key for a side-effecting step: hash(task_id + step + salient_inputs). Re-execution with the same key must be a no-op at the side-effect boundary; replay matches on it." },
-    "result": { "type": "string", "enum": ["start", "ok", "fail", "pass", "skipped-replay"], "description": "Step outcome. start = begun (not yet done); ok/pass = completed successfully (replay-eligible); fail = ran but failed; skipped-replay = short-circuited because a prior ok was found." },
-    "evidence": { "type": "string", "description": "Pointer to proof — a result-file path, an exit code, a log location. Never the raw payload (data-handling.md)." },
-    "metadata": { "type": "object", "description": "Instance escape hatch for extra structured fields. Must carry no secrets." }
+    "step": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The named step within the task's run (e.g. claim, dispatch, verify, complete, escalate). Instance-defined; the framework fixes no set."
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Which implement→verify attempt this record belongs to (the bounded-reiteration index)."
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Deterministic key for a side-effecting step: hash(task_id + step + salient_inputs). Re-execution with the same key must be a no-op at the side-effect boundary; replay matches on it."
+    },
+    "result": {
+      "type": "string",
+      "enum": ["start", "ok", "fail", "pass", "skipped-replay"],
+      "description": "Step outcome. start = begun (not yet done); ok/pass = completed successfully (replay-eligible); fail = ran but failed; skipped-replay = short-circuited because a prior ok was found."
+    },
+    "evidence": {
+      "type": "string",
+      "description": "Pointer to proof — a result-file path, an exit code, a log location. Never the raw payload (data-handling.md)."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Instance escape hatch for extra structured fields. Must carry no secrets."
+    }
   }
 }

@@ -14,10 +14,9 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
-
+import { FrontmatterSchema } from '../contract.js';
 import { parseFrontmatter } from '../frontmatter.js';
 import { lintRecord } from '../lint.js';
-import { FrontmatterSchema } from '../contract.js';
 
 // ---------------------------------------------------------------------------
 // Golden case schema (JSONL line shape)
@@ -114,13 +113,19 @@ async function parseGoldenFile(
     try {
       parsed = JSON.parse(lines[i]);
     } catch (err) {
-      reasons.push(`Line ${i + 1}: invalid JSON — ${err instanceof Error ? err.message : String(err)}`);
+      reasons.push(
+        `Line ${i + 1}: invalid JSON — ${err instanceof Error ? err.message : String(err)}`,
+      );
       return null;
     }
     const result = GoldenCaseSchema.safeParse(parsed);
     if (!result.success) {
-      const issues = result.error.issues.map((iss) => `${iss.path.join('.')}: ${iss.message}`).join('; ');
-      reasons.push(`Line ${i + 1} (id=${(parsed as Record<string, unknown>)?.id ?? '?'}): schema violation — ${issues}`);
+      const issues = result.error.issues
+        .map((iss) => `${iss.path.join('.')}: ${iss.message}`)
+        .join('; ');
+      reasons.push(
+        `Line ${i + 1} (id=${(parsed as Record<string, unknown>)?.id ?? '?'}): schema violation — ${issues}`,
+      );
       return null;
     }
     cases.push(result.data);

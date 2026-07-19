@@ -8,11 +8,11 @@
  * - Auto-reconnect on failure
  */
 
-import * as fs from "node:fs";
-import { log } from "@framework/mcp-shared";
-import { Client as SshClient } from "ssh2";
+import * as fs from 'node:fs';
+import { log } from '@framework/mcp-shared';
+import { Client as SshClient } from 'ssh2';
 
-const MCP = "apex-data-mcp";
+const MCP = 'apex-data-mcp';
 
 export interface ServerConfig {
   host: string;
@@ -84,7 +84,7 @@ export class SSHPool {
         }
       }, 10_000);
 
-      client.on("ready", () => {
+      client.on('ready', () => {
         resolved = true;
         clearTimeout(timeout);
 
@@ -98,9 +98,9 @@ export class SSHPool {
         // Start keepalive
         entry.keepaliveTimer = setInterval(() => {
           if (!entry.connected) return;
-          client.exec("echo keepalive", (err) => {
+          client.exec('echo keepalive', (err) => {
             if (err) {
-              log.warn(MCP, "ssh", "keepalive", `Keepalive failed for ${k}: ${err.message}`);
+              log.warn(MCP, 'ssh', 'keepalive', `Keepalive failed for ${k}: ${err.message}`);
               entry.connected = false;
             } else {
               entry.lastUsed = Date.now();
@@ -109,11 +109,11 @@ export class SSHPool {
         }, this.keepaliveInterval);
 
         this.pool.set(k, entry);
-        log.info(MCP, "ssh", "connect", `Connected to ${k}`);
+        log.info(MCP, 'ssh', 'connect', `Connected to ${k}`);
         resolve(client);
       });
 
-      client.on("error", (err) => {
+      client.on('error', (err) => {
         clearTimeout(timeout);
         const entry = this.pool.get(k);
         if (entry) entry.connected = false;
@@ -121,16 +121,16 @@ export class SSHPool {
         if (!resolved) {
           reject(new Error(`SSH connection to ${k} failed: ${err.message}`));
         } else {
-          log.warn(MCP, "ssh", "error", `Connection error on ${k}: ${err.message}`);
+          log.warn(MCP, 'ssh', 'error', `Connection error on ${k}: ${err.message}`);
         }
       });
 
-      client.on("close", () => {
+      client.on('close', () => {
         const entry = this.pool.get(k);
         if (entry) entry.connected = false;
       });
 
-      const connectOpts: Parameters<SshClient["connect"]>[0] = {
+      const connectOpts: Parameters<SshClient['connect']>[0] = {
         host: config.host,
         port: config.port,
         username: config.username,
@@ -139,7 +139,7 @@ export class SSHPool {
         readyTimeout: 20000,
       };
 
-      const agentSocket = process.env["SSH_AUTH_SOCK"];
+      const agentSocket = process.env['SSH_AUTH_SOCK'];
       if (agentSocket && fs.existsSync(agentSocket)) {
         connectOpts.agent = agentSocket;
       }
@@ -150,8 +150,8 @@ export class SSHPool {
           if ((keyStat.mode & 0o077) !== 0) {
             log.warn(
               MCP,
-              "ssh",
-              "key_permissions",
+              'ssh',
+              'key_permissions',
               `SSH key ${config.privateKeyPath} is readable by group or others`,
             );
           }
@@ -183,7 +183,7 @@ export class SSHPool {
     }
     entry.connected = false;
     this.pool.delete(key);
-    log.info(MCP, "ssh", "disconnect", `Closed connection to ${key}`);
+    log.info(MCP, 'ssh', 'disconnect', `Closed connection to ${key}`);
   }
 
   /** Clean up idle connections */
@@ -191,7 +191,7 @@ export class SSHPool {
     const now = Date.now();
     for (const [key, entry] of this.pool) {
       if (now - entry.lastUsed > this.idleTimeout) {
-        log.info(MCP, "ssh", "cleanup", `Closing idle connection to ${key}`);
+        log.info(MCP, 'ssh', 'cleanup', `Closing idle connection to ${key}`);
         this.closeConnection(key);
       }
     }

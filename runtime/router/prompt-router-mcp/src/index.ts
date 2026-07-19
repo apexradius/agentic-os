@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import process from 'node:process';
-
+import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import express from 'express';
 import { z } from 'zod';
 
@@ -18,10 +17,10 @@ import {
   resolveLibraryPath,
   resolveRoutes,
 } from './lib.js';
-import { readIndex } from './prompt-os/build.js';
 import type { IndexRecord } from './prompt-os/build.js';
-import { buildHealthReport, loadEffectiveRoutes, routePromptCore } from './router.js';
+import { readIndex } from './prompt-os/build.js';
 import { logRoutingDecision } from './prompt-os/telemetry.js';
+import { buildHealthReport, loadEffectiveRoutes, routePromptCore } from './router.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { name: string; version: string };
@@ -34,8 +33,7 @@ const MCP_VERSION = pkg.version;
 // to point the router at your library; absent that, fall back to a
 // workspace-local `prompt-library.md`.
 const DEFAULT_LIBRARY_PATH =
-  process.env['APEX_PROMPT_LIBRARY_PATH'] ??
-  join(process.cwd(), 'prompt-library.md');
+  process.env['APEX_PROMPT_LIBRARY_PATH'] ?? join(process.cwd(), 'prompt-library.md');
 const DEFAULT_WORKSPACE_PATH = process.env['APEX_PROMPT_ROUTER_WORKSPACE'] ?? process.cwd();
 
 function structuredLibraryDir(libraryPath: string): string {
@@ -114,13 +112,21 @@ function createServer(): McpServer {
           .min(1)
           .optional()
           .describe('Absolute path to the project workspace (defaults to the server workspace)'),
-        user_goal: z.string().max(4000).optional().describe('What the operator wants to accomplish'),
+        user_goal: z
+          .string()
+          .max(4000)
+          .optional()
+          .describe('What the operator wants to accomplish'),
         session_summary: z
           .string()
           .max(8000)
           .optional()
           .describe('Recent session context, e.g. last exit gate passed'),
-        library_path: z.string().min(1).optional().describe('Absolute path to the prompt library markdown'),
+        library_path: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('Absolute path to the prompt library markdown'),
         max_files: z.number().int().min(20).max(1000).default(300),
         max_depth: z.number().int().min(1).max(10).default(5),
         max_read_bytes: z.number().int().min(1000).max(50000).default(12000),
@@ -153,7 +159,8 @@ function createServer(): McpServer {
           margin: selected?.margin ?? null,
           runner_up: response.alternatives?.[0]?.prompt_name ?? null,
           fallback: selected?.fallback ?? false,
-          mode: process.env['APEX_PROMPT_LIBRARY_MODE'] === 'structured' ? 'structured' : 'monolith',
+          mode:
+            process.env['APEX_PROMPT_LIBRARY_MODE'] === 'structured' ? 'structured' : 'monolith',
         });
 
         return textResult(response);
@@ -218,7 +225,10 @@ function createServer(): McpServer {
     },
     async (args) => {
       try {
-        const { prompts, warnings, source_path } = await loadLibrary(DEFAULT_LIBRARY_PATH, args.library_path);
+        const { prompts, warnings, source_path } = await loadLibrary(
+          DEFAULT_LIBRARY_PATH,
+          args.library_path,
+        );
         const routes = await loadEffectiveRoutes(source_path);
         const routedBy = new Map(routes.map((route) => [route.promptName, route.trigger]));
         return textResult({
@@ -296,7 +306,12 @@ function createServer(): McpServer {
     async (args) => {
       const index = await readIndex(structuredLibraryDir(DEFAULT_LIBRARY_PATH));
       if (index === null) {
-        return textResult({ found: false, slug: args.slug, contract: null, note: INDEX_ABSENT_NOTE });
+        return textResult({
+          found: false,
+          slug: args.slug,
+          contract: null,
+          note: INDEX_ABSENT_NOTE,
+        });
       }
       const record = index.find((r) => r.slug === args.slug || r.id === args.slug);
       if (!record) {
@@ -318,14 +333,22 @@ function createServer(): McpServer {
       description:
         'Return every prompt record (from library/index.json) whose body contains the given XML section tag (e.g. "verify", "intake_gate"). Read-only. Returns a clean note if the sidecar is absent.',
       inputSchema: {
-        section: z.string().min(1).describe('XML section tag name, without angle brackets (e.g. "verify")'),
+        section: z
+          .string()
+          .min(1)
+          .describe('XML section tag name, without angle brackets (e.g. "verify")'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => {
       const index = await readIndex(structuredLibraryDir(DEFAULT_LIBRARY_PATH));
       if (index === null) {
-        return textResult({ section: args.section, count: 0, matches: [], note: INDEX_ABSENT_NOTE });
+        return textResult({
+          section: args.section,
+          count: 0,
+          matches: [],
+          note: INDEX_ABSENT_NOTE,
+        });
       }
       const needle = args.section.replace(/^<|>$/g, '');
       const matches = index

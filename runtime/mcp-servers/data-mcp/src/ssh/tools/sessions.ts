@@ -4,14 +4,14 @@
  * Persistent interactive sessions that survive across tool calls.
  */
 
-import { log, toolError, toolResult } from "@framework/mcp-shared";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import type { SSHClient } from "../client.js";
-import type { ServerConfig } from "../pool.js";
-import { resolveServer } from "./safety.js";
+import { log, toolError, toolResult } from '@framework/mcp-shared';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import type { SSHClient } from '../client.js';
+import type { ServerConfig } from '../pool.js';
+import { resolveServer } from './safety.js';
 
-const MCP = "apex-data-mcp";
+const MCP = 'apex-data-mcp';
 
 interface Session {
   id: string;
@@ -30,11 +30,11 @@ export function registerSessionTools(
   servers: Map<string, ServerConfig>,
 ): void {
   server.tool(
-    "ssh_session_start",
-    "Start a new persistent SSH session",
+    'ssh_session_start',
+    'Start a new persistent SSH session',
     {
-      server_id: z.string().optional().describe("Server alias"),
-      name: z.string().optional().describe("Session name (auto-generated if omitted)"),
+      server_id: z.string().optional().describe('Server alias'),
+      name: z.string().optional().describe('Session name (auto-generated if omitted)'),
     },
     async ({ server_id, name }) => {
       try {
@@ -42,16 +42,16 @@ export function registerSessionTools(
         const now = new Date().toISOString();
         sessions.set(id, {
           id,
-          serverId: server_id ?? "default",
-          outputBuffer: "",
+          serverId: server_id ?? 'default',
+          outputBuffer: '',
           createdAt: now,
           lastActivity: now,
         });
         log.info(
           MCP,
-          "ssh",
-          "session_start",
-          `Session ${id} started for ${server_id ?? "default"}`,
+          'ssh',
+          'session_start',
+          `Session ${id} started for ${server_id ?? 'default'}`,
         );
         return toolResult(`Session started: ${id}`);
       } catch (e) {
@@ -61,12 +61,12 @@ export function registerSessionTools(
   );
 
   server.tool(
-    "ssh_session_send",
-    "Send a command to a persistent SSH session and get output",
+    'ssh_session_send',
+    'Send a command to a persistent SSH session and get output',
     {
-      session_id: z.string().min(1).describe("Session ID"),
-      command: z.string().min(1).describe("Command to execute"),
-      timeout: z.number().optional().describe("Timeout in ms (default: 120000)"),
+      session_id: z.string().min(1).describe('Session ID'),
+      command: z.string().min(1).describe('Command to execute'),
+      timeout: z.number().optional().describe('Timeout in ms (default: 120000)'),
     },
     async ({ session_id, command, timeout }) => {
       try {
@@ -75,7 +75,7 @@ export function registerSessionTools(
 
         const { config, error } = resolveServer(
           servers,
-          session.serverId === "default" ? undefined : session.serverId,
+          session.serverId === 'default' ? undefined : session.serverId,
         );
         if (error) return toolError(error);
         const result = await ssh.exec(command, { timeout, server: config });
@@ -87,12 +87,12 @@ export function registerSessionTools(
         }
 
         const output = [
-          result.stdout ? result.stdout : "",
-          result.stderr ? `STDERR: ${result.stderr}` : "",
+          result.stdout ? result.stdout : '',
+          result.stderr ? `STDERR: ${result.stderr}` : '',
           `Exit: ${result.exitCode}`,
         ]
           .filter(Boolean)
-          .join("\n");
+          .join('\n');
 
         return result.exitCode === 0 ? toolResult(output) : toolError(output);
       } catch (e) {
@@ -101,23 +101,23 @@ export function registerSessionTools(
     },
   );
 
-  server.tool("ssh_session_list", "List all active SSH sessions", {}, async () => {
+  server.tool('ssh_session_list', 'List all active SSH sessions', {}, async () => {
     try {
-      if (sessions.size === 0) return toolResult("No active sessions.");
+      if (sessions.size === 0) return toolResult('No active sessions.');
       const lines = [...sessions.values()].map(
         (s) => `  ${s.id}: server=${s.serverId}, created=${s.createdAt}, last=${s.lastActivity}`,
       );
-      return toolResult(`Active sessions (${sessions.size}):\n${lines.join("\n")}`);
+      return toolResult(`Active sessions (${sessions.size}):\n${lines.join('\n')}`);
     } catch (e) {
       return toolError(e);
     }
   });
 
   server.tool(
-    "ssh_session_close",
-    "Close a persistent SSH session",
+    'ssh_session_close',
+    'Close a persistent SSH session',
     {
-      session_id: z.string().min(1).describe("Session ID to close"),
+      session_id: z.string().min(1).describe('Session ID to close'),
     },
     async ({ session_id }) => {
       try {

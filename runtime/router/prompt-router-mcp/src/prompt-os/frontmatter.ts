@@ -114,7 +114,11 @@ export function parseFrontmatter(fileText: string): FrontmatterResult {
 
     const colonIdx = line.indexOf(':');
     if (colonIdx < 0) {
-      return { data: null, body, error: `front-matter line is not a key: value pair: ${JSON.stringify(line)}` };
+      return {
+        data: null,
+        body,
+        error: `front-matter line is not a key: value pair: ${JSON.stringify(line)}`,
+      };
     }
 
     const key = line.slice(0, colonIdx).trim();
@@ -133,7 +137,11 @@ export function parseFrontmatter(fileText: string): FrontmatterResult {
     }
 
     if (!key) {
-      return { data: null, body, error: `front-matter line has empty key: ${JSON.stringify(line)}` };
+      return {
+        data: null,
+        body,
+        error: `front-matter line has empty key: ${JSON.stringify(line)}`,
+      };
     }
 
     const parsed = parseValue(rawValue);

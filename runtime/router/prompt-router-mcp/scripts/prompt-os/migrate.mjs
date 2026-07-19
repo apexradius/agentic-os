@@ -16,8 +16,7 @@
 //
 // Build first (`tsc`), then run: `node scripts/prompt-os/migrate.mjs`.
 
-import { promises as fs } from 'node:fs';
-import { readFileSync } from 'node:fs';
+import { promises as fs, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,8 +31,7 @@ const PROMPTS_DIR = path.join(LIBRARY_DIR, 'prompts');
 // Legacy single-file prompt library to migrate from. Instance-specific →
 // supply via APEX_PROMPT_LIBRARY_PATH; falls back to a home-dir file.
 const MONOLITH_PATH =
-  process.env['APEX_PROMPT_LIBRARY_PATH'] ??
-  path.join(os.homedir(), 'prompt-library.md');
+  process.env['APEX_PROMPT_LIBRARY_PATH'] ?? path.join(os.homedir(), 'prompt-library.md');
 
 // The published reference record is authored by hand and is NOT in the monolith.
 // Guard against any slug collision overwriting it.
@@ -124,7 +122,9 @@ async function main() {
   for (const [domain, count] of [...byDomain.entries()].sort()) {
     console.log(`  ${domain}: ${count}`);
   }
-  console.log(`migrate: reference record left untouched: library/prompts/lifecycle/production-deploy-verify.prompt.md`);
+  console.log(
+    `migrate: reference record left untouched: library/prompts/lifecycle/production-deploy-verify.prompt.md`,
+  );
 }
 
 main().catch((err) => {

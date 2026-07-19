@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Shared toolchain for Agentic OS primitives: frontmatter parsing, JSON-Schema validation (ajv), and one-directional agent emit (.md canonical -> .claude .md copy + .codex .toml).",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "apex-validate": "./validate.mjs",
     "apex-emit": "./emit.mjs"

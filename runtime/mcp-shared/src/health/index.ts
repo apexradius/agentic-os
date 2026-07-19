@@ -9,7 +9,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { type UnifiedErrorHandler } from '../errors/handler.js';
+import type { UnifiedErrorHandler } from '../errors/handler.js';
 
 export interface ServiceHealth {
   ok: boolean;
@@ -41,60 +41,55 @@ const startTime = Date.now();
  * Register the `system_health` tool on an MCP server.
  */
 export function registerHealthTool(server: McpServer, opts: HealthCheckOptions): void {
-  server.tool(
-    'system_health',
-    `Check health of all ${opts.mcpName} services`,
-    {},
-    async () => {
-      const services: Record<string, ServiceHealth> = {};
-      const now = new Date().toISOString();
+  server.tool('system_health', `Check health of all ${opts.mcpName} services`, {}, async () => {
+    const services: Record<string, ServiceHealth> = {};
+    const now = new Date().toISOString();
 
-      // Run all health checks in parallel
-      const entries = Object.entries(opts.checks);
-      const results = await Promise.allSettled(
-        entries.map(([, checkFn]) => checkFn()),
-      );
+    // Run all health checks in parallel
+    const entries = Object.entries(opts.checks);
+    const results = await Promise.allSettled(entries.map(([, checkFn]) => checkFn()));
 
-      let healthyCount = 0;
-      for (let i = 0; i < entries.length; i++) {
-        const [name] = entries[i]!;
-        const result = results[i]!;
+    let healthyCount = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const [name] = entries[i]!;
+      const result = results[i]!;
 
-        if (result.status === 'fulfilled') {
-          const error = result.value;
-          services[name] = { ok: error === null, error: error ?? undefined, lastCheck: now };
-          if (error === null) healthyCount++;
-        } else {
-          services[name] = {
-            ok: false,
-            error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-            lastCheck: now,
-          };
-        }
+      if (result.status === 'fulfilled') {
+        const error = result.value;
+        services[name] = { ok: error === null, error: error ?? undefined, lastCheck: now };
+        if (error === null) healthyCount++;
+      } else {
+        services[name] = {
+          ok: false,
+          error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+          lastCheck: now,
+        };
       }
+    }
 
-      const totalServices = entries.length;
-      let status: HealthReport['status'];
-      if (healthyCount === totalServices) status = 'operational';
-      else if (healthyCount === 0) status = 'down';
-      else status = 'degraded';
+    const totalServices = entries.length;
+    let status: HealthReport['status'];
+    if (healthyCount === totalServices) status = 'operational';
+    else if (healthyCount === 0) status = 'down';
+    else status = 'degraded';
 
-      const report: HealthReport = {
-        status,
-        mcp: opts.mcpName,
-        version: opts.version,
-        services,
-        circuitBreakers: opts.errorHandler.getCircuitStates(),
-        uptime_seconds: Math.round((Date.now() - startTime) / 1000),
-        memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-      };
+    const report: HealthReport = {
+      status,
+      mcp: opts.mcpName,
+      version: opts.version,
+      services,
+      circuitBreakers: opts.errorHandler.getCircuitStates(),
+      uptime_seconds: Math.round((Date.now() - startTime) / 1000),
+      memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    };
 
-      return {
-        content: [{
+    return {
+      content: [
+        {
           type: 'text' as const,
           text: JSON.stringify(report, null, 2),
-        }],
-      };
-    },
-  );
+        },
+      ],
+    };
+  });
 }

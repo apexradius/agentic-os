@@ -1,10 +1,10 @@
-import { toolError, toolResult } from "@framework/mcp-shared";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import type { PgClient } from "../client.js";
+import { toolError, toolResult } from '@framework/mcp-shared';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import type { PgClient } from '../client.js';
 
 export function registerSchemaTools(server: McpServer, client: PgClient): void {
-  server.tool("pg_list_schemas", "List all non-system schemas in the database.", {}, async () => {
+  server.tool('pg_list_schemas', 'List all non-system schemas in the database.', {}, async () => {
     try {
       const result = await client.query(`
           SELECT
@@ -22,24 +22,24 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
           ORDER BY s.schema_name
         `);
 
-      if (result.rows.length === 0) return toolResult("No user schemas found.");
+      if (result.rows.length === 0) return toolResult('No user schemas found.');
       const lines = result.rows.map(
         (r) =>
-          `${String(r["schema_name"]).padEnd(30)} owner: ${r["schema_owner"]}  size: ${r["total_size"] ?? "0 bytes"}`,
+          `${String(r['schema_name']).padEnd(30)} owner: ${r['schema_owner']}  size: ${r['total_size'] ?? '0 bytes'}`,
       );
-      return toolResult(`Schemas (${result.rows.length}):\n\n${lines.join("\n")}`);
+      return toolResult(`Schemas (${result.rows.length}):\n\n${lines.join('\n')}`);
     } catch (e) {
       return toolError(e);
     }
   });
 
   server.tool(
-    "pg_list_tables",
-    "List all tables and views in a schema with estimated row counts.",
+    'pg_list_tables',
+    'List all tables and views in a schema with estimated row counts.',
     {
-      schema: z.string().optional().describe("Schema name (default: public)"),
+      schema: z.string().optional().describe('Schema name (default: public)'),
     },
-    async ({ schema = "public" }) => {
+    async ({ schema = 'public' }) => {
       try {
         const result = await client.query(
           `
@@ -61,10 +61,10 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
 
         if (result.rows.length === 0) return toolResult(`No tables found in schema "${schema}".`);
         const lines = result.rows.map((r) => {
-          const type = r["table_type"] === "VIEW" ? "VIEW" : "TABLE";
-          return `${String(r["table_name"]).padEnd(40)} ${type.padEnd(6)} ~${String(r["estimated_rows"]).padStart(10)} rows  ${r["total_size"]}`;
+          const type = r['table_type'] === 'VIEW' ? 'VIEW' : 'TABLE';
+          return `${String(r['table_name']).padEnd(40)} ${type.padEnd(6)} ~${String(r['estimated_rows']).padStart(10)} rows  ${r['total_size']}`;
         });
-        return toolResult(`Tables in "${schema}" (${result.rows.length}):\n\n${lines.join("\n")}`);
+        return toolResult(`Tables in "${schema}" (${result.rows.length}):\n\n${lines.join('\n')}`);
       } catch (e) {
         return toolError(e);
       }
@@ -72,13 +72,13 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
   );
 
   server.tool(
-    "pg_describe_table",
-    "Show column definitions, types, constraints, and indexes for a table.",
+    'pg_describe_table',
+    'Show column definitions, types, constraints, and indexes for a table.',
     {
-      table: z.string().min(1).describe("Table name"),
-      schema: z.string().optional().describe("Schema name (default: public)"),
+      table: z.string().min(1).describe('Table name'),
+      schema: z.string().optional().describe('Schema name (default: public)'),
     },
-    async ({ table, schema = "public" }) => {
+    async ({ table, schema = 'public' }) => {
       try {
         const cols = await client.query(
           `
@@ -117,29 +117,29 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
 
         const constraintMap = new Map<string, string[]>();
         for (const r of constraints.rows) {
-          const col = String(r["column_name"]);
-          const type = String(r["constraint_type"]);
+          const col = String(r['column_name']);
+          const type = String(r['constraint_type']);
           if (!constraintMap.has(col)) constraintMap.set(col, []);
           constraintMap.get(col)!.push(type);
         }
 
         const lines = cols.rows.map((r) => {
-          const col = String(r["column_name"]);
+          const col = String(r['column_name']);
           const dt =
-            String(r["data_type"]) +
-            (r["character_maximum_length"] ? `(${r["character_maximum_length"]})` : "");
-          const nullable = r["is_nullable"] === "YES" ? "NULL" : "NOT NULL";
-          const def = r["column_default"] ? ` DEFAULT ${r["column_default"]}` : "";
-          const ctypes = constraintMap.get(col)?.join(", ") ?? "";
-          return `  ${col.padEnd(30)} ${dt.padEnd(25)} ${nullable}${def}${ctypes ? "  [" + ctypes + "]" : ""}`;
+            String(r['data_type']) +
+            (r['character_maximum_length'] ? `(${r['character_maximum_length']})` : '');
+          const nullable = r['is_nullable'] === 'YES' ? 'NULL' : 'NOT NULL';
+          const def = r['column_default'] ? ` DEFAULT ${r['column_default']}` : '';
+          const ctypes = constraintMap.get(col)?.join(', ') ?? '';
+          return `  ${col.padEnd(30)} ${dt.padEnd(25)} ${nullable}${def}${ctypes ? '  [' + ctypes + ']' : ''}`;
         });
 
         return toolResult(
           `Table: ${schema}.${table} (${cols.rows.length} columns)\n\n` +
-            `${"Column".padEnd(30)} ${"Type".padEnd(25)} Nullable / Default / Constraints\n` +
-            "-".repeat(90) +
-            "\n" +
-            lines.join("\n"),
+            `${'Column'.padEnd(30)} ${'Type'.padEnd(25)} Nullable / Default / Constraints\n` +
+            '-'.repeat(90) +
+            '\n' +
+            lines.join('\n'),
         );
       } catch (e) {
         return toolError(e);
@@ -148,13 +148,13 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
   );
 
   server.tool(
-    "pg_table_stats",
-    "Get live/dead row counts, vacuum info, and size for a table.",
+    'pg_table_stats',
+    'Get live/dead row counts, vacuum info, and size for a table.',
     {
-      table: z.string().min(1).describe("Table name"),
-      schema: z.string().optional().describe("Schema name (default: public)"),
+      table: z.string().min(1).describe('Table name'),
+      schema: z.string().optional().describe('Schema name (default: public)'),
     },
-    async ({ table, schema = "public" }) => {
+    async ({ table, schema = 'public' }) => {
       try {
         const result = await client.query(
           `
@@ -186,19 +186,19 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
         const lines = [
           `Table: ${schema}.${table}`,
           ``,
-          `Live rows:     ${r["live_rows"]}`,
-          `Dead rows:     ${r["dead_rows"]}`,
-          `Table size:    ${r["table_size"]}`,
-          `Index size:    ${r["index_size"]}`,
-          `Total size:    ${r["total_size"]}`,
+          `Live rows:     ${r['live_rows']}`,
+          `Dead rows:     ${r['dead_rows']}`,
+          `Table size:    ${r['table_size']}`,
+          `Index size:    ${r['index_size']}`,
+          `Total size:    ${r['total_size']}`,
           ``,
-          `Last vacuum:       ${r["last_vacuum"] ?? "never"}`,
-          `Last autovacuum:   ${r["last_autovacuum"] ?? "never"}`,
-          `Last analyze:      ${r["last_analyze"] ?? "never"}`,
-          `Last autoanalyze:  ${r["last_autoanalyze"] ?? "never"}`,
+          `Last vacuum:       ${r['last_vacuum'] ?? 'never'}`,
+          `Last autovacuum:   ${r['last_autovacuum'] ?? 'never'}`,
+          `Last analyze:      ${r['last_analyze'] ?? 'never'}`,
+          `Last autoanalyze:  ${r['last_autoanalyze'] ?? 'never'}`,
         ];
 
-        const deadRows = Number(r["dead_rows"]) || 0;
+        const deadRows = Number(r['dead_rows']) || 0;
         if (deadRows > 1000) {
           lines.push(
             ``,
@@ -206,7 +206,7 @@ export function registerSchemaTools(server: McpServer, client: PgClient): void {
           );
         }
 
-        return toolResult(lines.join("\n"));
+        return toolResult(lines.join('\n'));
       } catch (e) {
         return toolError(e);
       }

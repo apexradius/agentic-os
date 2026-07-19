@@ -7,7 +7,7 @@
 // Thresholds live on the baseline (thresholds:{}) so the reference run owns the bar it sets; a
 // baseline without them falls back to DEFAULT_THRESHOLDS.
 
-import { computeDeterministic } from "./score-deterministic.mjs";
+import { computeDeterministic } from './score-deterministic.mjs';
 
 export const DEFAULT_THRESHOLDS = {
   tool_path: 0.7, // min tool-path similarity vs baseline
@@ -92,7 +92,10 @@ export function compareToBaseline(candidate, baseline) {
     pass: floor_pass && !regressed,
     floor_degenerate,
     ...(floor_degenerate
-      ? { floor_degenerate_reason: "zero mutation spans — verification_discipline is vacuously green" }
+      ? {
+          floor_degenerate_reason:
+            'zero mutation spans — verification_discipline is vacuously green',
+        }
       : {}),
     thresholds: th,
     dimensions,
@@ -108,13 +111,13 @@ function gateHigher({ candidate, baseline, threshold, tolerance }) {
   // thing on each. (question_economy_max is an absolute cap, not a score threshold, so 0 there means
   // "zero asks allowed" — the strictest gate — and is handled by gateAsks, not here.)
   if (threshold === 0) {
-    return { gating: false, direction: "higher-is-better", candidate, baseline, threshold };
+    return { gating: false, direction: 'higher-is-better', candidate, baseline, threshold };
   }
   const meets_threshold = candidate >= threshold;
   const regressed = baseline != null && candidate < baseline - tolerance;
   return {
     gating: true,
-    direction: "higher-is-better",
+    direction: 'higher-is-better',
     candidate,
     baseline,
     threshold,
@@ -129,7 +132,7 @@ function gateLower({ candidate, baseline, max }) {
   const regressed = baseline != null && candidate > baseline; // more asks than the reference run
   return {
     gating: true,
-    direction: "lower-is-better",
+    direction: 'lower-is-better',
     candidate,
     baseline,
     max,
@@ -149,7 +152,7 @@ function gateAsks({ candidate, baseline, max, plan_approvals }) {
   if (!candidate.gateable) {
     return {
       gating: false,
-      status: "ask-vocabulary-required",
+      status: 'ask-vocabulary-required',
       candidate: candidate.count,
       baseline: baseline ? baseline.count : null,
       plan_approvals,

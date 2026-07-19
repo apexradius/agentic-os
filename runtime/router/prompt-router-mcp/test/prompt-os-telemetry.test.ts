@@ -127,7 +127,13 @@ describe('logRoutingDecision — telemetry ON', () => {
       process.env['APEX_PROMPT_TELEMETRY'] = '1';
 
       await logRoutingDecision(
-        buildRecord({ selected: null, confidence: null, margin: null, runner_up: null, fallback: true }),
+        buildRecord({
+          selected: null,
+          confidence: null,
+          margin: null,
+          runner_up: null,
+          fallback: true,
+        }),
         { logPath: tmpPath },
       );
 
@@ -152,7 +158,8 @@ describe('logRoutingDecision — telemetry ON', () => {
       expect(existsSync(tmpPath)).toBe(true);
     } finally {
       if (existsSync(tmpPath)) rmSync(tmpPath);
-      if (existsSync(path.join(tmpDir, 'sub'))) rmSync(path.join(tmpDir, 'sub'), { recursive: true });
+      if (existsSync(path.join(tmpDir, 'sub')))
+        rmSync(path.join(tmpDir, 'sub'), { recursive: true });
       if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true });
     }
   });
@@ -222,7 +229,9 @@ describe('logRoutingDecision — write failure resilience', () => {
 
     try {
       // Must complete without throwing
-      await expect(logRoutingDecision(buildRecord(), { logPath: uncreateable })).resolves.toBeUndefined();
+      await expect(
+        logRoutingDecision(buildRecord(), { logPath: uncreateable }),
+      ).resolves.toBeUndefined();
     } finally {
       if (existsSync(tmpFile)) rmSync(tmpFile);
     }

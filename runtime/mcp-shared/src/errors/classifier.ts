@@ -8,7 +8,11 @@
 
 import { ErrorSeverity, ErrorType, McpError, type StandardError } from './types.js';
 
-export type ClassifierFn = (error: unknown, service: string, operation: string) => StandardError | null;
+export type ClassifierFn = (
+  error: unknown,
+  service: string,
+  operation: string,
+) => StandardError | null;
 
 /**
  * Built-in classifier for common Node.js / network errors.
@@ -18,14 +22,20 @@ function classifyCommon(error: unknown, service: string, operation: string): Sta
   const err = error instanceof Error ? error : new Error(String(error));
   const msg = err.message.toLowerCase();
   const code = (err as Error & { code?: string }).code ?? '';
-  const statusCode = (err as Error & { statusCode?: number; status?: number }).statusCode
-    ?? (err as Error & { status?: number }).status;
+  const statusCode =
+    (err as Error & { statusCode?: number; status?: number }).statusCode ??
+    (err as Error & { status?: number }).status;
 
   // Already classified
   if (error instanceof McpError) return error;
 
   // Network errors
-  if (code === 'ECONNREFUSED' || code === 'ECONNRESET' || code === 'ENOTFOUND' || code === 'EHOSTUNREACH') {
+  if (
+    code === 'ECONNREFUSED' ||
+    code === 'ECONNRESET' ||
+    code === 'ENOTFOUND' ||
+    code === 'EHOSTUNREACH'
+  ) {
     return {
       type: ErrorType.NETWORK,
       severity: ErrorSeverity.TRANSIENT,
@@ -38,7 +48,12 @@ function classifyCommon(error: unknown, service: string, operation: string): Sta
   }
 
   // Timeouts
-  if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT' || msg.includes('timeout') || msg.includes('timed out')) {
+  if (
+    code === 'ETIMEDOUT' ||
+    code === 'ESOCKETTIMEDOUT' ||
+    msg.includes('timeout') ||
+    msg.includes('timed out')
+  ) {
     return {
       type: ErrorType.TIMEOUT,
       severity: ErrorSeverity.TRANSIENT,
@@ -114,8 +129,13 @@ function classifyCommon(error: unknown, service: string, operation: string): Sta
   }
 
   // Auth patterns
-  if (msg.includes('unauthorized') || msg.includes('forbidden') || msg.includes('token expired')
-    || msg.includes('invalid token') || msg.includes('authentication failed')) {
+  if (
+    msg.includes('unauthorized') ||
+    msg.includes('forbidden') ||
+    msg.includes('token expired') ||
+    msg.includes('invalid token') ||
+    msg.includes('authentication failed')
+  ) {
     return {
       type: ErrorType.AUTH,
       severity: ErrorSeverity.DEGRADED,
@@ -128,8 +148,13 @@ function classifyCommon(error: unknown, service: string, operation: string): Sta
   }
 
   // Validation patterns
-  if (msg.includes('invalid') || msg.includes('validation') || msg.includes('required field')
-    || msg.includes('must be') || msg.includes('expected')) {
+  if (
+    msg.includes('invalid') ||
+    msg.includes('validation') ||
+    msg.includes('required field') ||
+    msg.includes('must be') ||
+    msg.includes('expected')
+  ) {
     return {
       type: ErrorType.VALIDATION,
       severity: ErrorSeverity.USER_ERROR,
@@ -238,7 +263,11 @@ export const classifySSH: ClassifierFn = (error, service, operation) => {
   if (!err) return null;
   const msg = err.message.toLowerCase();
 
-  if (msg.includes('no such identity') || msg.includes('key not found') || msg.includes('no such file')) {
+  if (
+    msg.includes('no such identity') ||
+    msg.includes('key not found') ||
+    msg.includes('no such file')
+  ) {
     return {
       type: ErrorType.SSH,
       severity: ErrorSeverity.FATAL,
@@ -322,7 +351,12 @@ export const classifyMeta: ClassifierFn = (error, service, operation) => {
     };
   }
 
-  if (errCode === 4 || errCode === 17 || msg.includes('rate limit') || msg.includes('too many calls')) {
+  if (
+    errCode === 4 ||
+    errCode === 17 ||
+    msg.includes('rate limit') ||
+    msg.includes('too many calls')
+  ) {
     return {
       type: ErrorType.RATE_LIMIT,
       severity: ErrorSeverity.TRANSIENT,
@@ -357,10 +391,15 @@ export const classifyGoogle: ClassifierFn = (error, service, operation) => {
   const err = error instanceof Error ? error : null;
   if (!err) return null;
   const msg = err.message.toLowerCase();
-  const statusCode = (err as Error & { code?: number; status?: number }).code
-    ?? (err as Error & { status?: number }).status;
+  const statusCode =
+    (err as Error & { code?: number; status?: number }).code ??
+    (err as Error & { status?: number }).status;
 
-  if (statusCode === 401 || msg.includes('invalid_grant') || msg.includes('token has been expired')) {
+  if (
+    statusCode === 401 ||
+    msg.includes('invalid_grant') ||
+    msg.includes('token has been expired')
+  ) {
     return {
       type: ErrorType.AUTH,
       severity: ErrorSeverity.DEGRADED,

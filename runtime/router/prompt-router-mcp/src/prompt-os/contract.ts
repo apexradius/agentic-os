@@ -6,7 +6,14 @@ import { z } from 'zod';
 
 export const CONTRACT_VERSION = '1.1';
 
-export const DOMAINS = ['services', 'operations', 'platforms', 'lifecycle', 'templates', 'loops'] as const;
+export const DOMAINS = [
+  'services',
+  'operations',
+  'platforms',
+  'lifecycle',
+  'templates',
+  'loops',
+] as const;
 
 export const ALLOWED_INCLUDES = new Set([
   'universal-intake-contract',
@@ -22,13 +29,7 @@ export const ALLOWED_INCLUDES = new Set([
   'strategies/ship',
 ]);
 
-export const STRATEGY_OVERLAYS = [
-  'extract',
-  'critique',
-  'proof',
-  'redteam',
-  'ship',
-] as const;
+export const STRATEGY_OVERLAYS = ['extract', 'critique', 'proof', 'redteam', 'ship'] as const;
 
 export const PROOF_TYPES = [
   'test',
@@ -80,7 +81,8 @@ export const RULE_MESSAGES: Record<RuleCode, string> = {
   R10: 'created/updated/deprecated date does not match YYYY-MM-DD format',
   R11: 'parsePromptLibrary returned 0 prompts or produced warnings (unbalanced/missing ## heading or ```text fence)',
   R12: 'includes value is not in ALLOWED_INCLUDES set (unknown block)',
-  'R-INV': 'Workflow prompt is missing grounding gate (<investigate_before_answering> or <intake_gate>)',
+  'R-INV':
+    'Workflow prompt is missing grounding gate (<investigate_before_answering> or <intake_gate>)',
 };
 
 // ---------------------------------------------------------------------------

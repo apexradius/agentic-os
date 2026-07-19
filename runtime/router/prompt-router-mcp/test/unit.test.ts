@@ -6,19 +6,19 @@ import {
   buildStackConflicts,
   buildStackRecommendation,
   composePromptText,
-  detectStack,
   detectPrimaryShells,
+  detectStack,
   isSensitivePath,
   keywordMatcher,
   needsIntakeContract,
+  type PromptEntry,
   parsePromptLibrary,
   QUALITY,
   ROUTES,
+  type RouteScore,
   scoreRoutes,
   selectRoute,
   UNROUTED_ALLOWED,
-  type PromptEntry,
-  type RouteScore,
   type WorkspaceScan,
 } from '../src/lib.js';
 
@@ -102,7 +102,9 @@ describe('parsePromptLibrary', () => {
 
   it('skips a heading with too many description lines before a fence', () => {
     const filler = 'line\n'.repeat(6);
-    const { prompts } = parsePromptLibrary(`## Not A Prompt\n\n${filler}\n\`\`\`text\nBody\n\`\`\`\n`);
+    const { prompts } = parsePromptLibrary(
+      `## Not A Prompt\n\n${filler}\n\`\`\`text\nBody\n\`\`\`\n`,
+    );
     expect(prompts).toHaveLength(0);
   });
 });
@@ -148,7 +150,12 @@ describe('keywordMatcher boundaries', () => {
 
 describe('scoreRoutes', () => {
   it("'product page' routes to Shopify-class intent, never Release via 'prod' substring", () => {
-    const scores = scoreRoutes(ROUTES, 'build the product page for the new pricing tier', '', makeScan());
+    const scores = scoreRoutes(
+      ROUTES,
+      'build the product page for the new pricing tier',
+      '',
+      makeScan(),
+    );
     const release = scores.find((s) => s.trigger === 'RELEASE_RUN');
     expect(scores[0]!.trigger).toBe('SHOPIFY_STOREFRONT_RUN');
     expect(release?.score ?? 0).toBe(0);
@@ -300,7 +307,12 @@ describe('scoreRoutes', () => {
       ROUTES,
       '',
       '',
-      makeScan({ lifecycle_stage: 'S11', lifecycle_complete: true, gtm_decision: 'go', file_count: 3 }),
+      makeScan({
+        lifecycle_stage: 'S11',
+        lifecycle_complete: true,
+        gtm_decision: 'go',
+        file_count: 3,
+      }),
     );
     expect(scores[0]!.trigger).toBe('ACCOUNT_GROWTH_RUN');
   });
@@ -406,7 +418,11 @@ describe('composition', () => {
     slug: 'universal-intake-contract',
     text: 'You are running intake for [SERVICE].\nCollect the brief for [SERVICE].',
   };
-  const bare: PromptEntry = { name: 'Paid Advertising', slug: 'paid-advertising', text: 'Plan the ads.' };
+  const bare: PromptEntry = {
+    name: 'Paid Advertising',
+    slug: 'paid-advertising',
+    text: 'Plan the ads.',
+  };
   const gated: PromptEntry = {
     name: 'Security Review Prompt',
     slug: 'security-review-prompt',

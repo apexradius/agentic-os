@@ -16,17 +16,33 @@
       "properties": {
         "model": { "type": "string", "minLength": 1 },
         "agent_type": { "type": ["string", "null"] },
-        "prompt_version": { "type": ["string", "null"], "description": "prompt fingerprint; null until a prompt-pin source exists" },
-        "task_fingerprint": { "type": "string", "minLength": 1, "description": "stable id of the task the run performed — the join key between a candidate and its baseline" }
+        "prompt_version": {
+          "type": ["string", "null"],
+          "description": "prompt fingerprint; null until a prompt-pin source exists"
+        },
+        "task_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "description": "stable id of the task the run performed — the join key between a candidate and its baseline"
+        }
       }
     },
     "thresholds": {
       "type": "object",
       "description": "baseline-only: the bar the reference run sets for candidates scored against it",
       "properties": {
-        "tool_path": { "type": "number", "description": "min tool-path similarity vs baseline; 0 = fully ungated (dimension reported informationally, excluded from both floor and regression)" },
-        "verification_discipline": { "type": "number", "description": "min share of mutations followed by a verify; 0 = fully ungated (same as tool_path)" },
-        "question_economy_max": { "type": "integer", "description": "max operator-ask spans (execute_tool calls named in annotations.tool_classes.operator_ask) — NOT end_turn/turn boundaries. This is an absolute cap, not a score threshold: 0 means zero asks allowed (strictest), NOT ungated" },
+        "tool_path": {
+          "type": "number",
+          "description": "min tool-path similarity vs baseline; 0 = fully ungated (dimension reported informationally, excluded from both floor and regression)"
+        },
+        "verification_discipline": {
+          "type": "number",
+          "description": "min share of mutations followed by a verify; 0 = fully ungated (same as tool_path)"
+        },
+        "question_economy_max": {
+          "type": "integer",
+          "description": "max operator-ask spans (execute_tool calls named in annotations.tool_classes.operator_ask) — NOT end_turn/turn boundaries. This is an absolute cap, not a score threshold: 0 means zero asks allowed (strictest), NOT ungated"
+        },
         "regression_tolerance": { "type": "number" }
       }
     },

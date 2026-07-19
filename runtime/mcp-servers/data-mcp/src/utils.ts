@@ -1,6 +1,6 @@
 export interface ToolTextResult {
   [key: string]: unknown;
-  content: Array<{ type: "text"; text: string }>;
+  content: Array<{ type: 'text'; text: string }>;
   isError?: boolean;
 }
 
@@ -12,7 +12,7 @@ export function formatError(e: unknown): string {
     if (pgErr.detail) msg += ` — ${pgErr.detail}`;
     return msg;
   }
-  if (typeof e === "string") return e;
+  if (typeof e === 'string') return e;
   try {
     return JSON.stringify(e, null, 2);
   } catch {
@@ -21,11 +21,11 @@ export function formatError(e: unknown): string {
 }
 
 export function toolResult(text: string): ToolTextResult {
-  return { content: [{ type: "text", text: text.trim() || "Done." }] };
+  return { content: [{ type: 'text', text: text.trim() || 'Done.' }] };
 }
 
 export function toolError(e: unknown): ToolTextResult {
-  return { content: [{ type: "text", text: formatError(e) }], isError: true };
+  return { content: [{ type: 'text', text: formatError(e) }], isError: true };
 }
 
 /**
@@ -35,19 +35,19 @@ export function toolError(e: unknown): ToolTextResult {
 export function isReadOnlyQuery(sql: string): boolean {
   // Strip leading block comments /* ... */
   let s = sql.trim();
-  while (s.startsWith("/*")) {
-    const end = s.indexOf("*/");
+  while (s.startsWith('/*')) {
+    const end = s.indexOf('*/');
     if (end === -1) break;
     s = s.slice(end + 2).trim();
   }
   // Strip leading line comments --
-  while (s.startsWith("--")) {
-    const nl = s.indexOf("\n");
+  while (s.startsWith('--')) {
+    const nl = s.indexOf('\n');
     if (nl === -1) break;
     s = s.slice(nl + 1).trim();
   }
-  const first = s.split(/[\s(;]+/)[0]?.toUpperCase() ?? "";
-  return ["SELECT", "EXPLAIN", "SHOW", "WITH", "VALUES", "TABLE"].includes(first);
+  const first = s.split(/[\s(;]+/)[0]?.toUpperCase() ?? '';
+  return ['SELECT', 'EXPLAIN', 'SHOW', 'WITH', 'VALUES', 'TABLE'].includes(first);
 }
 
 /**
@@ -58,7 +58,7 @@ export function formatTable(
   rows: Record<string, unknown>[],
   maxRows: number,
 ): string {
-  if (rows.length === 0) return "Query returned 0 rows.";
+  if (rows.length === 0) return 'Query returned 0 rows.';
 
   const displayRows = rows.slice(0, maxRows);
   const truncated = rows.length > maxRows;
@@ -72,29 +72,29 @@ export function formatTable(
     });
   }
 
-  const sep = "+-" + widths.map((w) => "-".repeat(w)).join("-+-") + "-+";
-  const header = "| " + columns.map((col, i) => col.padEnd(widths[i])).join(" | ") + " |";
+  const sep = '+-' + widths.map((w) => '-'.repeat(w)).join('-+-') + '-+';
+  const header = '| ' + columns.map((col, i) => col.padEnd(widths[i])).join(' | ') + ' |';
 
   const dataLines = displayRows.map((row) => {
     const cells = columns.map((col, i) => {
       const v = cellStr(row[col]);
-      const clipped = v.length > 80 ? v.slice(0, 79) + "…" : v;
+      const clipped = v.length > 80 ? v.slice(0, 79) + '…' : v;
       return clipped.padEnd(widths[i]);
     });
-    return "| " + cells.join(" | ") + " |";
+    return '| ' + cells.join(' | ') + ' |';
   });
 
   const lines = [sep, header, sep, ...dataLines, sep];
   if (truncated)
     lines.push(`(showing ${displayRows.length} of ${rows.length} rows — use LIMIT to see more)`);
-  else lines.push(`(${rows.length} row${rows.length === 1 ? "" : "s"})`);
+  else lines.push(`(${rows.length} row${rows.length === 1 ? '' : 's'})`);
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 function cellStr(val: unknown): string {
-  if (val === null || val === undefined) return "NULL";
+  if (val === null || val === undefined) return 'NULL';
   if (val instanceof Date) return val.toISOString();
-  if (typeof val === "object") return JSON.stringify(val);
+  if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
 }

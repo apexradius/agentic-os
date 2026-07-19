@@ -11,13 +11,13 @@
 //                          is billed at ~10% of input, so a single-bucket $ would be an
 //                          order-of-magnitude lie — this splits the four categories.
 
-export const CATS = ["input", "cache_read", "cache_creation", "output"];
+export const CATS = ['input', 'cache_read', 'cache_creation', 'output'];
 
 const USAGE_KEYS = {
-  input: "input_tokens",
-  cache_read: "cache_read_input_tokens",
-  cache_creation: "cache_creation_input_tokens",
-  output: "output_tokens",
+  input: 'input_tokens',
+  cache_read: 'cache_read_input_tokens',
+  cache_creation: 'cache_creation_input_tokens',
+  output: 'output_tokens',
 };
 
 function blankCats() {
@@ -29,16 +29,20 @@ function blankCats() {
 export function meterTranscript(text) {
   const byId = new Map(); // message.id -> { model, cats }
   const order = [];
-  for (const rawLine of String(text || "").split("\n")) {
+  for (const rawLine of String(text || '').split('\n')) {
     const s = rawLine.trim();
     if (!s) continue;
     let e;
-    try { e = JSON.parse(s); } catch { continue; }
-    if (!e || typeof e !== "object") continue;
+    try {
+      e = JSON.parse(s);
+    } catch {
+      continue;
+    }
+    if (!e || typeof e !== 'object') continue;
     const msg = e.message;
-    if (!msg || typeof msg !== "object" || msg.role !== "assistant") continue;
+    if (!msg || typeof msg !== 'object' || msg.role !== 'assistant') continue;
     const usage = msg.usage;
-    if (!usage || typeof usage !== "object") continue;
+    if (!usage || typeof usage !== 'object') continue;
     const cats = {};
     let any = false;
     for (const [cat, key] of Object.entries(USAGE_KEYS)) {
@@ -55,7 +59,7 @@ export function meterTranscript(text) {
   const byModel = {};
   for (const id of order) {
     const { model, cats } = byId.get(id);
-    const key = model || "unknown";
+    const key = model || 'unknown';
     if (!byModel[key]) byModel[key] = blankCats();
     for (const c of CATS) byModel[key][c] += cats[c];
   }
@@ -72,12 +76,12 @@ export function totalTokens(byModel) {
 // { model: { input, cache_read, cache_creation, output }, default?: {...} }. Returns null when
 // no rate matches (never a fabricated number).
 export function costUsd(byModel, priceMap) {
-  if (!byModel || !priceMap || typeof priceMap !== "object") return null;
+  if (!byModel || !priceMap || typeof priceMap !== 'object') return null;
   let total = 0;
   let matched = false;
   for (const [model, cats] of Object.entries(byModel)) {
     const rates = priceMap[model] || priceMap.default;
-    if (!rates || typeof rates !== "object") continue;
+    if (!rates || typeof rates !== 'object') continue;
     matched = true;
     for (const c of CATS) {
       total += ((cats[c] || 0) / 1_000_000) * (Number(rates[c]) || 0);

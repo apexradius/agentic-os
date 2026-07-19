@@ -24,13 +24,96 @@
     }
   },
   "spans": [
-    { "span_id": "b0", "parent_span_id": null, "operation": "invoke_agent", "name": "invoke_agent executor", "start_ts": "2026-01-01T00:00:00Z", "end_ts": "2026-01-01T00:00:07Z", "duration_ms": 7000, "agent_type": "executor", "model": "mock-model-a", "self_report": "completed", "attributes": {} },
-    { "span_id": "b1", "parent_span_id": "b0", "operation": "chat", "name": "chat", "start_ts": "2026-01-01T00:00:01Z", "model": "mock-model-a", "tokens_in": 100, "tokens_out": 20, "finish_reason": "tool_use", "attributes": {} },
-    { "span_id": "b2", "parent_span_id": "b1", "operation": "execute_tool", "name": "execute_tool Read", "start_ts": "2026-01-01T00:00:02Z", "duration_ms": 40, "tool_name": "Read", "attributes": {} },
-    { "span_id": "b3", "parent_span_id": "b0", "operation": "chat", "name": "chat", "start_ts": "2026-01-01T00:00:03Z", "model": "mock-model-a", "tokens_in": 120, "tokens_out": 30, "finish_reason": "tool_use", "attributes": {} },
-    { "span_id": "b4", "parent_span_id": "b3", "operation": "execute_tool", "name": "execute_tool Write", "start_ts": "2026-01-01T00:00:04Z", "duration_ms": 15, "tool_name": "Write", "attributes": {} },
-    { "span_id": "b5", "parent_span_id": "b0", "operation": "chat", "name": "chat", "start_ts": "2026-01-01T00:00:05Z", "model": "mock-model-a", "tokens_in": 140, "tokens_out": 25, "finish_reason": "tool_use", "attributes": {} },
-    { "span_id": "b6", "parent_span_id": "b5", "operation": "execute_tool", "name": "execute_tool Bash", "start_ts": "2026-01-01T00:00:06Z", "duration_ms": 260, "tool_name": "Bash", "attributes": {} },
-    { "span_id": "b7", "parent_span_id": "b0", "operation": "chat", "name": "chat", "start_ts": "2026-01-01T00:00:07Z", "model": "mock-model-a", "tokens_in": 150, "tokens_out": 60, "finish_reason": "end_turn", "attributes": {} }
+    {
+      "span_id": "b0",
+      "parent_span_id": null,
+      "operation": "invoke_agent",
+      "name": "invoke_agent executor",
+      "start_ts": "2026-01-01T00:00:00Z",
+      "end_ts": "2026-01-01T00:00:07Z",
+      "duration_ms": 7000,
+      "agent_type": "executor",
+      "model": "mock-model-a",
+      "self_report": "completed",
+      "attributes": {}
+    },
+    {
+      "span_id": "b1",
+      "parent_span_id": "b0",
+      "operation": "chat",
+      "name": "chat",
+      "start_ts": "2026-01-01T00:00:01Z",
+      "model": "mock-model-a",
+      "tokens_in": 100,
+      "tokens_out": 20,
+      "finish_reason": "tool_use",
+      "attributes": {}
+    },
+    {
+      "span_id": "b2",
+      "parent_span_id": "b1",
+      "operation": "execute_tool",
+      "name": "execute_tool Read",
+      "start_ts": "2026-01-01T00:00:02Z",
+      "duration_ms": 40,
+      "tool_name": "Read",
+      "attributes": {}
+    },
+    {
+      "span_id": "b3",
+      "parent_span_id": "b0",
+      "operation": "chat",
+      "name": "chat",
+      "start_ts": "2026-01-01T00:00:03Z",
+      "model": "mock-model-a",
+      "tokens_in": 120,
+      "tokens_out": 30,
+      "finish_reason": "tool_use",
+      "attributes": {}
+    },
+    {
+      "span_id": "b4",
+      "parent_span_id": "b3",
+      "operation": "execute_tool",
+      "name": "execute_tool Write",
+      "start_ts": "2026-01-01T00:00:04Z",
+      "duration_ms": 15,
+      "tool_name": "Write",
+      "attributes": {}
+    },
+    {
+      "span_id": "b5",
+      "parent_span_id": "b0",
+      "operation": "chat",
+      "name": "chat",
+      "start_ts": "2026-01-01T00:00:05Z",
+      "model": "mock-model-a",
+      "tokens_in": 140,
+      "tokens_out": 25,
+      "finish_reason": "tool_use",
+      "attributes": {}
+    },
+    {
+      "span_id": "b6",
+      "parent_span_id": "b5",
+      "operation": "execute_tool",
+      "name": "execute_tool Bash",
+      "start_ts": "2026-01-01T00:00:06Z",
+      "duration_ms": 260,
+      "tool_name": "Bash",
+      "attributes": {}
+    },
+    {
+      "span_id": "b7",
+      "parent_span_id": "b0",
+      "operation": "chat",
+      "name": "chat",
+      "start_ts": "2026-01-01T00:00:07Z",
+      "model": "mock-model-a",
+      "tokens_in": 150,
+      "tokens_out": 60,
+      "finish_reason": "end_turn",
+      "attributes": {}
+    }
   ]
 }

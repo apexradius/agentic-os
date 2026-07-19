@@ -3,12 +3,15 @@
 // scheduler/lib/select.mjs. The fields are the observability standard
 // (framework/doctrine/standards/observability.md); the redaction obeys data-handling.md.
 
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
 /** sha256 sliced to 12 hex — enough to correlate identical reasons, reveals nothing of the call.
  *  Same technique as standards/tool-gate/lib/audit.mjs; copied (not imported) to keep runtime/ standalone. */
 export function reasonHash(reason) {
-  return createHash("sha256").update(String(reason ?? "")).digest("hex").slice(0, 12);
+  return createHash('sha256')
+    .update(String(reason ?? ''))
+    .digest('hex')
+    .slice(0, 12);
 }
 
 /** Redact gate decisions to {decision, rules, reason_hash} ONLY — the raw reason/command/path never
@@ -16,7 +19,7 @@ export function reasonHash(reason) {
 export function redactGateDecisions(decisions) {
   if (!Array.isArray(decisions)) return [];
   return decisions.map((d) => ({
-    decision: String(d?.decision ?? ""),
+    decision: String(d?.decision ?? ''),
     rules: Array.isArray(d?.rules) ? d.rules.map(String) : [],
     reason_hash: d?.reason_hash ?? reasonHash(d?.reason),
   }));
@@ -27,14 +30,14 @@ export function redactGateDecisions(decisions) {
 export function buildRunRecord(input = {}, now) {
   const rec = {
     ts: (now ?? new Date()).toISOString(),
-    task_id: String(input.task_id ?? ""),
-    slice: String(input.slice ?? ""),
-    model: String(input.model ?? ""),
-    effort: String(input.effort ?? ""),
+    task_id: String(input.task_id ?? ''),
+    slice: String(input.slice ?? ''),
+    model: String(input.model ?? ''),
+    effort: String(input.effort ?? ''),
     attempts: Number.isInteger(input.attempts) ? input.attempts : 1,
     verify: {
       first_pass: !!input.verify?.first_pass,
-      result: input.verify?.result === "pass" ? "pass" : "fail",
+      result: input.verify?.result === 'pass' ? 'pass' : 'fail',
     },
     gate_decisions: redactGateDecisions(input.gate_decisions),
   };

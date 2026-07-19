@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { UnifiedErrorHandler, type ErrorHandlerOptions } from './errors/handler.js';
+import { type ErrorHandlerOptions, UnifiedErrorHandler } from './errors/handler.js';
 import { registerHealthTool } from './health/index.js';
 
 export interface ApexServerOptions extends ErrorHandlerOptions {
@@ -21,7 +21,7 @@ export function createApexServer(opts: ApexServerOptions) {
   });
 
   const errorHandler = new UnifiedErrorHandler({
-    ...opts
+    ...opts,
   });
 
   if (opts.healthChecks) {

@@ -86,6 +86,8 @@ export async function logRoutingDecision(
   } catch (error) {
     // Best-effort: write to stderr only (never stdout — that is the MCP channel)
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`[apex-prompt-router-mcp] telemetry write failed (${logPath}): ${message}\n`);
+    process.stderr.write(
+      `[apex-prompt-router-mcp] telemetry write failed (${logPath}): ${message}\n`,
+    );
   }
 }

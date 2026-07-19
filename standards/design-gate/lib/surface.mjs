@@ -4,15 +4,15 @@
 // CSS-in-JS) into one css model, collects inline styles as synthetic rules so the same
 // color/motion/token rules catch them, and exposes the DOM tree for structural rules.
 
-import { parseCss, parseInlineDeclarations } from "./css.mjs";
-import { parseHtml } from "./html.mjs";
+import { parseCss, parseInlineDeclarations } from './css.mjs';
+import { parseHtml } from './html.mjs';
 
 export function typeForPath(file) {
-  const ext = (file.match(/\.([a-z]+)$/i) || [, ""])[1].toLowerCase();
-  if (ext === "css" || ext === "scss" || ext === "less" || ext === "sass") return "css";
-  if (ext === "html" || ext === "htm" || ext === "vue" || ext === "svelte") return "html";
-  if (ext === "jsx" || ext === "tsx" || ext === "js" || ext === "ts" || ext === "mjs") return "jsx";
-  return "unknown";
+  const ext = (file.match(/\.([a-z]+)$/i) || [, ''])[1].toLowerCase();
+  if (ext === 'css' || ext === 'scss' || ext === 'less' || ext === 'sass') return 'css';
+  if (ext === 'html' || ext === 'htm' || ext === 'vue' || ext === 'svelte') return 'html';
+  if (ext === 'jsx' || ext === 'tsx' || ext === 'js' || ext === 'ts' || ext === 'mjs') return 'jsx';
+  return 'unknown';
 }
 
 // Merge any number of parsed-css models into one (rules + custom props + flags).
@@ -42,17 +42,24 @@ function extractJsxStyleObjects(text) {
   while ((m = re.exec(text))) {
     const line = (text.slice(0, m.index).match(/\n/g) || []).length + 1;
     const decls = [];
-    for (const pair of m[1].split(",")) {
+    for (const pair of m[1].split(',')) {
       const km = pair.match(/['"]?([A-Za-z-]+)['"]?\s*:\s*(.+)/);
       if (!km) continue;
-      const prop = km[1].replace(/[A-Z]/g, (c) => "-" + c.toLowerCase());
-      let value = km[2].trim().replace(/^['"]|['"]$/g, "");
-      if (/^\d+$/.test(value) && prop !== "z-index" && prop !== "opacity" && prop !== "flex" && prop !== "line-height") {
-        value += "px"; // React turns a bare number into px
+      const prop = km[1].replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
+      let value = km[2].trim().replace(/^['"]|['"]$/g, '');
+      if (
+        /^\d+$/.test(value) &&
+        prop !== 'z-index' &&
+        prop !== 'opacity' &&
+        prop !== 'flex' &&
+        prop !== 'line-height'
+      ) {
+        value += 'px'; // React turns a bare number into px
       }
       if (prop && value) decls.push({ prop: prop.toLowerCase(), value, line });
     }
-    if (decls.length) out.push({ selectors: ["[jsx-inline]"], decls, line, media: null, inline: true });
+    if (decls.length)
+      out.push({ selectors: ['[jsx-inline]'], decls, line, media: null, inline: true });
   }
   return out;
 }
@@ -61,12 +68,12 @@ export function buildSurface(file, content, { register = null } = {}) {
   const type = typeForPath(file);
   const surface = { file, type, register, css: null, dom: null };
 
-  if (type === "css") {
+  if (type === 'css') {
     surface.css = parseCss(content);
     return surface;
   }
 
-  const jsx = type === "jsx";
+  const jsx = type === 'jsx';
   const { root, styleBlocks, cssInJs, inlineStyles } = parseHtml(content, { jsx });
   surface.dom = root;
 
@@ -79,7 +86,7 @@ export function buildSurface(file, content, { register = null } = {}) {
   // inline style="" attributes → synthetic single-selector rules
   for (const s of inlineStyles) {
     css.rules.push({
-      selectors: ["[inline-style]"],
+      selectors: ['[inline-style]'],
       decls: parseInlineDeclarations(s.decls, s.line),
       line: s.line,
       media: null,

@@ -15,7 +15,10 @@
       "required": ["hooks"],
       "additionalProperties": true,
       "properties": {
-        "matcher": { "type": "string", "description": "Tool-name pattern; '*' or omitted = all (regex allowed, e.g. 'Write|Edit')." },
+        "matcher": {
+          "type": "string",
+          "description": "Tool-name pattern; '*' or omitted = all (regex allowed, e.g. 'Write|Edit')."
+        },
         "hooks": {
           "type": "array",
           "items": { "$ref": "#/definitions/hook" }
@@ -34,8 +37,14 @@
         "statusMessage": { "type": "string" }
       },
       "allOf": [
-        { "if": { "properties": { "type": { "const": "command" } }, "required": ["type"] }, "then": { "required": ["command"] } },
-        { "if": { "properties": { "type": { "const": "prompt" } }, "required": ["type"] }, "then": { "required": ["prompt"] } }
+        {
+          "if": { "properties": { "type": { "const": "command" } }, "required": ["type"] },
+          "then": { "required": ["command"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "prompt" } }, "required": ["type"] },
+          "then": { "required": ["prompt"] }
+        }
       ]
     }
   }

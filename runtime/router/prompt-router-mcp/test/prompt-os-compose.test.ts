@@ -18,13 +18,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   composePromptText,
+  INTAKE_CONTRACT_NAME,
   loadLoopBlocks,
   loadStrategyBlocks,
+  type PromptEntry,
   parsePromptLibrary,
   resolveRoutes,
-  INTAKE_CONTRACT_NAME,
   UNROUTED_ALLOWED,
-  type PromptEntry,
 } from '../src/lib.js';
 import { loadEffectiveRoutes } from '../src/router.js';
 
@@ -32,14 +32,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(PACKAGE_ROOT, '../../../..');
 const ENV_LIBRARY_PATH = process.env['APEX_PROMPT_LIBRARY_PATH'];
-const LIBRARY_DIR =
-  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
-    ? path.dirname(ENV_LIBRARY_PATH)
-    : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
-const GENERATED_PATH =
-  ENV_LIBRARY_PATH?.endsWith('index.generated.md')
-    ? ENV_LIBRARY_PATH
-    : path.join(LIBRARY_DIR, 'index.generated.md');
+const LIBRARY_DIR = ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+  ? path.dirname(ENV_LIBRARY_PATH)
+  : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
+const GENERATED_PATH = ENV_LIBRARY_PATH?.endsWith('index.generated.md')
+  ? ENV_LIBRARY_PATH
+  : path.join(LIBRARY_DIR, 'index.generated.md');
 const LOOPS_DIR = path.join(LIBRARY_DIR, 'loops');
 const STRATEGIES_DIR = path.join(LIBRARY_DIR, 'strategies');
 const REFERENCE_FILE = path.join(
@@ -271,7 +269,10 @@ describe('composePromptText: LEGACY mode (byte-identical to prior behavior)', ()
       text: 'You are activating [SERVICE]. ## Intake Gate\nValidate.',
     };
 
-    const { text, composition } = composePromptText(promptWithGate, [contractEntry, promptWithGate]);
+    const { text, composition } = composePromptText(promptWithGate, [
+      contractEntry,
+      promptWithGate,
+    ]);
     expect(text).toBe(promptWithGate.text);
     expect(composition).toEqual([promptWithGate.name]);
   });

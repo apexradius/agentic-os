@@ -4,12 +4,12 @@
  * ssh_process_manager, ssh_history, ssh_deploy
  */
 
-import { toolError, toolResult } from "@framework/mcp-shared";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import type { SSHClient } from "../client.js";
-import type { ServerConfig, SSHPool } from "../pool.js";
-import { resolveServer, shellEscape, validateGitBranch } from "./safety.js";
+import { toolError, toolResult } from '@framework/mcp-shared';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import type { SSHClient } from '../client.js';
+import type { ServerConfig, SSHPool } from '../pool.js';
+import { resolveServer, shellEscape, validateGitBranch } from './safety.js';
 
 const serverProfiles = new Map<string, Record<string, string>>();
 const serverGroups = new Map<string, string[]>();
@@ -37,31 +37,31 @@ export function registerServerTools(
   pool: SSHPool,
   servers: Map<string, ServerConfig>,
 ): void {
-  server.tool("ssh_list_servers", "List all configured SSH servers", {}, async () => {
+  server.tool('ssh_list_servers', 'List all configured SSH servers', {}, async () => {
     try {
-      if (servers.size === 0) return toolResult("No servers configured.");
+      if (servers.size === 0) return toolResult('No servers configured.');
       const lines = [...servers.entries()].map(
-        ([id, c]) => `  ${id}: ${c.username}@${c.host}:${c.port}${c.alias ? ` (${c.alias})` : ""}`,
+        ([id, c]) => `  ${id}: ${c.username}@${c.host}:${c.port}${c.alias ? ` (${c.alias})` : ''}`,
       );
-      return toolResult(`Configured servers (${servers.size}):\n${lines.join("\n")}`);
+      return toolResult(`Configured servers (${servers.size}):\n${lines.join('\n')}`);
     } catch (e) {
       return toolError(e);
     }
   });
 
   server.tool(
-    "ssh_connection_status",
-    "Check connection status for all pooled SSH connections",
+    'ssh_connection_status',
+    'Check connection status for all pooled SSH connections',
     {},
     async () => {
       try {
         const status = pool.status();
-        if (status.connections.length === 0) return toolResult("No active connections.");
+        if (status.connections.length === 0) return toolResult('No active connections.');
         const lines = status.connections.map(
           (c) =>
-            `  ${c.server}: ${c.connected ? "connected" : "disconnected"} (idle ${Math.round(c.idleMs / 1000)}s)`,
+            `  ${c.server}: ${c.connected ? 'connected' : 'disconnected'} (idle ${Math.round(c.idleMs / 1000)}s)`,
         );
-        return toolResult(`SSH Pool (${status.active} active):\n${lines.join("\n")}`);
+        return toolResult(`SSH Pool (${status.active} active):\n${lines.join('\n')}`);
       } catch (e) {
         return toolError(e);
       }
@@ -69,30 +69,30 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_health_check",
-    "Run health checks on a remote server (disk, memory, load, uptime)",
+    'ssh_health_check',
+    'Run health checks on a remote server (disk, memory, load, uptime)',
     {
-      server_id: z.string().optional().describe("Server alias"),
+      server_id: z.string().optional().describe('Server alias'),
     },
     async ({ server_id }) => {
       try {
         const { config, error } = resolveServer(servers, server_id);
         if (error) return toolError(error);
         const checks = await Promise.all([
-          ssh.exec("uptime", { server: config }),
-          ssh.exec("free -h", { server: config }),
-          ssh.exec("df -h /", { server: config }),
-          ssh.exec("cat /proc/loadavg", { server: config }),
+          ssh.exec('uptime', { server: config }),
+          ssh.exec('free -h', { server: config }),
+          ssh.exec('df -h /', { server: config }),
+          ssh.exec('cat /proc/loadavg', { server: config }),
         ]);
         const [uptime, memory, disk, load] = checks;
         return toolResult(
           [
-            `=== Health Check: ${server_id ?? "default"} ===`,
+            `=== Health Check: ${server_id ?? 'default'} ===`,
             `Uptime: ${uptime.stdout.trim()}`,
             `\nMemory:\n${memory.stdout}`,
             `Disk:\n${disk.stdout}`,
             `Load: ${load.stdout.trim()}`,
-          ].join("\n"),
+          ].join('\n'),
         );
       } catch (e) {
         return toolError(e);
@@ -101,18 +101,18 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_service_status",
-    "Check the status of a systemd service on a remote server",
+    'ssh_service_status',
+    'Check the status of a systemd service on a remote server',
     {
-      service: z.string().min(1).describe("Service name (e.g. nginx, postgresql, docker)"),
-      server_id: z.string().optional().describe("Server alias"),
+      service: z.string().min(1).describe('Service name (e.g. nginx, postgresql, docker)'),
+      server_id: z.string().optional().describe('Server alias'),
     },
     async ({ service, server_id }) => {
       try {
         const { config, error } = resolveServer(servers, server_id);
         if (error) return toolError(error);
         if (!/^[A-Za-z0-9_.@:-]+$/.test(service))
-          return toolError("service contains unsupported characters");
+          return toolError('service contains unsupported characters');
         const result = await ssh.exec(`systemctl status ${shellEscape(service)} --no-pager -l`, {
           server: config,
         });
@@ -124,11 +124,11 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_alias",
-    "Create or manage server aliases",
+    'ssh_alias',
+    'Create or manage server aliases',
     {
-      action: z.enum(["set", "list", "delete"]),
-      alias: z.string().optional().describe("Alias name"),
+      action: z.enum(['set', 'list', 'delete']),
+      alias: z.string().optional().describe('Alias name'),
       host: z.string().optional(),
       port: z.number().optional(),
       username: z.string().optional(),
@@ -136,18 +136,18 @@ export function registerServerTools(
     },
     async ({ action, alias, host, port, username, key_path }) => {
       try {
-        if (action === "list") {
+        if (action === 'list') {
           const lines = [...servers.entries()].map(
             ([id, c]) => `  ${id}: ${c.username}@${c.host}:${c.port}`,
           );
-          return toolResult(lines.length ? lines.join("\n") : "No aliases.");
+          return toolResult(lines.length ? lines.join('\n') : 'No aliases.');
         }
-        if (!alias) return toolError("alias is required");
-        if (action === "delete") {
+        if (!alias) return toolError('alias is required');
+        if (action === 'delete') {
           servers.delete(alias);
           return toolResult(`Deleted alias: ${alias}`);
         }
-        if (!host || !username) return toolError("host and username required for set");
+        if (!host || !username) return toolError('host and username required for set');
         servers.set(alias, {
           host,
           port: port ?? 22,
@@ -162,30 +162,30 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_key_manage",
-    "Manage SSH keys on a remote server (list, add authorized key)",
+    'ssh_key_manage',
+    'Manage SSH keys on a remote server (list, add authorized key)',
     {
-      action: z.enum(["list", "add"]).describe("'list' authorized keys or 'add' a new one"),
-      public_key: z.string().optional().describe("Public key to add (required for add)"),
+      action: z.enum(['list', 'add']).describe("'list' authorized keys or 'add' a new one"),
+      public_key: z.string().optional().describe('Public key to add (required for add)'),
       server_id: z.string().optional(),
     },
     async ({ action, public_key, server_id }) => {
       try {
         const { config, error } = resolveServer(servers, server_id);
         if (error) return toolError(error);
-        if (action === "list") {
+        if (action === 'list') {
           const result = await ssh.exec(
             'cat ~/.ssh/authorized_keys 2>/dev/null || echo "No authorized_keys file"',
             { server: config },
           );
           return toolResult(result.stdout);
         }
-        if (!public_key) return toolError("public_key required for add");
+        if (!public_key) return toolError('public_key required for add');
         const result = await ssh.exec(
           `mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && printf '%s\\n' ${shellEscape(public_key)} >> ~/.ssh/authorized_keys`,
           { server: config },
         );
-        return result.exitCode === 0 ? toolResult("Key added.") : toolError(result.stderr);
+        return result.exitCode === 0 ? toolResult('Key added.') : toolError(result.stderr);
       } catch (e) {
         return toolError(e);
       }
@@ -193,44 +193,44 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_group_manage",
-    "Manage server groups for batch operations",
+    'ssh_group_manage',
+    'Manage server groups for batch operations',
     {
-      action: z.enum(["create", "list", "delete", "add_server", "remove_server"]),
-      group: z.string().optional().describe("Group name"),
-      server_id: z.string().optional().describe("Server alias to add/remove"),
+      action: z.enum(['create', 'list', 'delete', 'add_server', 'remove_server']),
+      group: z.string().optional().describe('Group name'),
+      server_id: z.string().optional().describe('Server alias to add/remove'),
     },
     async ({ action, group, server_id }) => {
       try {
-        if (action === "list") {
-          if (serverGroups.size === 0) return toolResult("No groups.");
+        if (action === 'list') {
+          if (serverGroups.size === 0) return toolResult('No groups.');
           const lines = [...serverGroups.entries()].map(
-            ([g, ids]) => `  ${g}: [${ids.join(", ")}]`,
+            ([g, ids]) => `  ${g}: [${ids.join(', ')}]`,
           );
-          return toolResult(lines.join("\n"));
+          return toolResult(lines.join('\n'));
         }
-        if (!group) return toolError("group name required");
-        if (action === "create") {
+        if (!group) return toolError('group name required');
+        if (action === 'create') {
           serverGroups.set(group, []);
           return toolResult(`Group created: ${group}`);
         }
-        if (action === "delete") {
+        if (action === 'delete') {
           serverGroups.delete(group);
           return toolResult(`Group deleted: ${group}`);
         }
         const members = serverGroups.get(group);
         if (!members) return toolError(`Group not found: ${group}`);
-        if (!server_id) return toolError("server_id required");
-        if (action === "add_server") {
+        if (!server_id) return toolError('server_id required');
+        if (action === 'add_server') {
           members.push(server_id);
           return toolResult(`Added ${server_id} to ${group}`);
         }
-        if (action === "remove_server") {
+        if (action === 'remove_server') {
           const idx = members.indexOf(server_id);
           if (idx >= 0) members.splice(idx, 1);
           return toolResult(`Removed ${server_id} from ${group}`);
         }
-        return toolError("Invalid action");
+        return toolError('Invalid action');
       } catch (e) {
         return toolError(e);
       }
@@ -238,24 +238,24 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_profile",
-    "View or set server profile metadata (tags, notes, env)",
+    'ssh_profile',
+    'View or set server profile metadata (tags, notes, env)',
     {
-      server_id: z.string().describe("Server alias"),
-      action: z.enum(["get", "set"]),
+      server_id: z.string().describe('Server alias'),
+      action: z.enum(['get', 'set']),
       key: z.string().optional(),
       value: z.string().optional(),
     },
     async ({ server_id, action, key, value }) => {
       try {
-        if (action === "get") {
+        if (action === 'get') {
           const profile = serverProfiles.get(server_id);
           if (!profile) return toolResult(`No profile for ${server_id}`);
           return toolResult(JSON.stringify(profile, null, 2));
         }
-        if (!key) return toolError("key required for set");
+        if (!key) return toolError('key required for set');
         const profile = serverProfiles.get(server_id) ?? {};
-        profile[key] = value ?? "";
+        profile[key] = value ?? '';
         serverProfiles.set(server_id, profile);
         return toolResult(`Set ${server_id}.${key} = ${value}`);
       } catch (e) {
@@ -265,34 +265,34 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_process_manager",
-    "List, find, or kill processes on a remote server",
+    'ssh_process_manager',
+    'List, find, or kill processes on a remote server',
     {
-      action: z.enum(["list", "find", "kill"]).describe("list all, find by name, or kill by PID"),
-      query: z.string().optional().describe("Process name pattern (for find) or PID (for kill)"),
-      signal: z.string().optional().describe("Signal for kill (default: TERM)"),
+      action: z.enum(['list', 'find', 'kill']).describe('list all, find by name, or kill by PID'),
+      query: z.string().optional().describe('Process name pattern (for find) or PID (for kill)'),
+      signal: z.string().optional().describe('Signal for kill (default: TERM)'),
       server_id: z.string().optional(),
     },
     async ({ action, query, signal, server_id }) => {
       try {
         const { config, error } = resolveServer(servers, server_id);
         if (error) return toolError(error);
-        if (action === "list") {
-          const r = await ssh.exec("ps aux --sort=-%mem | head -30", {
+        if (action === 'list') {
+          const r = await ssh.exec('ps aux --sort=-%mem | head -30', {
             server: config,
           });
           return toolResult(r.stdout);
         }
-        if (!query) return toolError("query required for find/kill");
-        if (action === "find") {
+        if (!query) return toolError('query required for find/kill');
+        if (action === 'find') {
           const r = await ssh.exec(`pgrep -la -- ${shellEscape(query)}`, {
             server: config,
           });
-          return toolResult(r.stdout || "No matching processes.");
+          return toolResult(r.stdout || 'No matching processes.');
         }
-        const sig = signal ?? "TERM";
-        if (!/^[A-Z0-9]+$/i.test(sig)) return toolError("signal contains unsupported characters");
-        if (!/^[0-9]+$/.test(query)) return toolError("kill requires a numeric PID");
+        const sig = signal ?? 'TERM';
+        if (!/^[A-Z0-9]+$/i.test(sig)) return toolError('signal contains unsupported characters');
+        if (!/^[0-9]+$/.test(query)) return toolError('kill requires a numeric PID');
         const r = await ssh.exec(`kill -${sig} ${query}`, { server: config });
         return r.exitCode === 0 ? toolResult(`Sent ${sig} to PID ${query}`) : toolError(r.stderr);
       } catch (e) {
@@ -302,19 +302,19 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_history",
-    "View SSH command execution history",
+    'ssh_history',
+    'View SSH command execution history',
     {
-      limit: z.number().optional().describe("Number of entries to show (default: 20)"),
+      limit: z.number().optional().describe('Number of entries to show (default: 20)'),
     },
     async ({ limit = 20 }) => {
       try {
         const entries = commandHistory.slice(0, limit);
-        if (entries.length === 0) return toolResult("No command history.");
+        if (entries.length === 0) return toolResult('No command history.');
         const lines = entries.map(
           (e) => `[${e.timestamp}] ${e.server} (exit ${e.exitCode}): ${e.command.slice(0, 100)}`,
         );
-        return toolResult(lines.join("\n"));
+        return toolResult(lines.join('\n'));
       } catch (e) {
         return toolError(e);
       }
@@ -322,26 +322,26 @@ export function registerServerTools(
   );
 
   server.tool(
-    "ssh_deploy",
-    "Deploy an application on a remote server (git pull + restart)",
+    'ssh_deploy',
+    'Deploy an application on a remote server (git pull + restart)',
     {
-      server_id: z.string().optional().describe("Server alias"),
-      path: z.string().describe("Application directory path on the server"),
-      branch: z.string().optional().describe("Git branch to deploy (default: main)"),
+      server_id: z.string().optional().describe('Server alias'),
+      path: z.string().describe('Application directory path on the server'),
+      branch: z.string().optional().describe('Git branch to deploy (default: main)'),
       restart_command: z
         .string()
         .optional()
         .describe(
-          "Trusted remote shell command to restart the service after deploy; intentionally unvalidated",
+          'Trusted remote shell command to restart the service after deploy; intentionally unvalidated',
         ),
       pre_deploy: z
         .string()
         .optional()
         .describe(
-          "Trusted remote shell command to run before deploy (e.g. backup); intentionally unvalidated",
+          'Trusted remote shell command to run before deploy (e.g. backup); intentionally unvalidated',
         ),
     },
-    async ({ server_id, path, branch = "main", restart_command, pre_deploy }) => {
+    async ({ server_id, path, branch = 'main', restart_command, pre_deploy }) => {
       try {
         const { config, error } = resolveServer(servers, server_id);
         if (error) return toolError(error);
@@ -373,7 +373,7 @@ export function registerServerTools(
           if (restart.stdout) steps.push(restart.stdout.trim());
         }
 
-        return toolResult(`Deploy completed:\n${steps.join("\n")}`);
+        return toolResult(`Deploy completed:\n${steps.join('\n')}`);
       } catch (e) {
         return toolError(e);
       }

@@ -7,8 +7,8 @@
 // meta declares the context a cert-mode provider closes over (T5). This canned self-verify stand-in
 // carries the declaration so score.mjs's cert-mode shape check passes; a real provider actually
 // closes over these (see judge-provider.skeleton.mjs).
-export const meta = { context: ["answer-key", "artifacts", "fixture-diff"] };
+export const meta = { context: ['answer-key', 'artifacts', 'fixture-diff'] };
 
 export default async function judge(_input) {
-  return "pass";
+  return 'pass';
 }

@@ -8,13 +8,25 @@
 // semantics are deferred to the design-critic role.
 
 const VOID_TAGS = new Set([
-  "area", "base", "br", "col", "embed", "hr", "img", "input", "link",
-  "meta", "param", "source", "track", "wbr",
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
 ]);
 
 function lineAt(text, offset) {
   let line = 1;
-  for (let i = 0; i < offset && i < text.length; i++) if (text[i] === "\n") line++;
+  for (let i = 0; i < offset && i < text.length; i++) if (text[i] === '\n') line++;
   return line;
 }
 
@@ -24,14 +36,14 @@ function parseAttrs(attrText) {
   let m;
   while ((m = re.exec(attrText))) {
     if (m[3]) {
-      attrs[m[3].toLowerCase()] = ""; // boolean attribute
+      attrs[m[3].toLowerCase()] = ''; // boolean attribute
       continue;
     }
     let name = m[1].toLowerCase();
     let val = m[2];
     if (val[0] === '"' || val[0] === "'") val = val.slice(1, -1);
     // JSX className → class; keep brace-expression values raw (rules treat them as opaque)
-    if (name === "classname") name = "class";
+    if (name === 'classname') name = 'class';
     attrs[name] = val;
   }
   return attrs;
@@ -44,8 +56,16 @@ function parseAttrs(attrText) {
  * Node = { tag, attrs, classes:string[], children:Node[], parent, line, text }
  */
 export function parseHtml(rawText, { jsx = false } = {}) {
-  const text = rawText || "";
-  const root = { tag: "#root", attrs: {}, classes: [], children: [], parent: null, line: 0, text: "" };
+  const text = rawText || '';
+  const root = {
+    tag: '#root',
+    attrs: {},
+    classes: [],
+    children: [],
+    parent: null,
+    line: 0,
+    text: '',
+  };
   const stack = [root];
   const styleBlocks = [];
   const cssInJs = [];
@@ -60,33 +80,38 @@ export function parseHtml(rawText, { jsx = false } = {}) {
     }
   }
 
-  const tagRe = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w.-]*)((?:[^>"'{]|"[^"]*"|'[^']*'|\{[^}]*\})*?)(\/?)>/g;
-  let last = 0, m;
+  const tagRe =
+    /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w.-]*)((?:[^>"'{]|"[^"]*"|'[^']*'|\{[^}]*\})*?)(\/?)>/g;
+  let last = 0,
+    m;
   while ((m = tagRe.exec(text))) {
     // text node between tags
     const between = text.slice(last, m.index).trim();
     if (between && stack.length) {
       const top = stack[stack.length - 1];
-      top.text += (top.text ? " " : "") + between.replace(/\{[^}]*\}/g, "").trim();
+      top.text += (top.text ? ' ' : '') + between.replace(/\{[^}]*\}/g, '').trim();
     }
     last = m.index + m[0].length;
 
-    if (m[0].startsWith("<!--")) continue;
-    const closing = m[1] === "/";
+    if (m[0].startsWith('<!--')) continue;
+    const closing = m[1] === '/';
     const tag = m[2].toLowerCase();
-    const attrText = m[3] || "";
-    const selfClose = m[4] === "/" || VOID_TAGS.has(tag);
+    const attrText = m[3] || '';
+    const selfClose = m[4] === '/' || VOID_TAGS.has(tag);
 
     if (closing) {
       // pop to matching tag
       for (let k = stack.length - 1; k >= 1; k--) {
-        if (stack[k].tag === tag) { stack.length = k; break; }
+        if (stack[k].tag === tag) {
+          stack.length = k;
+          break;
+        }
       }
       continue;
     }
 
     const attrs = parseAttrs(attrText);
-    const classAttr = attrs.class && !attrs.class.startsWith("{") ? attrs.class : "";
+    const classAttr = attrs.class && !attrs.class.startsWith('{') ? attrs.class : '';
     const node = {
       tag,
       attrs,
@@ -94,20 +119,23 @@ export function parseHtml(rawText, { jsx = false } = {}) {
       children: [],
       parent: stack[stack.length - 1],
       line: lineAt(text, m.index),
-      text: "",
+      text: '',
     };
     stack[stack.length - 1].children.push(node);
 
-    if (attrs.style && !attrs.style.startsWith("{")) {
+    if (attrs.style && !attrs.style.startsWith('{')) {
       inlineStyles.push({ decls: attrs.style, line: node.line, node });
     }
 
-    if (tag === "style") {
+    if (tag === 'style') {
       // capture raw CSS until </style>
-      const close = text.indexOf("</style>", last);
-      const css = close === -1 ? "" : text.slice(last, close);
+      const close = text.indexOf('</style>', last);
+      const css = close === -1 ? '' : text.slice(last, close);
       styleBlocks.push({ css, line: node.line });
-      if (close !== -1) { tagRe.lastIndex = close; last = close; }
+      if (close !== -1) {
+        tagRe.lastIndex = close;
+        last = close;
+      }
       continue;
     }
     if (!selfClose) stack.push(node);

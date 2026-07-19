@@ -5,8 +5,8 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { lintFile } from './lint.js';
 import type { LintResult } from './lint.js';
+import { lintFile } from './lint.js';
 
 // ---------------------------------------------------------------------------
 // Walk directories recursively for *.prompt.md files

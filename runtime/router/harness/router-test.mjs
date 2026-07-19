@@ -5,9 +5,12 @@ const [, , routerPath, libPath, ws] = process.argv;
 const { routePromptCore } = await import(routerPath);
 
 const goals = [
-  { label: "debug", goal: "debug why the production API intermittently returns 500 errors under load" },
-  { label: "plan",  goal: "plan and architect a new multi-tenant billing system from scratch" },
-  { label: "audit", goal: "audit this website for SEO, performance, and core web vitals" },
+  {
+    label: 'debug',
+    goal: 'debug why the production API intermittently returns 500 errors under load',
+  },
+  { label: 'plan', goal: 'plan and architect a new multi-tenant billing system from scratch' },
+  { label: 'audit', goal: 'audit this website for SEO, performance, and core web vitals' },
 ];
 
 const cases = [];
@@ -36,5 +39,7 @@ for (const g of goals) {
 }
 
 const distinct_selected = new Set(cases.map((c) => c.selected)).size;
-const all_ok = cases.every((c) => c.status === "ok" && c.selected && c.contract && c.warnings === 0);
+const all_ok = cases.every(
+  (c) => c.status === 'ok' && c.selected && c.contract && c.warnings === 0,
+);
 console.log(JSON.stringify({ cases, distinct_selected, all_ok }, null, 2));

@@ -55,7 +55,11 @@ export function toolError(e: unknown): ToolTextResult {
 }
 
 /** Image result with text caption */
-export function imageResult(caption: string, base64Data: string, mimeType: 'image/png' | 'image/jpeg' = 'image/png'): ToolImageResult {
+export function imageResult(
+  caption: string,
+  base64Data: string,
+  mimeType: 'image/png' | 'image/jpeg' = 'image/png',
+): ToolImageResult {
   return {
     content: [
       { type: 'text', text: caption },
@@ -64,7 +68,7 @@ export function imageResult(caption: string, base64Data: string, mimeType: 'imag
   };
 }
 
-/** 
+/**
  * Multimodal result (Gemini-optimized)
  * Combines high-res image + structured JSON metadata for cross-referencing.
  */
@@ -72,20 +76,22 @@ export function multimodalResult(
   text: string,
   base64Image: string,
   metadata: any,
-  mimeType: 'image/png' | 'image/jpeg' = 'image/png'
+  mimeType: 'image/png' | 'image/jpeg' = 'image/png',
 ): ToolImageResult {
   return {
     content: [
       { type: 'text', text },
       { type: 'image', data: base64Image, mimeType },
-      { type: 'text', text: `\n<metadata>\n${JSON.stringify(metadata, null, 2)}\n</metadata>` }
+      { type: 'text', text: `\n<metadata>\n${JSON.stringify(metadata, null, 2)}\n</metadata>` },
     ],
   };
 }
 
 /** Multi-content result (text + images mixed) */
 export function multiContentResult(
-  parts: Array<{ text: string } | { image: string; mimeType?: 'image/png' | 'image/jpeg'; caption?: string }>,
+  parts: Array<
+    { text: string } | { image: string; mimeType?: 'image/png' | 'image/jpeg'; caption?: string }
+  >,
 ): ToolImageResult {
   const content: ToolImageResult['content'] = [];
   for (const part of parts) {

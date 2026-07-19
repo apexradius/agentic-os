@@ -14,16 +14,9 @@
   "annotations": {
     "task": "<task-fingerprint> — <short task description>",
     "driver_note": "provenance.model is the driver model; worker models remain visible per span.",
-    "exemplifies": [
-      "<what the golden demonstrates>"
-    ],
-    "expected_finding_classes": [
-      "<finding-class-1>",
-      "<finding-class-2>"
-    ],
-    "discoverable_facts": [
-      "<fixture fact the candidate must read>"
-    ],
+    "exemplifies": ["<what the golden demonstrates>"],
+    "expected_finding_classes": ["<finding-class-1>", "<finding-class-2>"],
+    "discoverable_facts": ["<fixture fact the candidate must read>"],
     "tool_classes": {
       "operator_ask": ["AskUserQuestion"],
       "plan_approval": ["ExitPlanMode"]

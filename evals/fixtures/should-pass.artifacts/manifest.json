@@ -20,7 +20,11 @@
       "model_tier": "mid",
       "effort": "high",
       "depends_on": ["recon"],
-      "files_owned": ["fixture/lib/cache.js", "fixture/api/handler.js", "fixture/config/defaults.json"],
+      "files_owned": [
+        "fixture/lib/cache.js",
+        "fixture/api/handler.js",
+        "fixture/config/defaults.json"
+      ],
       "validation_command": "node --check fixture/api/handler.js",
       "output_artifact": "artifacts/session-cache.diff",
       "resume_key": "wire-cache"

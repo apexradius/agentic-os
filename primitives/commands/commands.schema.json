@@ -14,10 +14,7 @@
       "description": "One-line help text shown in the /command picker. Says what the command does."
     },
     "argument-hint": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "array", "items": { "type": "string" } }
-      ],
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }],
       "description": "Hint for the $ARGUMENTS the command expects, e.g. '[pr-number]' or ['client', 'ask']."
     },
     "allowed-tools": {

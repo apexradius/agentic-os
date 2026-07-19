@@ -26,6 +26,10 @@
 | Source | Endpoint | Signature/Verification Method | Timestamp Tolerance | Replay/Idempotency Handling |
 | --- | --- | --- | --- | --- |
 
+## AI Integration & Environment Context
+- **AI Spec Constraints**: The system design must be structured so explicitly that an AI agent (treating it as a junior developer) can execute it without assumptions.
+- **Repository Context (CLAUDE.md)**: Define the global instructions, tech stack conventions, and autonomous hook/skill rules that will be written into a root `CLAUDE.md` or `AGENTS.md` file to guide AI IDEs.
+
 ## Environment And Secrets
 - `.env.example` contract:
 - Secret source mapping:

@@ -8,21 +8,54 @@
 // Unknown names resolve to null — a rule that can't resolve a color skips it (honest:
 // we never assert contrast on a color we couldn't read).
 const NAMED = {
-  black: "#000000", white: "#ffffff", red: "#ff0000", green: "#008000",
-  blue: "#0000ff", yellow: "#ffff00", orange: "#ffa500", purple: "#800080",
-  gray: "#808080", grey: "#808080", silver: "#c0c0c0", maroon: "#800000",
-  olive: "#808000", lime: "#00ff00", aqua: "#00ffff", cyan: "#00ffff",
-  teal: "#008080", navy: "#000080", fuchsia: "#ff00ff", magenta: "#ff00ff",
-  indigo: "#4b0082", violet: "#ee82ee", gold: "#ffd700", pink: "#ffc0cb",
-  brown: "#a52a2a", beige: "#f5f5dc", tan: "#d2b48c", crimson: "#dc143c",
-  slategray: "#708090", slategrey: "#708090", darkgray: "#a9a9a9", darkgrey: "#a9a9a9",
-  lightgray: "#d3d3d3", lightgrey: "#d3d3d3", whitesmoke: "#f5f5f5", gainsboro: "#dcdcdc",
+  black: '#000000',
+  white: '#ffffff',
+  red: '#ff0000',
+  green: '#008000',
+  blue: '#0000ff',
+  yellow: '#ffff00',
+  orange: '#ffa500',
+  purple: '#800080',
+  gray: '#808080',
+  grey: '#808080',
+  silver: '#c0c0c0',
+  maroon: '#800000',
+  olive: '#808000',
+  lime: '#00ff00',
+  aqua: '#00ffff',
+  cyan: '#00ffff',
+  teal: '#008080',
+  navy: '#000080',
+  fuchsia: '#ff00ff',
+  magenta: '#ff00ff',
+  indigo: '#4b0082',
+  violet: '#ee82ee',
+  gold: '#ffd700',
+  pink: '#ffc0cb',
+  brown: '#a52a2a',
+  beige: '#f5f5dc',
+  tan: '#d2b48c',
+  crimson: '#dc143c',
+  slategray: '#708090',
+  slategrey: '#708090',
+  darkgray: '#a9a9a9',
+  darkgrey: '#a9a9a9',
+  lightgray: '#d3d3d3',
+  lightgrey: '#d3d3d3',
+  whitesmoke: '#f5f5f5',
+  gainsboro: '#dcdcdc',
 };
 
 // Keywords that are NOT a literal color value — used by the tokenize rule to know that
 // `color: inherit` is fine but `color: #fff` is a hard-coded literal.
 export const COLOR_KEYWORDS = new Set([
-  "inherit", "initial", "unset", "revert", "currentcolor", "transparent", "none",
+  'inherit',
+  'initial',
+  'unset',
+  'revert',
+  'currentcolor',
+  'transparent',
+  'none',
 ]);
 
 function clamp(n, lo, hi) {
@@ -32,7 +65,10 @@ function clamp(n, lo, hi) {
 function hexToRgb(hex) {
   let h = hex.slice(1);
   if (h.length === 3 || h.length === 4) {
-    h = h.split("").map((c) => c + c).join("");
+    h = h
+      .split('')
+      .map((c) => c + c)
+      .join('');
   }
   if (h.length !== 6 && h.length !== 8) return null;
   const r = parseInt(h.slice(0, 2), 16);
@@ -45,7 +81,7 @@ function hexToRgb(hex) {
 
 function parseChannel(tok) {
   tok = tok.trim();
-  if (tok.endsWith("%")) return clamp(Math.round((parseFloat(tok) / 100) * 255), 0, 255);
+  if (tok.endsWith('%')) return clamp(Math.round((parseFloat(tok) / 100) * 255), 0, 255);
   return clamp(Math.round(parseFloat(tok)), 0, 255);
 }
 
@@ -56,7 +92,9 @@ function hslToRgb(h, s, l) {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
-  let r = 0, g = 0, b = 0;
+  let r = 0,
+    g = 0,
+    b = 0;
   if (h < 60) [r, g, b] = [c, x, 0];
   else if (h < 120) [r, g, b] = [x, c, 0];
   else if (h < 180) [r, g, b] = [0, c, x];
@@ -74,17 +112,17 @@ function hslToRgb(h, s, l) {
 export function parseColor(input) {
   if (!input) return null;
   const v = String(input).trim().toLowerCase();
-  if (COLOR_KEYWORDS.has(v)) return v === "transparent" ? { r: 0, g: 0, b: 0, a: 0 } : null;
-  if (v.startsWith("#")) return hexToRgb(v);
+  if (COLOR_KEYWORDS.has(v)) return v === 'transparent' ? { r: 0, g: 0, b: 0, a: 0 } : null;
+  if (v.startsWith('#')) return hexToRgb(v);
   if (NAMED[v]) return hexToRgb(NAMED[v]);
 
   const fn = v.match(/^(rgba?|hsla?)\(([^)]*)\)$/);
   if (fn) {
     const kind = fn[1];
     // Support both comma and space (with optional `/ alpha`) syntaxes.
-    const body = fn[2].replace(/\//g, " ").replace(/,/g, " ").trim();
+    const body = fn[2].replace(/\//g, ' ').replace(/,/g, ' ').trim();
     const parts = body.split(/\s+/).filter(Boolean);
-    if (kind.startsWith("rgb")) {
+    if (kind.startsWith('rgb')) {
       if (parts.length < 3) return null;
       const r = parseChannel(parts[0]);
       const g = parseChannel(parts[1]);
@@ -137,8 +175,11 @@ export function contrast(fg, bg) {
 
 /** rgb → {h:0–360, s:0–100, l:0–100}. */
 export function rgbToHsl({ r, g, b }) {
-  const rn = r / 255, gn = g / 255, bn = b / 255;
-  const max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+  const rn = r / 255,
+    gn = g / 255,
+    bn = b / 255;
+  const max = Math.max(rn, gn, bn),
+    min = Math.min(rn, gn, bn);
   const d = max - min;
   let h = 0;
   if (d !== 0) {

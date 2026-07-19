@@ -1,16 +1,16 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+  type PromptEntry,
   parsePromptLibrary,
+  ROUTES,
   resolveLibraryPath,
   resolveRoutes,
-  ROUTES,
   scoreRoutes,
-  type PromptEntry,
   type WorkspaceScan,
 } from '../src/lib.js';
 import { readCapabilityIndex, readIndex } from '../src/prompt-os/build.js';
@@ -27,9 +27,13 @@ const LIBRARY_DIR =
     : path.join(REPO_ROOT, 'apex/config/prompt-router/library');
 
 const MONOLITH_PATH =
-  ENV_LIBRARY_PATH && !ENV_LIBRARY_IS_GENERATED ? ENV_LIBRARY_PATH : path.join(os.homedir(), 'prompt-library.md');
+  ENV_LIBRARY_PATH && !ENV_LIBRARY_IS_GENERATED
+    ? ENV_LIBRARY_PATH
+    : path.join(os.homedir(), 'prompt-library.md');
 const GENERATED_PATH =
-  ENV_LIBRARY_IS_GENERATED && ENV_LIBRARY_PATH ? ENV_LIBRARY_PATH : path.join(LIBRARY_DIR, 'index.generated.md');
+  ENV_LIBRARY_IS_GENERATED && ENV_LIBRARY_PATH
+    ? ENV_LIBRARY_PATH
+    : path.join(LIBRARY_DIR, 'index.generated.md');
 
 function parseFileOrThrow(p: string): PromptEntry[] {
   const text = readFileSync(p, 'utf8');
@@ -126,7 +130,9 @@ describe('Prompt OS migration HARD GATE', () => {
 
     for (const record of index!.filter((entry) => entry.status === 'published')) {
       for (const phrase of record.trigger_phrases) {
-        const scores = scoreRoutes(routes, phrase.toLowerCase(), '', NEUTRAL_SCAN, { userGoalText: phrase });
+        const scores = scoreRoutes(routes, phrase.toLowerCase(), '', NEUTRAL_SCAN, {
+          userGoalText: phrase,
+        });
         expect(scores[0]?.prompt_name, `${record.name}: ${phrase}`).toBe(record.name);
       }
     }
@@ -139,7 +145,8 @@ describe('Prompt OS migration HARD GATE', () => {
     const generatedNames = new Set(genRes.resolved.map((route) => route.promptName));
 
     expect(monoRes.missing_route_prompts).toEqual([]);
-    for (const route of monoRes.resolved) expect(generatedNames.has(route.promptName), route.promptName).toBe(true);
+    for (const route of monoRes.resolved)
+      expect(generatedNames.has(route.promptName), route.promptName).toBe(true);
   });
 
   itMono('generated library additionally contains the reference record -> 32 total', () => {
@@ -172,7 +179,10 @@ describe('Prompt OS sidecar artifacts', () => {
   it('labels.json contains exactly the published record(s)', () => {
     const labelsPath = path.join(LIBRARY_DIR, 'labels.json');
     expect(existsSync(labelsPath), 'labels.json must exist').toBe(true);
-    const labels = JSON.parse(readFileSync(labelsPath, 'utf8')) as Record<string, { production: string }>;
+    const labels = JSON.parse(readFileSync(labelsPath, 'utf8')) as Record<
+      string,
+      { production: string }
+    >;
     const labelSlugs = Object.keys(labels).sort();
     const index = JSON.parse(readFileSync(path.join(LIBRARY_DIR, 'index.json'), 'utf8')) as Array<{
       slug: string;
@@ -191,7 +201,10 @@ describe('Prompt OS sidecar artifacts', () => {
   it('published records include the generated production label set', async () => {
     const index = await readIndex(LIBRARY_DIR);
     expect(index).not.toBeNull();
-    const published = index!.filter((r) => r.status === 'published').map((r) => r.slug).sort();
+    const published = index!
+      .filter((r) => r.status === 'published')
+      .map((r) => r.slug)
+      .sort();
     expect(published.length).toBeGreaterThanOrEqual(30);
     expect(published).toContain('focused-gtm-slice-prompt');
     expect(published).toContain('production-deploy-verify');

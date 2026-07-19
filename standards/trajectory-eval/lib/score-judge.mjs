@@ -12,12 +12,12 @@
 // The taste dimensions the spans alone cannot settle. Names are stable — the judge-gate and any
 // rubric reference them.
 export const JUDGE_DIMENSIONS = [
-  "plan_adherence", // did the run follow the phases the baseline exemplifies?
-  "synthesis_fidelity", // is the returned conclusion supported by what the tools actually surfaced?
-  "finding_class_coverage", // were the finding classes the baseline expects all reached?
-  "question_discoverability", // were paused-to-user stops truly undiscoverable, or answerable in-context?
-  "verification_adequacy", // was the verification real (right target) or a proxy that looks disciplined?
-  "artifact_set", // were the specific expected artifacts produced (spans carry tool, not file path)?
+  'plan_adherence', // did the run follow the phases the baseline exemplifies?
+  'synthesis_fidelity', // is the returned conclusion supported by what the tools actually surfaced?
+  'finding_class_coverage', // were the finding classes the baseline expects all reached?
+  'question_discoverability', // were paused-to-user stops truly undiscoverable, or answerable in-context?
+  'verification_adequacy', // was the verification real (right target) or a proxy that looks disciplined?
+  'artifact_set', // were the specific expected artifacts produced (spans carry tool, not file path)?
 ];
 
 /**
@@ -28,20 +28,36 @@ export const JUDGE_DIMENSIONS = [
  * Returns {gradeable, dimensions:{<name>:{...}}, escalations:[...]}.
  */
 export async function scoreJudge({ candidate, baseline, provider, dimensions = JUDGE_DIMENSIONS }) {
-  if (typeof provider !== "function") {
+  if (typeof provider !== 'function') {
     const out = {};
-    for (const d of dimensions) out[d] = { gradeable: false, reason: "judge-required (no provider configured)" };
+    for (const d of dimensions)
+      out[d] = { gradeable: false, reason: 'judge-required (no provider configured)' };
     return { gradeable: false, dimensions: out, escalations: [] };
   }
 
   const out = {};
   const escalations = [];
   for (const d of dimensions) {
-    const first = await provider({ dimension: d, candidate, baseline, presentation: "candidate-first" });
-    const second = await provider({ dimension: d, candidate, baseline, presentation: "baseline-first" });
+    const first = await provider({
+      dimension: d,
+      candidate,
+      baseline,
+      presentation: 'candidate-first',
+    });
+    const second = await provider({
+      dimension: d,
+      candidate,
+      baseline,
+      presentation: 'baseline-first',
+    });
     const consistent = normalize(first) === normalize(second);
     if (!consistent) {
-      out[d] = { gradeable: false, escalate: true, verdicts: [first, second], reason: "order-swap verdicts disagree" };
+      out[d] = {
+        gradeable: false,
+        escalate: true,
+        verdicts: [first, second],
+        reason: 'order-swap verdicts disagree',
+      };
       escalations.push(d);
     } else {
       out[d] = { gradeable: true, verdict: normalize(first), consistent: true };
@@ -52,5 +68,5 @@ export async function scoreJudge({ candidate, baseline, provider, dimensions = J
 
 function normalize(v) {
   const s = String(v).trim().toLowerCase();
-  return s === "pass" || s === "fail" ? s : "fail";
+  return s === 'pass' || s === 'fail' ? s : 'fail';
 }

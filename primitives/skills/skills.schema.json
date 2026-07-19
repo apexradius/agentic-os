@@ -22,20 +22,35 @@
     },
     "user-invocable": { "type": "boolean", "description": "Whether /<name> dispatch is allowed." },
     "argument-hint": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "array", "items": { "type": "string" } }
-      ]
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
     },
-    "tools": { "type": "string", "description": "Comma-separated tool allow-list (Claude permission model)." },
-    "allowed-tools": { "type": "string", "description": "Comma-separated tool allow-list (alt spelling)." },
-    "context": { "type": "string", "description": "Execution strategy, e.g. 'fork'. Left as a free string — only one value observed live; an enum here would risk false negatives." },
+    "tools": {
+      "type": "string",
+      "description": "Comma-separated tool allow-list (Claude permission model)."
+    },
+    "allowed-tools": {
+      "type": "string",
+      "description": "Comma-separated tool allow-list (alt spelling)."
+    },
+    "context": {
+      "type": "string",
+      "description": "Execution strategy, e.g. 'fork'. Left as a free string — only one value observed live; an enum here would risk false negatives."
+    },
     "agent": { "type": "string", "description": "Route this skill to a named agent's context." },
-    "disable-model-invocation": { "type": "boolean", "description": "Human-invocable only; the model will not auto-trigger." },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "description": "Human-invocable only; the model will not auto-trigger."
+    },
     "license": { "type": "string" },
     "version": { "type": "string" },
-    "metadata": { "type": "object", "description": "Free-form key/value bag (validated structurally only)." },
-    "mcp_dependencies": { "type": ["array", "object", "string"], "description": "MCP servers this skill needs. Observed live as a comma-separated string ('mcp-core, mcp-tools'); arrays/objects also accepted." },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form key/value bag (validated structurally only)."
+    },
+    "mcp_dependencies": {
+      "type": ["array", "object", "string"],
+      "description": "MCP servers this skill needs. Observed live as a comma-separated string ('mcp-core, mcp-tools'); arrays/objects also accepted."
+    },
     "compatibility": { "type": ["object", "string", "array"] },
     "certification": {
       "type": "array",

@@ -4,5 +4,5 @@
 // Proves the meta shape check bites; run with --allow-deferred it would be moot (meta is a cert-mode
 // requirement only).
 export default async function judge(_input) {
-  return "pass";
+  return 'pass';
 }

@@ -12,24 +12,23 @@
 //
 // The Codex projection is intentionally lossy — see framework/primitives/agents/spec.md.
 
-import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, dirname, basename } from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { parseFrontmatter } from "./frontmatter.mjs";
-import { emitAgentToml } from "./emit-toml.mjs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { emitAgentToml } from './emit-toml.mjs';
+import { parseFrontmatter } from './frontmatter.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const REPO = join(__dirname, "..", "..", "..");
+export const REPO = join(__dirname, '..', '..', '..');
 
-const SOURCE_DIRS = [join(REPO, "framework", "roles"), join(REPO, "apex", "agents")];
-const OUT_CLAUDE = join(REPO, ".claude", "agents");
-const OUT_CODEX = join(REPO, ".codex", "agents");
+const SOURCE_DIRS = [join(REPO, 'framework', 'roles'), join(REPO, 'apex', 'agents')];
+const OUT_CLAUDE = join(REPO, '.claude', 'agents');
+const OUT_CODEX = join(REPO, '.codex', 'agents');
 
 function listAgentMd(dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith(".md") && f !== "README.md")
+    .filter((f) => f.endsWith('.md') && f !== 'README.md')
     .sort()
     .map((f) => join(dir, f));
 }
@@ -40,17 +39,19 @@ export function buildAll() {
   const seen = new Map();
   for (const dir of SOURCE_DIRS) {
     for (const path of listAgentMd(dir)) {
-      const raw = readFileSync(path, "utf8");
+      const raw = readFileSync(path, 'utf8');
       const { data, body } = parseFrontmatter(raw);
-      const stem = basename(path, ".md");
+      const stem = basename(path, '.md');
       const name = data.name;
       if (!name) throw new Error(`${rel(path)}: frontmatter is missing 'name'`);
-      if (name !== stem) throw new Error(`${rel(path)}: frontmatter name '${name}' != filename stem '${stem}'`);
-      if (seen.has(name)) throw new Error(`duplicate agent '${name}': ${rel(seen.get(name))} and ${rel(path)}`);
+      if (name !== stem)
+        throw new Error(`${rel(path)}: frontmatter name '${name}' != filename stem '${stem}'`);
+      if (seen.has(name))
+        throw new Error(`duplicate agent '${name}': ${rel(seen.get(name))} and ${rel(path)}`);
       seen.set(name, path);
 
-      const claudeOut = raw.replace(/\n*$/, "\n"); // exactly one trailing newline
-      const codexOut = emitAgentToml({ name, description: data.description ?? "", body });
+      const claudeOut = raw.replace(/\n*$/, '\n'); // exactly one trailing newline
+      const codexOut = emitAgentToml({ name, description: data.description ?? '', body });
       agents.push({ name, sourcePath: path, claudeOut, codexOut });
     }
   }
@@ -67,11 +68,15 @@ export function check(agents = buildAll()) {
     compare(join(OUT_CODEX, `${a.name}.toml`), a.codexOut, drift);
   }
   // Orphans: emitted files with no canonical source.
-  for (const [dir, ext] of [[OUT_CLAUDE, ".md"], [OUT_CODEX, ".toml"]]) {
+  for (const [dir, ext] of [
+    [OUT_CLAUDE, '.md'],
+    [OUT_CODEX, '.toml'],
+  ]) {
     if (!existsSync(dir)) continue;
     for (const f of readdirSync(dir)) {
-      if (!f.endsWith(ext) || f === "README.md") continue;
-      if (!names.has(basename(f, ext))) drift.push(`orphan    ${rel(join(dir, f))} (no canonical source)`);
+      if (!f.endsWith(ext) || f === 'README.md') continue;
+      if (!names.has(basename(f, ext)))
+        drift.push(`orphan    ${rel(join(dir, f))} (no canonical source)`);
     }
   }
   return drift;
@@ -79,7 +84,7 @@ export function check(agents = buildAll()) {
 
 function compare(path, expected, drift) {
   if (!existsSync(path)) drift.push(`missing   ${rel(path)}`);
-  else if (readFileSync(path, "utf8") !== expected) drift.push(`drift     ${rel(path)}`);
+  else if (readFileSync(path, 'utf8') !== expected) drift.push(`drift     ${rel(path)}`);
 }
 
 function write(agents) {
@@ -92,27 +97,31 @@ function write(agents) {
 }
 
 function rel(p) {
-  return p.startsWith(REPO + "/") ? p.slice(REPO.length + 1) : p;
+  return p.startsWith(REPO + '/') ? p.slice(REPO.length + 1) : p;
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-if (process.argv[1] && process.argv[1].endsWith("emit.mjs")) {
-  const isCheck = process.argv.slice(2).includes("--check");
+if (process.argv[1] && process.argv[1].endsWith('emit.mjs')) {
+  const isCheck = process.argv.slice(2).includes('--check');
   try {
     const agents = buildAll();
     if (isCheck) {
       const drift = check(agents);
       if (drift.length) {
-        console.error(`emit --check: DRIFT (${drift.length})\n` + drift.map((d) => "  " + d).join("\n"));
+        console.error(
+          `emit --check: DRIFT (${drift.length})\n` + drift.map((d) => '  ' + d).join('\n'),
+        );
         process.exit(1);
       }
       console.log(`emit --check: clean — ${agents.length} agents, interfaces match canonical`);
     } else {
       write(agents);
-      console.log(`emit: wrote ${agents.length} agents -> .claude/agents/*.md + .codex/agents/*.toml`);
+      console.log(
+        `emit: wrote ${agents.length} agents -> .claude/agents/*.md + .codex/agents/*.toml`,
+      );
     }
   } catch (e) {
-    console.error("emit: " + e.message);
+    console.error('emit: ' + e.message);
     process.exit(1);
   }
 }

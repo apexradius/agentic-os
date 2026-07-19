@@ -33,17 +33,31 @@ Design *serves* the work in one register and *is* the brand in the other.
 - **Radius:** marketing surfaces use `0`; operational UI uses a small max (≈`8px`). Never make
   every control pill-shaped.
 - **Type:** body text ≥ `16px`; stable role-based sizes, not viewport-width scaling. Metrics
-  use tabular numbers.
+  use tabular numbers. **At most two font families**; a display or handwritten face never
+  sets body copy. Line-height ≈ `150%` for body, `110–130%` for headings; tighten kerning on
+  very large type (≳ `70px`).
 - **Spacing:** an 8px grid. Sections may breathe; tools stay compact. **Never place a card
   inside another card.**
 - **Color:** one dominant accent plus semantic states; maintain high contrast. Avoid
   gradient-text, side-stripe cards, purple/blue gradient domination, beige/brown monotones,
   and one-hue palettes. Status is never conveyed by color alone — pair it with text or icon.
+  In the **operational** register, build the palette as a *layered neutral shell*: shift the
+  background a step to separate structural zones (e.g. a lighter-gray nav on a white
+  workspace), divide sections with whitespace or a soft shadow rather than borders, reserve
+  the dominant accent for the primary action, and mark an active/selected state with **at
+  least two** cues (e.g. fill + weight), never color alone. Do **not** distribute color by a
+  fixed 60-30-10 split inside a tool — 60-30-10 is a marketing-register heuristic.
+- **Depth:** never a harsh pure-black shadow. Soften it (low opacity ≈ `15–20%`, larger blur)
+  and **tint the shadow toward the surface behind it**. In dark mode, separate elevation by
+  *lightening* the raised surface, not by adding shadow. Backgrounds are never pure `#000` or
+  `#fff` — use an off-black / off-white.
 - **Motion:** animate **opacity and transform only** unless the feature genuinely needs more.
   Always respect `prefers-reduced-motion`. No decorative animation on conversion-critical or
   data-bearing interactions; motion must never hide data or cause layout shift.
 - **Imagery:** real product/place/workflow/domain visuals. No atmospheric stock fill when the
   user needs to inspect the real thing.
+- **Copy:** real, domain-true text. Never Lorem Ipsum or placeholder filler in a surface
+  called done.
 - **Controls:** icon-only actions need a label or tooltip; never ship an ambiguous icon.
 
 ## Constraints (the floors)
@@ -85,5 +99,7 @@ Before any surface is called done:
 5. Changed styles use tokens, not one-off values.
 6. No secrets or placeholder/parked URLs in the shipped code.
 7. The affected lint/test/build passed — or the exact blocked reason + next action recorded.
+8. **Squint test:** at ~10% zoom (or squinting), a single focal point dominates. If every
+   element competes at once, the hierarchy has failed — strip ornament until one anchor wins.
 
-> Last reviewed: 2026-06-19
+> Last reviewed: 2026-07-18

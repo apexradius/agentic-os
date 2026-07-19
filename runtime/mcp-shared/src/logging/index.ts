@@ -22,19 +22,43 @@ function emit(entry: LogEntry): void {
 }
 
 export const log = {
-  info(mcp: string, service: string, op: string, msg: string, extra?: Record<string, unknown>): void {
+  info(
+    mcp: string,
+    service: string,
+    op: string,
+    msg: string,
+    extra?: Record<string, unknown>,
+  ): void {
     emit({ level: 'info', mcp, service, op, msg, ts: new Date().toISOString(), ...extra });
   },
 
-  warn(mcp: string, service: string, op: string, msg: string, extra?: Record<string, unknown>): void {
+  warn(
+    mcp: string,
+    service: string,
+    op: string,
+    msg: string,
+    extra?: Record<string, unknown>,
+  ): void {
     emit({ level: 'warn', mcp, service, op, msg, ts: new Date().toISOString(), ...extra });
   },
 
-  error(mcp: string, service: string, op: string, msg: string, extra?: Record<string, unknown>): void {
+  error(
+    mcp: string,
+    service: string,
+    op: string,
+    msg: string,
+    extra?: Record<string, unknown>,
+  ): void {
     emit({ level: 'error', mcp, service, op, msg, ts: new Date().toISOString(), ...extra });
   },
 
-  debug(mcp: string, service: string, op: string, msg: string, extra?: Record<string, unknown>): void {
+  debug(
+    mcp: string,
+    service: string,
+    op: string,
+    msg: string,
+    extra?: Record<string, unknown>,
+  ): void {
     if (process.env['APEX_MCP_DEBUG'] === '1') {
       emit({ level: 'debug', mcp, service, op, msg, ts: new Date().toISOString(), ...extra });
     }
