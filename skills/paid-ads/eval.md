@@ -40,3 +40,16 @@ With the paid-ads skill loaded, the agent:
 
 **Fail** if the output is "tighten ad groups, narrow audience, lower bids, raise ROAS, test a creative" —
 i.e. the legacy manual-era playbook, indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-18 (first execution)
+Solver: claude-sonnet-5 subagents; grader: session lead vs rubric, per-item evidence.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 8/16 | FAIL — but materially STRONGER than this eval predicted: it already consolidates, names CAPI dedup + ~50 conv/week, refuses audience-narrowing, checks creative fatigue. Missed: creative-as-targeting (~20 diverse, hook rate), learning-safe scaling discipline, EC/value-based bidding, view-inclusive attribution, net-profit/CAC:LTV reframe, citations |
+| With skill | 15/16 | PASS — consolidate-to-business + SKAG starve [GA1]; broad + ~20 creatives + hook rate + Andromeda [MA2]; thresholds + 30-day no-touch + 3%/day scaling; funnel-stage conversion map + first-party/EC/VBB; Pixel+CAPI + EMQ + view-inclusive window; net-profit/offer-fit framing; siblings deferred. Dropped 1 pt: search-term-report workflow + message-match congruence not explicit (negatives only) |
+
+Delta +7. HONEST FINDING: the 2026 frontier baseline has absorbed much of the automation-era playbook —
+this eval's "observed baseline failure" paragraph understates current baselines. The skill's real margin
+is the discipline layer (creative volume/hook-rate, thresholds, attribution window, profit framing) and
+traceability, not the headline concepts. Baseline description should be refreshed at next revision.

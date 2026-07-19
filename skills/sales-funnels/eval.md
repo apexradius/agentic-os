@@ -39,3 +39,14 @@ With the sales-funnels skill loaded, the agent:
 
 **Fail** if the output lists features with a single price, sends cold traffic straight to the offer,
 invents scarcity, or omits funnel math — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-18 (first execution)
+Solver: claude-sonnet-5 subagents; grader: session lead vs rubric, per-item evidence.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 7/16 | FAIL — stronger than predicted: strong risk-reversal guarantee, genuine-scarcity warning ("should be *true*"), organic-proof-first traffic. Missed: no Value Equation/named frameworks, no 3-tier anchor or bonus stack, no break-even tripwire, zero funnel math, unnamed call framework, no citations |
+| With skill | 16/16 | PASS — Value Equation + Trim & Stack + textable razor; 3-tier anchor + Bonus Bank + guarantee; LM→$97 tripwire (break-even)→core→upsell, cold never sent to core; application-funnel archetype reasoned; 12:1 human-loop LTV:CAC + break-even CAC + close-rate diagnostic; CLOSER + two-for-two + 5-touch value-added follow-up; genuine sender-pool scarcity; `src` cited throughout |
+
+Delta +9. The funnel-math stage is the skill's sharpest edge — baseline had literally zero economics;
+treatment independently identified the 12:1 LTV:CAC floor as the binding constraint on the whole offer.

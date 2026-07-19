@@ -8,8 +8,29 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.11.0] - 2026-07-18
+
+This release is the knowledge-enrichment wave: sixteen source-cited discipline skills distilled
+from large practitioner corpora, two new standards, and a broad validator/runtime hardening pass.
+It shipped as two public syncs (`8e6e4ea` content, then this versioned housekeeping sync — the
+content sync predated its changelog entry; recorded here to close that gap).
+
 ### Added
 
+- **16 source-cited discipline skills** — `skills/`: `automation`, `backend-platform`, `branding`,
+  `business-strategy`, `copywriting`, `cro`, `lead-management`, `market-research`, `paid-ads`,
+  `project-management`, `sales-funnels`, `seo`, `shopify`, `social-content`, `video-content`,
+  `web-dev`. Each is an executable workflow over a cited `references/knowledge-base.md` (every
+  claim traces to a source; corpus skew and gaps stated in-file) with a failing-baseline `eval.md`.
+  `email-draft` and `app-build-workflow` enriched on the same pattern. First eval executions
+  recorded for `paid-ads` (15/16 pass vs 8/16 baseline) and `sales-funnels` (16/16 vs 7/16).
+- **Completion-audit standard** — `standards/completion-audit/`: hook + validator that audits
+  "done" claims against evidence.
+- **MCP proof-params standard** — `standards/mcp-proof-params/`: proof-bearing tool-result
+  contract for MCP servers, with `runtime/mcp-shared/src/proof/` as the shared implementation.
+- **pipeline-mcp** — `runtime/mcp-servers/pipeline-mcp/`: minimal staged-pipeline ledger server.
 - **Content-injection standard** — `standards/content-injection/`: the results-side twin of
   `tool-gate`. A zero-dependency reference detector (`lib/detect.mjs`, a faithful port of an
   injection scanner's L1 hidden-character + L2 heuristic layers) plus a four-category RED/GREEN
@@ -27,6 +48,16 @@ All notable changes to the **agentic-os** framework are recorded here, newest fi
   long-lived tiers — the freshness-over-faith rule made schema-enforceable. Validator ships 11 checks
   (secrets ban, zone-purity, legacy-taxonomy migration nudges that name the fix) with an 18-case
   RED/GREEN selftest; governs per-file records only, aggregates stay under knowledge-freshness.
+
+### Changed
+
+- **Validator/runtime hardening pass** across the standards suite (design-gate, tool-gate,
+  trajectory-eval, knowledge-freshness, session-discipline, cost-budget, and peers), the
+  primitive validators, `runtime/durability`, `runtime/learning`, `runtime/observability`,
+  the prompt-router (prompt-os build/lint/eval/telemetry), and the scheduler. Behavior-preserving
+  refactors plus stricter checks; `validate.mjs --all` green throughout.
+- **Agents spec** — new wiring constraint: a skill wired into an agent gets one `<Core_Context>`
+  line (what + when to load), never inlined skill content — depth stays in the skill.
 
 ## [0.10.0] - 2026-07-05
 

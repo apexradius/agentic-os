@@ -123,6 +123,10 @@ error — a role may legitimately inherit the session default.
 - **Never put Apex specifics in `framework/roles/`.** If a generic role needs to name its
   runtime, say it neutrally (the validator enforces this).
 - **Never hand-author the `.toml`.** It is a projection, not a source.
+- **Never inline a skill's content into `<Core_Context>` when wiring it.** One line per wired
+  skill: what it is + when to load it. The depth (workflow, numbers, caveats) lives in the
+  skill's own `SKILL.md`/references — duplicating it bloats every session the agent runs and
+  drifts the moment the skill is revised.
 
 ## Verify (executable acceptance)
 
