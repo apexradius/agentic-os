@@ -11,9 +11,10 @@
 //   6. PRESENCE of every shipped file; zone-purity over the standard dir.
 // The LIVE judge provider is instance-supplied and never exercised here — that is the skip()'d branch.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scanZonePurity } from '../_lib/zone-purity.mjs';
 import { exportFromRows, promptFingerprint, promptFingerprintFromFile } from './lib/export.mjs';
 import { compareToBaseline } from './lib/regression.mjs';
 import { levenshtein, toolPathScore, verificationDiscipline } from './lib/score-deterministic.mjs';
@@ -549,25 +550,8 @@ const EXPECTED = [
 ];
 for (const rel of EXPECTED) ok(`PRESENCE: ${rel} exists`, existsSync(join(__dirname, rel)));
 
-// ── 7. zone-purity over the standard dir (forbidden literals split-joined; exclude this file) ──
-const FORBIDDEN = [
-  ['apex', 'radius'].join(''),
-  ['trade', 'ops'].join(''),
-  ['ko', 'vara'].join(''),
-  ['/Users/', 'apex'].join(''),
-  ['/home/', 'adam'].join(''),
-  [148, 113, 202, 79].join('.'),
-];
-const walk = (dir) =>
-  readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
-    const p = join(dir, d.name);
-    return d.isDirectory() ? walk(p) : [p];
-  });
-let zoneHit = '';
-for (const f of walk(__dirname).filter((f) => !f.endsWith('validate.mjs'))) {
-  const txt = readFileSync(f, 'utf8');
-  for (const tok of FORBIDDEN) if (txt.includes(tok)) zoneHit = `${f}: ${tok}`;
-}
+// ── 7. zone-purity over the standard dir (shared scan; validate.mjs excluded) ──
+const zoneHit = scanZonePurity(__dirname);
 ok('zone-purity: no Apex coupling in the standard dir', zoneHit === '', zoneHit);
 
 const failed = checks.filter((c) => !c.pass);

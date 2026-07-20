@@ -50,7 +50,7 @@ export function isDue(task, now) {
 }
 
 /** Every id this task depends on must be completed. */
-export function dependenciesMet(task, byId) {
+function dependenciesMet(task, byId) {
   return (task.depends_on || []).every((id) => byId.get(id)?.status === 'completed');
 }
 

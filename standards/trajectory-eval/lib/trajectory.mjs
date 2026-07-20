@@ -8,8 +8,8 @@
 export const SCHEMA_ID = 'trajectory/1';
 
 // Default classifications — a baseline may override via annotations.tool_classes.
-export const MUTATING_TOOLS = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'];
-export const VERIFYING_TOOLS = ['Read', 'Bash', 'Grep', 'Glob'];
+const MUTATING_TOOLS = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'];
+const VERIFYING_TOOLS = ['Read', 'Bash', 'Grep', 'Glob'];
 
 /** Parse trajectory JSON text (or accept an already-parsed object). Never throws on bad JSON —
  *  returns {trajectory:null, errors:[...]} so the caller decides. */
@@ -60,11 +60,6 @@ export function validateTrajectory(t) {
     });
   }
   return errors;
-}
-
-/** True iff this trajectory carries a baseline's annotations/thresholds (a golden trace). */
-export function isBaseline(t) {
-  return !!(t && (t.annotations || t.thresholds));
 }
 
 // ── extractors: everything the deterministic scorer needs, read once from the spans ──

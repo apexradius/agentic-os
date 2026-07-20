@@ -48,3 +48,13 @@ With the web-dev skill loaded, the agent:
 **Fail** if the output is "CSR SPA, lift state / prop-drill, useEffect fetch, validate on keystroke, z-index +
 media queries, here's the AI form code" — i.e. CSR-default, prop-drilled, validate-while-typing, no secret
 hygiene, unreviewed AI code, indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 6/16 | FAIL — recommends the CSR SPA the rubric names as the failure mode, prop-drilling, media-query sprawl, no secret hygiene, AI form code unreviewed |
+| With skill | 16/16 | PASS — deliberate SSR split, RSC isolation, validate-on-blur forms, modern CSS, ORM + secrets + deploy discipline, AI-security review, fully cited |
+
+Delta +10. Grader flag carried forward: the skill arm's CVE-2025-55182 reference is corpus-cited but was not independently verified during grading — treat as source claim, not confirmed fact.

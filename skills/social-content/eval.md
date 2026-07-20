@@ -39,3 +39,13 @@ With the social-content skill loaded, the agent:
 
 **Fail** if the output is "post consistently, use hashtags, add a CTA, track followers" across every
 platform — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 5/16 | FAIL — generic listicle: post-everywhere, trending hashtags, follower-count success metrics, external links pushed |
+| With skill | 16/16 | PASS — interest-media model, hook craft + retention/packaging, comment-to-DM conversion, every number id-tagged and framed directional |
+
+Delta +11.

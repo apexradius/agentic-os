@@ -9,7 +9,7 @@
 
 import { computeDeterministic } from './score-deterministic.mjs';
 
-export const DEFAULT_THRESHOLDS = {
+const DEFAULT_THRESHOLDS = {
   tool_path: 0.7, // min tool-path similarity vs baseline
   verification_discipline: 1.0, // every mutation must be verified
   question_economy_max: 1, // at most this many operator-ask spans

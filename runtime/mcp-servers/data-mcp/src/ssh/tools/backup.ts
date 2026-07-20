@@ -67,7 +67,7 @@ function validateCronField(field: string, range: (typeof CRON_FIELDS)[number]): 
   return null;
 }
 
-export function validateCronSchedule(schedule: string): string | null {
+function validateCronSchedule(schedule: string): string | null {
   const fields = schedule.trim().split(/\s+/);
   if (fields.length !== 5) {
     return 'schedule must be a five-field cron expression';

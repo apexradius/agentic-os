@@ -90,7 +90,7 @@ function walkTs(dir, acc = []) {
 }
 
 /** Skills from a `<root>/<name>/SKILL.md` corpus, tagged with `zone`. */
-export function collectSkills(root, zone) {
+function collectSkills(root, zone) {
   const dir = root;
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
@@ -114,7 +114,7 @@ export function collectSkills(root, zone) {
 }
 
 /** Agents from a `<root>/<name>.md` directory (roles or apex agents), tagged with `zone`. */
-export function collectAgents(root, zone) {
+function collectAgents(root, zone) {
   return listFiles(root, (f) => f.endsWith('.md') && f !== 'README.md')
     .map((p) => {
       const fm = readScalars(readFileSync(p, 'utf8'), ['name', 'description', 'model']);
@@ -148,7 +148,7 @@ export function extractTools(tsSource) {
 
 /** MCP servers under a given `<serversRoot>/<name>/` (framework/runtime + apex/runtime are both
  *  scanned) — package.json name+description + statically-detected tools across its TS sources. */
-export function collectMcp(serversRoot) {
+function collectMcp(serversRoot) {
   if (!existsSync(serversRoot)) return [];
   return readdirSync(serversRoot, { withFileTypes: true })
     .filter((e) => e.isDirectory() && existsSync(join(serversRoot, e.name, 'package.json')))

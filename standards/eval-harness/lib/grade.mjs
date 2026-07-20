@@ -7,7 +7,7 @@
 const EXPECT_BLOCK = /```expect[ \t]*\r?\n([\s\S]*?)\r?\n```/i;
 
 /** Extract the assertion block from an eval body, or null when there is none (→ judge-required). */
-export function parseExpect(body) {
+function parseExpect(body) {
   const m = String(body).match(EXPECT_BLOCK);
   if (!m) return null;
   const a = { contains: [], regex: [], not_contains: [] };
@@ -28,7 +28,7 @@ function unquote(v) {
 }
 
 /** Evaluate an assertion set against a model output → {pass, missing[]}. */
-export function evalAssertions(assertions, output) {
+function evalAssertions(assertions, output) {
   const out = String(output ?? '');
   const missing = [];
   for (const s of assertions.contains) if (!out.includes(s)) missing.push(`contains:${s}`);
@@ -94,7 +94,7 @@ function parseThreshold(body) {
 }
 
 /** Parse the rubric table rows + the pass threshold from an eval body. */
-export function parseRubric(body) {
+function parseRubric(body) {
   const rows = [];
   for (const line of String(body).split(/\r?\n/)) {
     const t = line.trim();

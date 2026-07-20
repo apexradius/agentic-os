@@ -97,6 +97,3 @@ export function initSSH(server: McpServer, config: SSHConfig): SSHModule {
     },
   };
 }
-
-export { SSHClient } from './client.js';
-export { type ServerConfig, SSHPool } from './pool.js';

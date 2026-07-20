@@ -2,9 +2,10 @@
 // validate.mjs — the judge-validity standard. Enforces doctrine/standards/judge-validity.md:
 // judge agreement must be validated with chance-corrected agreement, not raw agreement alone.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { walkNamed } from '../_lib/fs-scan.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..'); // framework/
@@ -84,15 +85,6 @@ function validateReplayGoldSet(replay, goldById) {
     errors.push(`gold_set.ratings_count must equal ${actual.ratings_a.length}`);
   }
   return errors;
-}
-
-function walkNamed(dir, name, acc = []) {
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) walkNamed(p, name, acc);
-    else if (e.name === name) acc.push(p);
-  }
-  return acc;
 }
 
 ok('cohenKappa: perfect agreement is 1', cohenKappa(['pass', 'fail'], ['pass', 'fail']) === 1);

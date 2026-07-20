@@ -3,9 +3,10 @@
 // model-judged gates must declare deterministic-first routing, order-swap agreement,
 // judge separation, and rubric controls for known verbosity/self-preference bias.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { walkNamed } from '../_lib/fs-scan.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..'); // framework/
@@ -81,15 +82,6 @@ function validateReplay(replay) {
     }
   }
   return errors;
-}
-
-function walkNamed(dir, name, acc = []) {
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, e.name);
-    if (e.isDirectory()) walkNamed(p, name, acc);
-    else if (e.name === name) acc.push(p);
-  }
-  return acc;
 }
 
 const good = {

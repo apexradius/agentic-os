@@ -19,8 +19,8 @@ export const RETURN_FIELDS = [
   'artifacts',
   'follow_ups',
 ];
-export const REQUIRED_RETURN_FIELDS = ['kind', 'status', 'summary', 'evidence'];
-export const RETURN_STATUSES = ['done', 'blocked', 'needs-input'];
+const REQUIRED_RETURN_FIELDS = ['kind', 'status', 'summary', 'evidence'];
+const RETURN_STATUSES = ['done', 'blocked', 'needs-input'];
 
 function asLines(value) {
   if (Array.isArray(value)) return value.map((v) => `- ${v}`).join('\n');

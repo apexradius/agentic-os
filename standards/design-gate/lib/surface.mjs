@@ -7,7 +7,7 @@
 import { parseCss, parseInlineDeclarations } from './css.mjs';
 import { parseHtml } from './html.mjs';
 
-export function typeForPath(file) {
+function typeForPath(file) {
   const ext = (file.match(/\.([a-z]+)$/i) || [, ''])[1].toLowerCase();
   if (ext === 'css' || ext === 'scss' || ext === 'less' || ext === 'sass') return 'css';
   if (ext === 'html' || ext === 'htm' || ext === 'vue' || ext === 'svelte') return 'html';

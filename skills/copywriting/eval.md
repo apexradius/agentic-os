@@ -40,3 +40,13 @@ With the copywriting skill loaded, the agent:
 
 **Fail** if the output lists features with multiple CTAs, invents proof, or reads generic with no
 framework — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 7/16 | FAIL — no framework named, feature-led module list, stacked CTAs (2 buttons in 2 sections), recurring patterns-of-three |
+| With skill | 15/16 | PASS — 8-section anatomy + BAB named, Contrast Disruption headline formula, assumed-VOC flagged with mining workflow, 4 objections dissolved, single CTA; −1: two residual triplets despite self-claim of none |
+
+Delta +8. Cleanup flagged for next revision: unsourced "$2,000+/mo" cost-of-inaction figure should be hedged, and one "$500" renders as a mojibake glyph in the skill arm's output — cosmetic, but worth a wording guard.

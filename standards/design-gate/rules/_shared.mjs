@@ -58,9 +58,3 @@ export function declOf(rule, propRe) {
   for (const d of rule.decls) if (propRe.test(d.prop)) found = d;
   return found;
 }
-
-/** Quick membership test for "is this surface in this register?" */
-export function registerApplies(rule, surface) {
-  if (rule.register === 'any') return true;
-  return surface.register === rule.register;
-}

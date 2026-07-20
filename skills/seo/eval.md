@@ -39,3 +39,13 @@ With the seo skill loaded, the agent:
 
 **Fail** if the output is generic "research keywords / write content / get links" with no winnability
 check, no indexation triage, and no citations — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 7/16 | FAIL — generic listicle: no SERP/intent read, no indexation triage, no winnability check, zero citations |
+| With skill | 15/16 | PASS — diagnosed, winnability-gated ranked plan with GBP review-velocity specifics, all numbers cited + flagged directional; −1: AI-search folded in rather than siloed as its own workstream |
+
+Delta +8. Cosmetic: one duplicated citation ID in the skill arm (same SM id twice on one line).

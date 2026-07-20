@@ -42,7 +42,7 @@ const ROW_COLS = [
 ];
 
 /** Map one spans-table row → a trajectory span. attributes_json is parsed for the long tail. */
-export function rowToSpan(r) {
+function rowToSpan(r) {
   let attributes = {};
   try {
     attributes = JSON.parse(r.attributes_json || '{}');
@@ -116,7 +116,7 @@ function shq(s) {
 }
 
 /** Read the rows for one trace from a LOCAL sqlite file (no remote knowledge). */
-export function rowsFromSqlite(sqlitePath, traceId) {
+function rowsFromSqlite(sqlitePath, traceId) {
   const sql = `SELECT ${ROW_COLS.join(', ')} FROM spans WHERE trace_id=${shq(traceId)} ORDER BY start_ts;`;
   const out = execFileSync('sqlite3', ['-json', sqlitePath, sql], {
     encoding: 'utf-8',

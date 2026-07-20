@@ -48,3 +48,13 @@ With the automation skill loaded, the agent:
 **Fail** if the output is "one n8n flow with an AI agent that researches and auto-sends emails, add more AI
 steps" — i.e. AI-for-everything, happy-path, no guards, auto-outbound, no injection defense, indistinguishable
 from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 6/16 | FAIL — happy-path build: uncapped retries, no loop guard, no injection defense on scraped data, auto-send with no human gate, no ROI check |
+| With skill | 15/16 | PASS — hits every hardening dimension incl. HITL gate + injection layering; −1: compounding-error decay not named |
+
+Delta +9.

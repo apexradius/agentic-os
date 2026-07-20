@@ -144,7 +144,7 @@ export function parseColor(input) {
 }
 
 /** Composite a (possibly translucent) foreground over an opaque background. */
-export function flatten(fg, bg) {
+function flatten(fg, bg) {
   if (fg.a >= 1) return fg;
   const a = fg.a;
   return {
@@ -156,7 +156,7 @@ export function flatten(fg, bg) {
 }
 
 /** WCAG relative luminance of an opaque rgb. */
-export function luminance({ r, g, b }) {
+function luminance({ r, g, b }) {
   const lin = [r, g, b].map((v) => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;

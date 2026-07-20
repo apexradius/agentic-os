@@ -38,3 +38,13 @@ With the cro skill loaded, the agent:
 
 **Fail** if the output is a generic tip list with no benchmark, no intent check, no leak isolation, and no
 measurement/test plan — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 8/16 | FAIL — well-written but benchmark-free, unsourced tip list; no funnel-leak isolation, generic measurement |
+| With skill | 16/16 | PASS — benchmark-anchored, measurement-first diagnosis with correct scope deferral; grader resolved 10 sampled citation hashes against references/knowledge-base.md — all real, stats verbatim |
+
+Delta +8. Only skill in the batch whose citations were independently resolved to source during grading (single-file KB made it cheap) — all clean.

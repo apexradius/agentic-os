@@ -51,3 +51,13 @@ With the video-content skill loaded, the agent:
 **Fail** if the output is "buy a good camera, full script, SEO keywords in the title, post daily" — i.e.
 gear-first, camera-over-audio, SEO-title, no-retention-structure, packaging-as-afterthought, indistinguishable
 from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 7/16 | FAIL — SEO-keyword titles, no retention 80/20, no Cliff/Stop-Stack mechanics, AI absent, zero citations (gear-order instinct was right) |
+| With skill | 16/16 | PASS — packaging-first, 70% cut, Cliff + Stop-Stack, 30/70 short-long mix, AI as tool not script-generator, numbers flagged directional |
+
+Delta +9. Soft spot flagged for next revision: skill arm scopes out-of-KB topics rather than naming ai-video/video-produce/paid-ads as explicit handoffs.

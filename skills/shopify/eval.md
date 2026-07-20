@@ -39,3 +39,13 @@ With the shopify skill loaded, the agent:
 **Fail** if the output edits the live theme, hardcodes the variant logic, reaches for jQuery, treats it as
 a one-client build, or gives submission advice with no Shopify-specific bar — i.e. indistinguishable from
 the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 8/16 | FAIL — asserted the submission bar as fact with no source, missed never-edit-live discipline and the RTL/cross-merchant bar |
+| With skill | 14/16 | PASS — never-edit-live, sensitive-data-in-JS, full Theme Store bar; explicitly DECLINED to state two numbers it couldn't source (the discipline the eval rewards) |
+
+Delta +6 — narrowest margin of the batch: two conditional rubric items (app/API, merchandising) are largely N/A for a theme-only task and scored 1/1 for both arms, compressing the spread.

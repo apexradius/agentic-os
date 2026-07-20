@@ -5,6 +5,8 @@
 // declarations. SCSS nesting is not resolved (documented boundary) — nested blocks are
 // still walked, so flat declarations are seen regardless.
 
+import { lineAt } from './text.mjs';
+
 function stripComments(text) {
   // Replace /* */ comments with equal-length whitespace so byte offsets (and thus line
   // numbers) are preserved. Newlines inside comments are kept.
@@ -22,12 +24,6 @@ function stripComments(text) {
     }
   }
   return out;
-}
-
-function lineAt(text, offset) {
-  let line = 1;
-  for (let i = 0; i < offset && i < text.length; i++) if (text[i] === '\n') line++;
-  return line;
 }
 
 // Split a string on a delimiter char, but only at brace/paren depth 0 and outside strings.

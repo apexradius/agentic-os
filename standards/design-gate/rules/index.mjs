@@ -16,5 +16,3 @@ for (const r of RULES) {
   if (seen.has(r.id)) throw new Error(`duplicate rule id: ${r.id}`);
   seen.add(r.id);
 }
-
-export const RULES_BY_ID = new Map(RULES.map((r) => [r.id, r]));

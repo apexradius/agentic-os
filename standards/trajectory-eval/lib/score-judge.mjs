@@ -11,7 +11,7 @@
 
 // The taste dimensions the spans alone cannot settle. Names are stable — the judge-gate and any
 // rubric reference them.
-export const JUDGE_DIMENSIONS = [
+const JUDGE_DIMENSIONS = [
   'plan_adherence', // did the run follow the phases the baseline exemplifies?
   'synthesis_fidelity', // is the returned conclusion supported by what the tools actually surfaced?
   'finding_class_coverage', // were the finding classes the baseline expects all reached?

@@ -40,3 +40,13 @@ With the market-research skill loaded, the agent:
 
 **Fail** if the output is a TAM number + competitor list + "worth building" conclusion resting on desk
 research and "say" evidence — i.e. indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 4/16 | FAIL — invented CAC/COGS/TAM/margin figures stated as fact, desk-research build verdict, no evidence ladder |
+| With skill | 16/16 | PASS — evidence ladder, JPG hypothesis, say/do discipline, moat analysis; fabricated nothing, flagged its own category claims "unverified — I believe" |
+
+Delta +12.

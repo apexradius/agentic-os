@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, readFileSync } from 'node:fs';
 
 /** sha256/12 of the reason — enough to correlate identical reasons, reveals nothing of the call. */
-export function reasonHash(reason) {
+function reasonHash(reason) {
   return createHash('sha256')
     .update(String(reason ?? ''))
     .digest('hex')
@@ -26,7 +26,7 @@ export function reasonHash(reason) {
 }
 
 /** Build the redacted record for one decision. Pure — no I/O, trivially assertable. */
-export function buildRecord(result, now) {
+function buildRecord(result, now) {
   return {
     ts: (now ?? new Date()).toISOString(),
     tool: String(result?.surface?.tool ?? result?.tool ?? ''),

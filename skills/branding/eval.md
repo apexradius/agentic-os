@@ -50,3 +50,13 @@ With the branding skill loaded, the agent:
 **Fail** if the output is "nice logo, professional colors, stay consistent, post everywhere, grow your
 following" — i.e. execution-first, taste-based, no positioning, vanity-growth, indistinguishable from the
 no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 7/16 | FAIL — competent generalist advice but no voice/promise-gap, no funnel structure, taste-psychology color logic, builds the logo itself, zero citations |
+| With skill | 16/16 | PASS — tip-vs-shaft, blue-ocean + competitor recon, category-codes color logic, TOFU/MOFU/BOFU, transformation monetization, execution correctly deferred to design/copy skills |
+
+Delta +9. Notable: baseline was NOT the pure strawman — it sequenced strategy first and said own-your-email-list; the skill's margin is the strategic depth + sourcing, not the headline instinct.

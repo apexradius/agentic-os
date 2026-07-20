@@ -7,6 +7,8 @@
 // expressions are ignored. HTML and CSS are the first-class targets — full JSX-AST
 // semantics are deferred to the design-critic role.
 
+import { lineAt } from './text.mjs';
+
 const VOID_TAGS = new Set([
   'area',
   'base',
@@ -23,12 +25,6 @@ const VOID_TAGS = new Set([
   'track',
   'wbr',
 ]);
-
-function lineAt(text, offset) {
-  let line = 1;
-  for (let i = 0; i < offset && i < text.length; i++) if (text[i] === '\n') line++;
-  return line;
-}
 
 function parseAttrs(attrText) {
   const attrs = {};
@@ -153,7 +149,7 @@ export function walk(node, fn, depth = 0) {
 }
 
 /** A class token names a "card" if it is `card`, ends with -card/_card, or is PascalCase *Card. */
-export function isCardClass(cls) {
+function isCardClass(cls) {
   return /^card$/i.test(cls) || /[-_]card$/i.test(cls) || /^[A-Z][\w]*Card$/.test(cls);
 }
 

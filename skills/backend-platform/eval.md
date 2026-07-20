@@ -49,3 +49,13 @@ With the backend-platform skill loaded, the agent:
 **Fail** if the output is "microservices from day one, Kubernetes, services call each other over REST, shared
 DB, set up CI/CD" — i.e. premature-microservices, sync-chained, secrets/observability-absent, mutable-deploy,
 indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 6/16 | FAIL — monolith-first instinct present, but zero secrets discipline, zero shift-left security, zero deploy immutability, zero citations |
+| With skill | 16/16 | PASS — full spine: vault + edge auth, SCA/secret-scan/container hardening, pinned digests + locked IaC, three-pillars observability, dense [BE] citations |
+
+Delta +10 — lift concentrated exactly where the baseline is blind (both arms already knew monolith-first; the 2026 baseline has absorbed that headline).

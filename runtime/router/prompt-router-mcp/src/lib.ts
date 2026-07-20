@@ -117,11 +117,12 @@ type FileRecord = {
   relativePath: string;
 };
 
-export class WorkspaceNotFoundError extends Error {
+class WorkspaceNotFoundError extends Error {
   readonly code = 'WORKSPACE_NOT_FOUND';
 }
 
 export class InvalidWorkspaceError extends Error {
+  // fallow-ignore-next-line unused-class-member
   readonly code = 'INVALID_WORKSPACE';
 }
 
@@ -130,7 +131,7 @@ export class InvalidWorkspaceError extends Error {
 // workspace-derived evidence — see scoreRoutes() and the regression tests.
 // ---------------------------------------------------------------------------
 
-export const WEIGHTS = {
+const WEIGHTS = {
   PRIMARY_TRIGGER: 60,
   STATE: 30,
   PRIMARY_PHRASE: 9,
@@ -811,7 +812,7 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export function normalizeRelativePath(value: string): string {
+function normalizeRelativePath(value: string): string {
   return value.split(path.sep).join('/').toLowerCase();
 }
 
@@ -823,7 +824,7 @@ function assertAbsolutePath(value: string, fieldName: string): void {
 
 // Workspace paths that must never be scanned. Scanning "/" or a home root is
 // always a caller mistake (typo or missing workspace_path), never intent.
-export function assertSafeWorkspacePath(value: string): string {
+function assertSafeWorkspacePath(value: string): string {
   assertAbsolutePath(value, 'workspace_path');
   const resolved = path.resolve(value);
   const forbidden = new Set([
@@ -945,12 +946,12 @@ export async function readPromptLibrary(libraryPath: string): Promise<ParsedLibr
 
 // library/ lives at the package root, one level up from dist/lib.js (and from
 // src/lib.ts under ts-node-style resolution). Resolve relative to this module.
-export function packageLibraryDir(): string {
+function packageLibraryDir(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(here, '..', 'library');
 }
 
-export function structuredLibraryPath(): string {
+function structuredLibraryPath(): string {
   const configuredLibraryPath = process.env['APEX_PROMPT_LIBRARY_PATH'];
   if (
     configuredLibraryPath &&
@@ -1116,7 +1117,7 @@ export function keywordMatcher(keyword: string): RegExp {
   return regex;
 }
 
-export function isPhrase(keyword: string): boolean {
+function isPhrase(keyword: string): boolean {
   return keyword.trim().split(/\s+/).length > 1;
 }
 
@@ -1143,7 +1144,7 @@ const EXCLUDED_DIRS = new Set([
   '.mypy_cache',
 ]);
 
-export const IMPORTANT_EXACT_PATHS = new Set([
+const IMPORTANT_EXACT_PATHS = new Set([
   'readme.md',
   'agents.md',
   'claude.md',
@@ -1220,7 +1221,7 @@ export function isSensitivePath(relativePath: string): boolean {
   return SENSITIVE_NEEDLES.some((needle) => normalized.includes(needle));
 }
 
-export function isImportantPath(relativePath: string): boolean {
+function isImportantPath(relativePath: string): boolean {
   const normalized = normalizeRelativePath(relativePath);
   return (
     IMPORTANT_EXACT_PATHS.has(normalized) || IMPORTANT_BASENAMES.has(path.basename(normalized))
@@ -1678,7 +1679,7 @@ export function buildStackRecommendation(
   };
 }
 
-export function readGitStatus(workspacePath: string): string | null {
+function readGitStatus(workspacePath: string): string | null {
   const result = spawnSync('git', ['-C', workspacePath, 'status', '--short', '--branch'], {
     encoding: 'utf8',
     timeout: 5000,

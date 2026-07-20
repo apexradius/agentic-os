@@ -16,22 +16,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hasPersistedRef, hasText, isObject } from '../_lib/shape.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASSERTION_CLASSES = new Set(['discoverable', 'preference']);
 const STATUSES = new Set(['pending', 'verified']);
-
-function isObject(value) {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasText(value) {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function hasPersistedRef(value) {
-  return hasText(value) && !/\s/.test(value.trim()) && /[./#]/.test(value.trim());
-}
 
 function checkAssertion(errors, assertion, index) {
   const at = `assertions[${index}]`;

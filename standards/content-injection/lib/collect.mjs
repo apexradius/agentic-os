@@ -9,7 +9,7 @@
 const BUDGET = 200_000;
 
 /** Recursively gather string content from an arbitrary tool_response node into `out`. */
-export function collectInto(node, out) {
+function collectInto(node, out) {
   if (out.reduce((n, s) => n + s.length, 0) > BUDGET) return;
   if (typeof node === 'string') {
     out.push(node);

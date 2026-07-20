@@ -6,6 +6,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hasPersistedRef, hasText, isObject } from '../_lib/shape.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const checks = [];
@@ -34,18 +35,6 @@ const CLAIM_KIND_HINTS = [
   ['artifact-created', /\b(artifact|file|report|trace)\b.*\b(created|written|emitted)\b/i],
   ['runtime-observed', /\b(observed|verified live|runtime|endpoint|service)\b/i],
 ];
-
-function isObject(value) {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasText(value) {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function hasPersistedRef(value) {
-  return hasText(value) && !/\s/.test(value.trim()) && /[./#]/.test(value.trim());
-}
 
 function hasTimestamp(value) {
   return hasText(value) && Number.isFinite(Date.parse(value));

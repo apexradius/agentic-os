@@ -10,7 +10,7 @@ import { z } from 'zod';
 type JsonCell = string | number | boolean | null;
 type JsonRow = JsonCell[];
 
-export interface WorkbookInfo {
+interface WorkbookInfo {
   filePath: string;
   sheetCount: number;
   sheets: Array<{
@@ -23,7 +23,7 @@ export interface WorkbookInfo {
   }>;
 }
 
-export interface ReadSheetOptions {
+interface ReadSheetOptions {
   sheetName?: string;
   sheetIndex?: number;
   startRow?: number;
@@ -33,7 +33,7 @@ export interface ReadSheetOptions {
   includeEmptyRows?: boolean;
 }
 
-export interface ReadSheetResult {
+interface ReadSheetResult {
   filePath: string;
   sheetName: string;
   sheetIndex: number;
@@ -44,11 +44,11 @@ export interface ReadSheetResult {
   rows: JsonRow[];
 }
 
-export interface WriteSheetOptions {
+interface WriteSheetOptions {
   mode?: 'overwrite' | 'append';
 }
 
-export interface WriteSheetResult {
+interface WriteSheetResult {
   filePath: string;
   sheetName: string;
   mode: 'overwrite' | 'append';
@@ -162,7 +162,7 @@ export function registerExcelTools(server: McpServer): void {
   );
 }
 
-export async function getWorkbookInfo(filePath: string): Promise<WorkbookInfo> {
+async function getWorkbookInfo(filePath: string): Promise<WorkbookInfo> {
   const workbook = await loadWorkbook(filePath);
   return {
     filePath,
@@ -178,7 +178,7 @@ export async function getWorkbookInfo(filePath: string): Promise<WorkbookInfo> {
   };
 }
 
-export async function readSheetRows(
+async function readSheetRows(
   filePath: string,
   options: ReadSheetOptions = {},
 ): Promise<ReadSheetResult> {
@@ -216,7 +216,7 @@ export async function readSheetRows(
   };
 }
 
-export async function writeSheetRows(
+async function writeSheetRows(
   filePath: string,
   sheetName: string,
   rows: JsonRow[],
@@ -252,7 +252,7 @@ export async function writeSheetRows(
   };
 }
 
-export function parseRowsJson(rowsJson: string): JsonRow[] {
+function parseRowsJson(rowsJson: string): JsonRow[] {
   const parsed: unknown = JSON.parse(rowsJson);
   if (!Array.isArray(parsed)) {
     throw new Error('rows_json must be a JSON array of row arrays');

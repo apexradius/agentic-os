@@ -50,3 +50,13 @@ With the project-management skill loaded, the agent:
 **Fail** if the output is "use Scrum, 2-week sprints, Gantt, one estimate + 10% buffer, standups, burndown,
 lessons doc at the end" — i.e. fashion-first, single-estimate, no-baseline-control, benefits-never-defined
 generic PM, indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 4/16 | FAIL — fashion-first Agile/Scrum, flat 15-20% buffer, shelved retro, benefits never defined, zero citations |
+| With skill | 16/16 | PASS — poor-control thesis, exponential estimate scale, governance separation + Noble Objection, real-end-user UAT, all stats cited + flagged directional |
+
+Delta +12. Grader verdict: "a categorically different answer, not a polished one."

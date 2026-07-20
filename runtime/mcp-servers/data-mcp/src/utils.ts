@@ -1,33 +1,3 @@
-export interface ToolTextResult {
-  [key: string]: unknown;
-  content: Array<{ type: 'text'; text: string }>;
-  isError?: boolean;
-}
-
-export function formatError(e: unknown): string {
-  if (e instanceof Error) {
-    const pgErr = e as Error & { code?: string; detail?: string };
-    let msg = e.message;
-    if (pgErr.code) msg += ` (code: ${pgErr.code})`;
-    if (pgErr.detail) msg += ` — ${pgErr.detail}`;
-    return msg;
-  }
-  if (typeof e === 'string') return e;
-  try {
-    return JSON.stringify(e, null, 2);
-  } catch {
-    return String(e);
-  }
-}
-
-export function toolResult(text: string): ToolTextResult {
-  return { content: [{ type: 'text', text: text.trim() || 'Done.' }] };
-}
-
-export function toolError(e: unknown): ToolTextResult {
-  return { content: [{ type: 'text', text: formatError(e) }], isError: true };
-}
-
 /**
  * Returns true if the SQL's first meaningful keyword is SELECT, EXPLAIN, SHOW, WITH, or VALUES.
  * Strips leading whitespace and block comments before checking.

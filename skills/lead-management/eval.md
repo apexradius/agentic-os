@@ -42,3 +42,13 @@ With the lead-management skill loaded, the agent:
 
 **Fail** if the output is a single-number score with a fixed cadence and "keep the CRM clean" — i.e.
 indistinguishable from the no-skill baseline — or if it quotes the corpus's vendor stats as established fact.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 4/16 | FAIL — single-number tiers, fixed cadence, and the rubric's named failure verbatim: "response within 5 minutes converts dramatically better" stated as fact, zero citations |
+| With skill | 16/16 | PASS — fit/engagement split with decay, disqualification discipline, every corpus stat quarantined as self-reported/directional with [LM] citations (26 markers) |
+
+Delta +12 — largest separation of the batch alongside market-research and project-management; the baseline fabrication is the strongest justification for the citation discipline.

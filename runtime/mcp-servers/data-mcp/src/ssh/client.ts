@@ -122,24 +122,6 @@ export class SSHClient {
       });
     });
   }
-
-  /** Read a remote file's contents */
-  async readFile(remotePath: string, opts?: { server?: ServerConfig }): Promise<string> {
-    const result = await this.exec(`cat ${shellEscape(remotePath)}`, opts);
-    if (result.exitCode !== 0) throw new Error(`Failed to read ${remotePath}: ${result.stderr}`);
-    return result.stdout;
-  }
-
-  /** List files in a remote directory */
-  async ls(remotePath: string, opts?: { server?: ServerConfig }): Promise<string> {
-    const result = await this.exec(`ls -la ${shellEscape(remotePath)}`, opts);
-    if (result.exitCode !== 0) throw new Error(`Failed to list ${remotePath}: ${result.stderr}`);
-    return result.stdout;
-  }
-
-  get server(): ServerConfig {
-    return this.defaultServer;
-  }
 }
 
 /** Escape a string for shell use */

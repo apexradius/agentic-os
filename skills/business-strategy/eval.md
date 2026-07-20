@@ -49,3 +49,13 @@ With the business-strategy skill loaded, the agent:
 **Fail** if the output is "open a second location / launch a new service, do more marketing, hire, delegate,
 aim for 3:1 LTV:CAC" — i.e. scale-a-plateau-with-complexity, no-constraint-diagnosis, flat-ratio economics,
 indistinguishable from the no-skill baseline.
+
+## Results — 2026-07-19 (first execution)
+Solvers: claude-sonnet-5 subagents (mirrors production agents); grader: claude-opus-4-8 subagent vs rubric with per-item evidence; spot-checked by session lead.
+
+| Arm | Score | Verdict |
+|---|---|---|
+| Baseline (no skill) | 6/16 | FAIL — "expand + market more + delegate" without diagnosing the constraint; flat 3:1 LTV:CAC for a human-delivered service |
+| With skill | 15/16 | PASS — nail-it gate, constraint diagnosis, margin/CAC-payback floors, human-adjusted LTV:CAC ladder, retention lens; −1: the four leverages absent |
+
+Delta +9.

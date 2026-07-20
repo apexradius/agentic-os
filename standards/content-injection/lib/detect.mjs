@@ -136,7 +136,7 @@ const B64_BLOB = /[A-Za-z0-9+/]{80,}={0,2}/;
 /** Deterministic 0..1 score with matched-rule labels, categories, and the offending excerpt.
  *  The excerpt is the transparency-relay payload: a consumer surfaces WHAT was injected, verbatim
  *  and as data, rather than silently swallowing it. */
-export function heuristicScore(text) {
+function heuristicScore(text) {
   const src = String(text ?? '');
   let score = 0;
   const labels = [];
